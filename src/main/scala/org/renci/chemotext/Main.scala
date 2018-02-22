@@ -93,23 +93,25 @@ object Main extends App with LazyLogging {
       case (filename, articleSet) =>
         filename -> extractText(articleSet)
     }
-    .flatMapConcat {
-      case (filename, articlesWithText) =>
+    .mapAsyncUnordered(fileLoadParallelism) {
+      case (filename, articlesWithText) => Future {
         Source(articlesWithText).mapAsyncUnordered(annotationParallelism) {
           case (pmid, text) =>
             annotateWithSciGraph(text).map(pmid -> _)
         }.fold(Set.empty[Statement]) {
           case (statements, (pmid, json)) => statements ++ makeTriples(pmid, json)
-        }.map(filename -> _)
-    }.runForeach {
-      case (filename, statements) =>
-        blocking {
-          val outStream = new FileOutputStream(new File(s"$filename.ttl"))
-          val model = ModelFactory.createDefaultModel()
-          model.add(statements.toSeq.asJava)
-          model.write(outStream, "ttl")
-          outStream.close()
+        }.runForeach { statements =>
+          blocking {
+            val outStream = new FileOutputStream(new File(s"$filename.ttl"))
+            val model = ModelFactory.createDefaultModel()
+            model.add(statements.toSeq.asJava)
+            model.write(outStream, "ttl")
+            outStream.close()
+          }
         }
+      }
+    }.runForeach { fileCompletion =>
+      
     }
 
   Await.ready(done, Duration.Inf).onComplete {
