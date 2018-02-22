@@ -11,7 +11,6 @@ import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.blocking
 import scala.concurrent.duration.Duration
-import scala.util.Failure
 import scala.xml.Elem
 
 import org.apache.jena.rdf.model.ModelFactory
@@ -23,7 +22,6 @@ import com.typesafe.scalalogging.LazyLogging
 
 import akka.actor.ActorSystem
 import akka.stream._
-import akka.stream.scaladsl._
 import io.scigraph.annotation.EntityAnnotation
 import io.scigraph.annotation.EntityFormatConfiguration
 
@@ -68,13 +66,11 @@ object Main extends App with LazyLogging {
     } yield pmid -> s"$title $abstractText $meshTerms"
   }
 
-  def annotateWithSciGraph(text: String): Future[List[EntityAnnotation]] = Future {
+  def annotateWithSciGraph(text: String): List[EntityAnnotation] = {
     val configBuilder = new EntityFormatConfiguration.Builder(new StringReader(text))
     configBuilder.longestOnly(true)
     configBuilder.minLength(3)
-    blocking {
-      annotator.processor.annotateEntities(configBuilder.get).asScala.toList
-    }
+    annotator.processor.annotateEntities(configBuilder.get).asScala.toList
   }
 
   def makeTriples(pmid: String, annotations: List[EntityAnnotation]): Set[Statement] = {
@@ -85,43 +81,22 @@ object Main extends App with LazyLogging {
     statements.toSet
   }
 
-  val done = Source(dataFiles)
-    .mapAsyncUnordered(fileLoadParallelism) { file =>
-      readXMLFromGZip(file).map(file.getName -> _)
-    }
-    .map {
-      case (filename, articleSet) =>
-        filename -> extractText(articleSet)
-    }
-    .flatMapConcat {
-      case (filename, articlesWithText) =>
-        Source(articlesWithText).mapAsyncUnordered(annotationParallelism) {
-          case (pmid, text) =>
-            annotateWithSciGraph(text).map(pmid -> _)
-        }.fold(Set.empty[Statement]) {
-          case (statements, (pmid, json)) => statements ++ makeTriples(pmid, json)
-        }.map(filename -> _)
-    }.runForeach {
-      case (filename, statements) =>
-        blocking {
-          val outStream = new FileOutputStream(new File(s"$filename.ttl"))
-          val model = ModelFactory.createDefaultModel()
-          model.add(statements.toSeq.asJava)
-          model.write(outStream, "ttl")
-          outStream.close()
-        }
-    }
-
-  Await.ready(done, Duration.Inf).onComplete {
-    case Failure(e) =>
-      e.printStackTrace()
-      system.terminate()
-      annotator.dispose()
-      System.exit(1)
-    case _ => {
-      system.terminate()
-      annotator.dispose()
-    }
+  dataFiles.foreach { file =>
+    val elem = Await.result(readXMLFromGZip(file), Duration.Inf)
+    val articlesWithText = extractText(elem)
+    val triples = articlesWithText
+      .map {
+        case (pmid, text) =>
+          pmid -> annotateWithSciGraph(text)
+      }
+      .foldLeft(Set.empty[Statement]) {
+        case (statements, (pmid, json)) => statements ++ makeTriples(pmid, json)
+      }
+    val outStream = new FileOutputStream(new File(s"${file.getName}.ttl"))
+    val model = ModelFactory.createDefaultModel()
+    model.add(triples.toSeq.asJava)
+    model.write(outStream, "ttl")
+    outStream.close()
   }
 
 }
