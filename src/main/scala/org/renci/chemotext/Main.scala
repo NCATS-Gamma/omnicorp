@@ -13,9 +13,11 @@ import scala.concurrent.blocking
 import scala.concurrent.duration.Duration
 import scala.xml.Elem
 
-import org.apache.jena.rdf.model.ModelFactory
 import org.apache.jena.rdf.model.ResourceFactory
 import org.apache.jena.rdf.model.Statement
+import org.apache.jena.riot.Lang
+import org.apache.jena.riot.system.StreamOps
+import org.apache.jena.riot.system.StreamRDFWriter
 import org.apache.jena.vocabulary.DCTerms
 
 import com.typesafe.scalalogging.LazyLogging
@@ -56,7 +58,7 @@ object Main extends App with LazyLogging {
   def extractText(articleSet: Elem): List[(String, String)] = {
     for {
       article <- (articleSet \ "PubmedArticle").toList
-      pmidEl <- article \\ "PMID"
+      pmidEl <- article \ "MedlineCitation" \ "PMID"
       pmid = pmidEl.text
       title = (article \\ "ArticleTitle").map(_.text).mkString(" ")
       abstractText = (article \\ "AbstractText").map(_.text).mkString(" ")
@@ -82,20 +84,15 @@ object Main extends App with LazyLogging {
   }
 
   dataFiles.foreach { file =>
-    val elem = Await.result(readXMLFromGZip(file), Duration.Inf)
-    val articlesWithText = extractText(elem)
-    val triples = articlesWithText
-      .map {
-        case (pmid, text) =>
-          pmid -> annotateWithSciGraph(text)
-      }
-      .foldLeft(Set.empty[Statement]) {
-        case (statements, (pmid, json)) => statements ++ makeTriples(pmid, json)
-      }
+    val articlesWithText = extractText(Await.result(readXMLFromGZip(file), Duration.Inf))
+    logger.info(s"Will process total articles: ${articlesWithText.size}")
     val outStream = new FileOutputStream(new File(s"${file.getName}.ttl"))
-    val model = ModelFactory.createDefaultModel()
-    model.add(triples.toSeq.asJava)
-    model.write(outStream, "ttl")
+    val rdfStream = StreamRDFWriter.getWriterStream(outStream, Lang.TURTLE)
+    articlesWithText.foreach {
+      case (pmid, text) =>
+        val triples = makeTriples(pmid, annotateWithSciGraph(text)).map(_.asTriple)
+        StreamOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
+    }
     outStream.close()
   }
 
