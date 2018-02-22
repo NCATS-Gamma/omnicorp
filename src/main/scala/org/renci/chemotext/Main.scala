@@ -48,8 +48,8 @@ object Main extends App with FailFastCirceSupport with LazyLogging {
   implicit val dispatcher = system.dispatcher
   implicit val materializer = ActorMaterializer()
 
-  val SciGraphEndpoint = "https://scigraph-ontology.monarchinitiative.org/scigraph/annotations/entities" //FIXME
-  val CurieMapEndpoint = "https://scigraph-ontology.monarchinitiative.org/scigraph/cypher/curies" //FIXME
+  val SciGraphEndpoint = "http://localhost:9000/scigraph/annotations/entities" //FIXME
+  val CurieMapEndpoint = "http://localhost:9000/scigraph/cypher/curies" //FIXME
   val PMIDNamespace = "https://www.ncbi.nlm.nih.gov/pubmed"
   val DCTReferences = DCTerms.references
   val CURIE = "^([^:]*):(.*)$".r
@@ -99,6 +99,7 @@ object Main extends App with FailFastCirceSupport with LazyLogging {
   def annotateWithSciGraph(text: String): Future[Json] = {
     val formData: FormData = FormData(
       "content" -> text,
+      "minLength" -> "3",
       "longestOnly" -> "true")
     implicit val marshaller = Marshaller.FormDataMarshaller
     for {
@@ -118,10 +119,7 @@ object Main extends App with FailFastCirceSupport with LazyLogging {
       val iri = annotation.token.id match {
         case CURIE(prefix, local) => curieMap.get(prefix) match {
           case Some(namespace) => namespace + local
-          case None => {
-            logger.error(s"No prefix mapping found for: $prefix")
-            local
-          }
+          case None => local
         }
         case nonCurie => nonCurie
       }
@@ -130,7 +128,6 @@ object Main extends App with FailFastCirceSupport with LazyLogging {
     result match {
       case Right(statements) => statements.toSet
       case Left(error) => {
-        println(annotations)
         logger.error(s"Failed decoding JSON response for PMID: $pmid")
         Set.empty
       }
@@ -139,7 +136,7 @@ object Main extends App with FailFastCirceSupport with LazyLogging {
   }
 
   val done = Source(dataFiles)
-    .mapAsyncUnordered(2) { file =>
+    .mapAsyncUnordered(1) { file =>
       readXMLFromGZip(file).map(file.getName -> _)
     }
     .map {
@@ -148,8 +145,9 @@ object Main extends App with FailFastCirceSupport with LazyLogging {
     }
     .flatMapConcat {
       case (filename, articlesWithText) =>
-        Source(articlesWithText).take(3).mapAsyncUnordered(10) {
+        Source(articlesWithText).mapAsyncUnordered(40) {
           case (pmid, text) =>
+	    logger.info(pmid)
             annotateWithSciGraph(text).map(pmid -> _)
         }.fold(Set.empty[Statement]) {
           case (statements, (pmid, json)) => statements ++ makeTriples(pmid, json)
