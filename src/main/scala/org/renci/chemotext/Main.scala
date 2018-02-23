@@ -21,11 +21,25 @@ import com.typesafe.scalalogging.LazyLogging
 import io.scigraph.annotation.EntityAnnotation
 import io.scigraph.annotation.EntityFormatConfiguration
 
+import akka.actor.ActorSystem
+import akka.stream._
+import akka.stream.scaladsl._
+import scala.concurrent.Await
+import scala.concurrent.Future
+import scala.concurrent.blocking
+import scala.concurrent.duration.Duration
+import scala.util.Failure
+
 object Main extends App with LazyLogging {
 
   val scigraphLocation = args(0)
+  val parallelism = args(1).toInt
 
   val annotator = new Annotator(scigraphLocation)
+
+  implicit val system = ActorSystem("pubmed-actors")
+  implicit val dispatcher = system.dispatcher
+  implicit val materializer = ActorMaterializer()
 
   val PMIDNamespace = "https://www.ncbi.nlm.nih.gov/pubmed"
   val DCTReferences = DCTerms.references
@@ -76,15 +90,29 @@ object Main extends App with LazyLogging {
     val outStream = new FileOutputStream(new File(s"${file.getName}.ttl"))
     val rdfStream = StreamRDFWriter.getWriterStream(outStream, Lang.TURTLE)
     rdfStream.start()
-    articlesWithText.foreach {
-      case (pmid, text) =>
-        val triples = makeTriples(pmid, annotateWithSciGraph(text)).map(_.asTriple)
-        StreamOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
+    val done = Source(articlesWithText).mapAsyncUnordered(parallelism) {
+      case (pmid, text) => Future {
+        makeTriples(pmid, annotateWithSciGraph(text)).map(_.asTriple)
+      }
+    }.runForeach { triples =>
+      StreamOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
     }
-    rdfStream.finish()
-    outStream.close()
+    Await.ready(done, Duration.Inf).onComplete {
+      case Failure(e) =>
+        e.printStackTrace()
+        rdfStream.finish()
+        outStream.close()
+        system.terminate()
+        annotator.dispose()
+        System.exit(1)
+      case _ => {
+        rdfStream.finish()
+        outStream.close()
+      }
+    }
     logger.info(s"Done processing $file")
   }
   annotator.dispose()
+  system.terminate()
 
 }
