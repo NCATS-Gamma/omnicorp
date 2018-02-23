@@ -75,11 +75,13 @@ object Main extends App with LazyLogging {
     logger.info(s"Will process total articles: ${articlesWithText.size}")
     val outStream = new FileOutputStream(new File(s"${file.getName}.ttl"))
     val rdfStream = StreamRDFWriter.getWriterStream(outStream, Lang.TURTLE)
+    rdfStream.start()
     articlesWithText.foreach {
       case (pmid, text) =>
         val triples = makeTriples(pmid, annotateWithSciGraph(text)).map(_.asTriple)
         StreamOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
     }
+    rdfStream.finish()
     outStream.close()
     logger.info(s"Done processing $file")
   }
