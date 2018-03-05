@@ -32,7 +32,8 @@ import io.scigraph.annotation.EntityFormatConfiguration
 object Main extends App with LazyLogging {
 
   val scigraphLocation = args(0)
-  val parallelism = args(1).toInt
+  val dataDir = new File(args(1))
+  val parallelism = args(2).toInt
 
   val annotator = new Annotator(scigraphLocation)
 
@@ -45,8 +46,8 @@ object Main extends App with LazyLogging {
   val DCTReferences = DCTerms.references
   val CURIE = "^([^:]*):(.*)$".r
 
-  val dataDir = new File("data")
-  val dataFiles = dataDir.listFiles().filter(_.getName.endsWith(".xml.gz")).toList
+  val dataFiles = if (dataDir.isFile) List(dataDir)
+  else dataDir.listFiles().filter(_.getName.endsWith(".xml.gz")).toList
 
   def readXMLFromGZip(file: File): Elem = {
     val stream = new GZIPInputStream(new FileInputStream(file))
