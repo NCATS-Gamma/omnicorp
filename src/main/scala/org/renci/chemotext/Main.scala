@@ -7,6 +7,10 @@ import java.io.StringReader
 import java.util.zip.GZIPInputStream
 
 import scala.collection.JavaConverters._
+import scala.concurrent.Await
+import scala.concurrent.Future
+import scala.concurrent.duration.Duration
+import scala.util.Failure
 import scala.xml.Elem
 
 import org.apache.jena.rdf.model.ResourceFactory
@@ -15,20 +19,15 @@ import org.apache.jena.riot.Lang
 import org.apache.jena.riot.system.StreamOps
 import org.apache.jena.riot.system.StreamRDFWriter
 import org.apache.jena.vocabulary.DCTerms
+import org.apache.lucene.queryparser.classic.QueryParserBase
 
 import com.typesafe.scalalogging.LazyLogging
-
-import io.scigraph.annotation.EntityAnnotation
-import io.scigraph.annotation.EntityFormatConfiguration
 
 import akka.actor.ActorSystem
 import akka.stream._
 import akka.stream.scaladsl._
-import scala.concurrent.Await
-import scala.concurrent.Future
-import scala.concurrent.blocking
-import scala.concurrent.duration.Duration
-import scala.util.Failure
+import io.scigraph.annotation.EntityAnnotation
+import io.scigraph.annotation.EntityFormatConfiguration
 
 object Main extends App with LazyLogging {
 
@@ -69,7 +68,7 @@ object Main extends App with LazyLogging {
   }
 
   def annotateWithSciGraph(text: String): List[EntityAnnotation] = {
-    val configBuilder = new EntityFormatConfiguration.Builder(new StringReader(text))
+    val configBuilder = new EntityFormatConfiguration.Builder(new StringReader(QueryParserBase.escape(text)))
     configBuilder.longestOnly(true)
     configBuilder.minLength(3)
     annotator.processor.annotateEntities(configBuilder.get).asScala.toList
