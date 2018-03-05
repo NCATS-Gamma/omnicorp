@@ -41,6 +41,7 @@ object Main extends App with LazyLogging {
   implicit val materializer = ActorMaterializer()
 
   val PMIDNamespace = "https://www.ncbi.nlm.nih.gov/pubmed"
+  val MESHNamespace = "http://id.nlm.nih.gov/mesh"
   val DCTReferences = DCTerms.references
   val CURIE = "^([^:]*):(.*)$".r
 
@@ -54,17 +55,19 @@ object Main extends App with LazyLogging {
     elem
   }
 
-  def extractText(articleSet: Elem): List[(String, String)] = {
+  def extractText(articleSet: Elem): List[(String, String, Set[String])] = {
     for {
       article <- (articleSet \ "PubmedArticle").toList
       pmidEl <- article \ "MedlineCitation" \ "PMID"
       pmid = pmidEl.text
       title = (article \\ "ArticleTitle").map(_.text).mkString(" ")
       abstractText = (article \\ "AbstractText").map(_.text).mkString(" ")
-      meshTerms = (article \\ "MeshHeading").map(mh =>
-        (mh \ "DescriptorName").map(_.text).mkString(" ") +
-          (mh \ "QualifierName").map(_.text).mkString(" ")).mkString(" ")
-    } yield pmid -> s"$title $abstractText $meshTerms"
+      (meshTermIDs, meshLabels) = (article \\ "MeshHeading").map { mh =>
+        val (dMeshIds, dMeshLabels) = (mh \ "DescriptorName").map(mesh => ((mesh \ "@UI").text, mesh.text)).unzip
+        val (qMeshIds, qMeshLabels) = (mh \ "QualifierName").map(mesh => ((mesh \ "@UI").text, mesh.text)).unzip
+        ((dMeshIds ++ qMeshIds), (dMeshLabels ++ qMeshLabels).mkString(" "))
+      }.unzip
+    } yield (pmid, s"$title $abstractText ${meshLabels.mkString(" ")}", meshTermIDs.flatten.toSet)
   }
 
   def annotateWithSciGraph(text: String): List[EntityAnnotation] = {
@@ -74,12 +77,16 @@ object Main extends App with LazyLogging {
     annotator.processor.annotateEntities(configBuilder.get).asScala.toList
   }
 
-  def makeTriples(pmid: String, annotations: List[EntityAnnotation]): Set[Statement] = {
+  def makeTriples(pmid: String, annotations: List[EntityAnnotation], meshIDs: Set[String]): Set[Statement] = {
     val pmidIRI = ResourceFactory.createResource(s"$PMIDNamespace/$pmid")
+    val meshIRIs = meshIDs.map(id => ResourceFactory.createResource(s"$MESHNamespace/$id"))
     val statements = annotations.map { annotation =>
       ResourceFactory.createStatement(pmidIRI, DCTReferences, ResourceFactory.createResource(annotation.getToken.getId))
     }
-    statements.toSet
+    val meshStatements = meshIRIs.map { meshIRI =>
+      ResourceFactory.createStatement(pmidIRI, DCTReferences, meshIRI)
+    }
+    statements.toSet ++ meshStatements
   }
 
   dataFiles.foreach { file =>
@@ -90,8 +97,8 @@ object Main extends App with LazyLogging {
     val rdfStream = StreamRDFWriter.getWriterStream(outStream, Lang.TURTLE)
     rdfStream.start()
     val done = Source(articlesWithText).mapAsyncUnordered(parallelism) {
-      case (pmid, text) => Future {
-        makeTriples(pmid, annotateWithSciGraph(text)).map(_.asTriple)
+      case (pmid, text, meshIDs) => Future {
+        makeTriples(pmid, annotateWithSciGraph(text), meshIDs).map(_.asTriple)
       }
     }.runForeach { triples =>
       StreamOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
