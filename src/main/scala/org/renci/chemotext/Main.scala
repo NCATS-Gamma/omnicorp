@@ -63,12 +63,16 @@ object Main extends App with LazyLogging {
       pmid = pmidEl.text
       title = (article \\ "ArticleTitle").map(_.text).mkString(" ")
       abstractText = (article \\ "AbstractText").map(_.text).mkString(" ")
+      geneSymbols = (article \\ "GeneSymbol").map(_.text).mkString(" ")
       (meshTermIDs, meshLabels) = (article \\ "MeshHeading").map { mh =>
         val (dMeshIds, dMeshLabels) = (mh \ "DescriptorName").map(mesh => ((mesh \ "@UI").text, mesh.text)).unzip
         val (qMeshIds, qMeshLabels) = (mh \ "QualifierName").map(mesh => ((mesh \ "@UI").text, mesh.text)).unzip
         ((dMeshIds ++ qMeshIds), (dMeshLabels ++ qMeshLabels).mkString(" "))
       }.unzip
-    } yield (pmid, s"$title $abstractText ${meshLabels.mkString(" ")}", meshTermIDs.flatten.toSet)
+      (meshSubstanceIDs, meshSubstanceLabels) = (article \\ "NameOfSubstance").map(substance => ((substance \ "@UI").text, substance.text)).unzip
+      allMeshTermIDs = meshTermIDs.flatten.toSet ++ meshSubstanceIDs
+      allMeshLabels = meshLabels.toSet ++ meshSubstanceLabels
+    } yield (pmid, s"$title $abstractText ${allMeshLabels.mkString(" ")} $geneSymbols", allMeshTermIDs)
   }
 
   def annotateWithSciGraph(text: String): List[EntityAnnotation] = {
