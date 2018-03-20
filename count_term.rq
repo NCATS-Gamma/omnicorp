@@ -1,0 +1,11 @@
+#+ endpoint: https://stars-app.renci.org/pubmedgraph/sparql
+#+ method: GET
+#+ summary: Count Pubmed articles referencing a term.
+
+PREFIX mesh: <http://id.nlm.nih.gov/mesh/>
+PREFIX pubmed: <https://www.ncbi.nlm.nih.gov/pubmed/>
+PREFIX dct: <http://purl.org/dc/terms/>
+SELECT (COUNT(DISTINCT ?pubmed) AS ?count)
+WHERE {
+  ?pubmed dct:references ?_term_iri .
+}
