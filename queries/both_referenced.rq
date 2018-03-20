@@ -1,4 +1,6 @@
 #+ endpoint: http://stars-app.renci.org/pubmedgraph/sparql
+#+ method: GET
+#+ summary: Find Pubmed articles which reference both of two terms.
 PREFIX mesh: <http://id.nlm.nih.gov/mesh/>
 PREFIX pubmed: <https://www.ncbi.nlm.nih.gov/pubmed/>
 PREFIX dct: <http://purl.org/dc/terms/>
