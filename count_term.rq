@@ -3,7 +3,7 @@
 #+ summary: Count Pubmed articles referencing a term.
 
 PREFIX mesh: <http://id.nlm.nih.gov/mesh/>
-PREFIX pubmed: <https://www.ncbi.nlm.nih.gov/pubmed/>
+PREFIX pmid: <https://www.ncbi.nlm.nih.gov/pubmed/>
 PREFIX dct: <http://purl.org/dc/terms/>
 SELECT (COUNT(DISTINCT ?pubmed) AS ?count)
 WHERE {
