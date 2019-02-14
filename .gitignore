@@ -7,3 +7,7 @@ catalog-v001.xml
 project/project
 project/target
 target
+/SciGraph
+/omnicorp-scigraph
+/.idea
+ontologies-merged.ttl

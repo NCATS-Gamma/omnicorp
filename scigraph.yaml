@@ -1,0 +1,68 @@
+graphConfiguration:
+    # The location of the graph.
+    # If this location does not exist it will be created.
+    # Loading will append content to existing graphs.
+    location: ../../omnicorp-scigraph
+    indexedNodeProperties:
+      - category
+      - label
+      - synonym
+      - fragment
+    exactNodeProperties:
+      - label
+      - synonym
+#    curies:
+#      'rdfs' : 'http://www.w3.org/2000/01/rdf-schema#'
+#      'UBERON' : 'http://purl.obolibrary.org/obo/UBERON_'
+#      'BSPO' : 'http://purl.obolibrary.org/obo/BSPO_'
+#      'PATO' : 'http://purl.obolibrary.org/obo/PATO_'
+#      'VTO' : 'http://purl.obolibrary.org/obo/VTO_'
+#      'BFO' : 'http://purl.obolibrary.org/obo/BFO_'
+#      'TAXRANK' : 'http://purl.obolibrary.org/obo/TAXRANK_'
+#      'RO' : 'http://purl.obolibrary.org/obo/RO_'
+
+    # Set Neo4j configuration options
+    neo4jConfig:
+      dump_configuration : true
+      dbms.pagecache.memory : 1G
+
+# The number of threads dedicated to reading ontologies
+producerThreadCount: 2
+
+# The number of threads dedicated to processing ontology axioms
+consumerThreadCount: 2
+
+# A list of ontologies to import.
+ontologies:
+  # Files can be local paths...
+  - url: ../../ontologies-merged.ttl
+    # Or URIs
+    #- http://www.w3.org/TR/2004/REC-owl-guide-20040210/wine.rdf
+    # And can optionally include a reasoner factory
+    #reasonerConfiguration:
+    #  factory: org.semanticweb.elk.owlapi.ElkReasonerFactory
+
+# Categories are used for vocabulary term filtering and are inherited to
+# subclasses of their parent. They are also added as node labels for
+# convenience.
+# Note that previously defined curies can be used instead of IRIs.
+#categories:
+#    UBERON:0001062: anatomical_entity
+#    VTO:0000001: taxon
+#    PATO:0000001: quality
+
+# All properties are stored but can optionally be added to a new node property.
+# Note that previously defined curies can be used instead of IRIs.
+mappedProperties:
+  - name: label # The name of the new property
+    properties: # The list of properties mapped to the new property
+    - http://www.w3.org/2000/01/rdf-schema#label
+  - name: synonym
+    properties:
+    - http://www.geneontology.org/formats/oboInOwl#hasExactSynonym
+    - http://www.geneontology.org/formats/oboInOwl#hasNarrowSynonym
+#    - http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym
+#    - http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym
+#    - http://www.w3.org/2004/02/skos/core#prefLabel
+#  - name: comment
+#    properties:
