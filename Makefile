@@ -10,8 +10,8 @@ create_directory:
 
 .PHONY: download_pubmed
 download_pubmed: create_directory
-    (cd pubmed-annual-baseline &&\
-    curl --ftp-method singlecwd -O ftp://ftp.ncbi.nlm.nih.gov/pubmed/baseline/pubmed19n0[001-970].xml.gz)
+	(cd pubmed-annual-baseline &&\
+	curl --ftp-method singlecwd -O ftp://ftp.ncbi.nlm.nih.gov/pubmed/baseline/pubmed19n0[001-970].xml.gz)
 
 .PHONY: SciGraph
 SciGraph:
