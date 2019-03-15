@@ -11,7 +11,7 @@ create_directory:
 .PHONY: download_pubmed
 download_pubmed: create_directory
 	(cd pubmed-annual-baseline &&\
-	curl --ftp-method singlecwd -O ftp://ftp.ncbi.nlm.nih.gov/pubmed/baseline/pubmed19n0[001-002].xml.gz)
+	curl --ftp-method singlecwd -O ftp://ftp.ncbi.nlm.nih.gov/pubmed/baseline/pubmed19n0[001-970].xml.gz)
 
 .PHONY: SciGraph
 SciGraph:
@@ -31,4 +31,4 @@ ontologies-merged.ttl: robot.jar | ontologies.ofn
 .PHONY: SciGraph-core
 SciGraph-core: ontologies-merged.ttl | SciGraph
 	(cd SciGraph/SciGraph-core &&\
-    mvn exec:java -DXmx8G -Dexec.mainClass="io.scigraph.owlapi.loader.BatchOwlLoader" -Dexec.args="-c ../../scigraph.yaml")
+	mvn exec:java -DXmx8G -Dexec.mainClass="io.scigraph.owlapi.loader.BatchOwlLoader" -Dexec.args="-c ../../scigraph.yaml")
