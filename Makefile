@@ -26,9 +26,9 @@ robot.jar:
 	wget https://github.com/ontodev/robot/releases/download/v1.4.0/robot.jar
 
 ontologies-merged.ttl: robot.jar | ontologies.ofn
-    java -jar ./robot.jar merge -vvv -i ontologies.ofn -o ontologies-merged.ttl
+	java -jar ./robot.jar merge -vvv -i ontologies.ofn -o ontologies-merged.ttl
 
 .PHONY: SciGraph-core
 SciGraph-core: ontologies-merged.ttl | SciGraph
-    (cd SciGraph/SciGraph-core &&\
+	(cd SciGraph/SciGraph-core &&\
     mvn exec:java -DXmx8G -Dexec.mainClass="io.scigraph.owlapi.loader.BatchOwlLoader" -Dexec.args="-c ../../scigraph.yaml")
