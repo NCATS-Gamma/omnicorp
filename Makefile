@@ -4,10 +4,9 @@ PUBMED_DIR := pubmed-annual-baseline
 all: create_directory download_pubmed SciGraph SciGraph-core
 
 .PHONY: create_directory
-create_directory: $(PUBMED_DIR) 
+create_directory:
+	(mkdir -p $(PUBMED_DIR))
 
-$(PUBMED_DIR)/.:
-	mkdir -p $@
 
 .PHONY: download_pubmed
 download_pubmed: create_directory
@@ -16,13 +15,18 @@ download_pubmed: create_directory
 
 .PHONY: SciGraph
 SciGraph:
+	rm -rf ./SciGraph
 	git clone https://github.com/balhoff/SciGraph.git
 	(cd SciGraph &&\
 	git checkout public-constructors &&\
 	mvn -DskipTests -DskipITs install)
 
-ontologies-merged.ttl: ontologies.ofn
-	robot merge -vvv -i ontologies.ofn -o ontologies-merged.ttl
+.PHONY: robot.jar
+robot.jar:
+	wget https://github.com/ontodev/robot/releases/download/v1.4.0/robot.jar
+
+ontologies-merged.ttl: robot.jar | ontologies.ofn
+	java -jar ./robot.jar merge -vvv -i ontologies.ofn -o ontologies-merged.ttl
 
 .PHONY: SciGraph-core
 SciGraph-core: ontologies-merged.ttl | SciGraph
