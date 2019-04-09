@@ -12,10 +12,10 @@ SciGraph:
 	mvn -DskipTests -DskipITs install
 
 robot.jar:
-	wget https://github.com/ontodev/robot/releases/download/v1.4.0/robot.jar
+	curl -L -O https://github.com/ontodev/robot/releases/download/v1.4.0/robot.jar
 
-robot:
-	wget https://raw.githubusercontent.com/ontodev/robot/master/bin/robot && chmod +x robot
+robot: robot.jar
+	curl -L -O https://raw.githubusercontent.com/ontodev/robot/master/bin/robot && chmod +x robot
 
 ontologies-merged.ttl: robot ontologies.ofn
 	ROBOT_JAVA_ARGS=-Xmx8G ./robot merge -i ontologies.ofn -o ontologies-merged.ttl
