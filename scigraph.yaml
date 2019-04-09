@@ -61,6 +61,7 @@ mappedProperties:
     properties:
     - http://www.geneontology.org/formats/oboInOwl#hasExactSynonym
     - http://www.geneontology.org/formats/oboInOwl#hasNarrowSynonym
+    - http://www.ebi.ac.uk/efo/alternative_term
 #    - http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym
 #    - http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym
 #    - http://www.w3.org/2004/02/skos/core#prefLabel
