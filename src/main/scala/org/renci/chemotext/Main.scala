@@ -33,7 +33,8 @@ object Main extends App with LazyLogging {
 
   val scigraphLocation = args(0)
   val dataDir = new File(args(1))
-  val parallelism = args(2).toInt
+  val outDir = args(2)
+  val parallelism = args(3).toInt
 
   val annotator = new Annotator(scigraphLocation)
 
@@ -98,7 +99,7 @@ object Main extends App with LazyLogging {
     val articlesWithText = extractText(readXMLFromGZip(file))
     logger.info(s"Begin processing $file")
     logger.info(s"Will process total articles: ${articlesWithText.size}")
-    val outStream = new FileOutputStream(new File(s"${file.getName}.ttl"))
+    val outStream = new FileOutputStream(new File(s"$outDir/${file.getName}.ttl"))
     val rdfStream = StreamRDFWriter.getWriterStream(outStream, Lang.TURTLE)
     rdfStream.start()
     val done = Source(articlesWithText).mapAsyncUnordered(parallelism) {
