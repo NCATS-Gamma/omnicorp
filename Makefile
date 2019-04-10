@@ -31,4 +31,4 @@ $(OMNICORP):
 
 output: $(OMNICORP) pubmed-annual-baseline omnicorp-scigraph
 	mkdir -p $@ &&\
-	JAVA_OPTS=-Xmx80G $OMNICORP omnicorp-scigraph pubmed-annual-baseline $@ 20
+	JAVA_OPTS=-Xmx80G $(OMNICORP) omnicorp-scigraph pubmed-annual-baseline $@ 20
