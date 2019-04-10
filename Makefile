@@ -1,7 +1,7 @@
 OMNICORP = ./target/universal/stage/bin/omnicorp
 
 .PHONY: all
-all: omnicorp-scigraph
+all: output
 
 pubmed-annual-baseline:
 	mkdir -p $@ && cd $@ &&\
@@ -23,12 +23,12 @@ ontologies-merged.ttl: robot ontologies.ofn
 	ROBOT_JAVA_ARGS=-Xmx8G ./robot merge -i ontologies.ofn -o ontologies-merged.ttl
 
 omnicorp-scigraph: ontologies-merged.ttl SciGraph
-	cd SciGraph/SciGraph-core &&\
+	rm -rf $@ && cd SciGraph/SciGraph-core &&\
 	mvn exec:java -DXmx8G -Dexec.mainClass="io.scigraph.owlapi.loader.BatchOwlLoader" -Dexec.args="-c ../../scigraph.yaml"
 
 $(OMNICORP):
 	sbt stage
 
 output: $(OMNICORP) pubmed-annual-baseline omnicorp-scigraph
-	mkdir -p $@ &&\
+	rm -rf $@ && mkdir -p $@ &&\
 	JAVA_OPTS=-Xmx80G $(OMNICORP) omnicorp-scigraph pubmed-annual-baseline $@ 20
