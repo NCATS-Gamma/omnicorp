@@ -8,7 +8,7 @@ version       := "0.1-SNAPSHOT"
 
 licenses := Seq("MIT" -> url("https://opensource.org/licenses/MIT"))
 
-scalaVersion  := "2.11.11" //Neo4j has a 2.11 Scala dependency
+scalaVersion  := "2.12.8" //Neo4j has a 2.11 Scala dependency but it seems to be only for the cypher parser
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
