@@ -29,6 +29,8 @@ import akka.stream.scaladsl._
 import io.scigraph.annotation.EntityAnnotation
 import io.scigraph.annotation.EntityFormatConfiguration
 
+case class ArticleInfo(pmid:String,info:String,meshTermIDs:Set[String])
+
 object Main extends App with LazyLogging {
 
   val scigraphLocation = args(0)
@@ -57,12 +59,13 @@ object Main extends App with LazyLogging {
     elem
   }
 
-  def extractText(articleSet: Elem): List[(String, String, Set[String])] = {
+  def extractText(articleSet: Elem): List[ArticleInfo] = {
     for {
       article <- (articleSet \ "PubmedArticle").toList
       pmidEl <- article \ "MedlineCitation" \ "PMID"
       pmid = pmidEl.text
       title = (article \\ "ArticleTitle").map(_.text).mkString(" ")
+      date = (article \\ "PubDate").headOption.map(pub => (pub \ "Year").text).mkString(" ")
       abstractText = (article \\ "AbstractText").map(_.text).mkString(" ")
       geneSymbols = (article \\ "GeneSymbol").map(_.text).mkString(" ")
       (meshTermIDs, meshLabels) = (article \\ "MeshHeading").map { mh =>
@@ -73,7 +76,7 @@ object Main extends App with LazyLogging {
       (meshSubstanceIDs, meshSubstanceLabels) = (article \\ "NameOfSubstance").map(substance => ((substance \ "@UI").text, substance.text)).unzip
       allMeshTermIDs = meshTermIDs.flatten.toSet ++ meshSubstanceIDs
       allMeshLabels = meshLabels.toSet ++ meshSubstanceLabels
-    } yield (pmid, s"$title $abstractText ${allMeshLabels.mkString(" ")} $geneSymbols", allMeshTermIDs)
+    } yield ArticleInfo(pmid, s"$title $date $abstractText ${allMeshLabels.mkString(" ")} $geneSymbols", allMeshTermIDs)
   }
 
   def annotateWithSciGraph(text: String): List[EntityAnnotation] = {
@@ -103,7 +106,7 @@ object Main extends App with LazyLogging {
     val rdfStream = StreamRDFWriter.getWriterStream(outStream, Lang.TURTLE)
     rdfStream.start()
     val done = Source(articlesWithText).mapAsyncUnordered(parallelism) {
-      case (pmid, text, meshIDs) => Future {
+      case ArticleInfo(pmid, text, meshIDs) => Future {
         makeTriples(pmid, annotateWithSciGraph(text), meshIDs).map(_.asTriple)
       }
     }.runForeach { triples =>
