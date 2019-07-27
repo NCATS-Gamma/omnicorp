@@ -29,7 +29,7 @@ import akka.stream.scaladsl._
 import io.scigraph.annotation.EntityAnnotation
 import io.scigraph.annotation.EntityFormatConfiguration
 
-case class ArticleInfo(pmid:String,info:String,meshTermIDs:Set[String])
+case class ArticleInfo(pmid:String,info:String,meshTermIDs:Set[String],date:String)
 
 object Main extends App with LazyLogging {
 
@@ -76,7 +76,7 @@ object Main extends App with LazyLogging {
       (meshSubstanceIDs, meshSubstanceLabels) = (article \\ "NameOfSubstance").map(substance => ((substance \ "@UI").text, substance.text)).unzip
       allMeshTermIDs = meshTermIDs.flatten.toSet ++ meshSubstanceIDs
       allMeshLabels = meshLabels.toSet ++ meshSubstanceLabels
-    } yield ArticleInfo(pmid, s"$title $date $abstractText ${allMeshLabels.mkString(" ")} $geneSymbols", allMeshTermIDs)
+    } yield ArticleInfo(pmid, s"$title $abstractText ${allMeshLabels.mkString(" ")} $geneSymbols", allMeshTermIDs, s"$date")
   }
 
   def annotateWithSciGraph(text: String): List[EntityAnnotation] = {
@@ -86,16 +86,20 @@ object Main extends App with LazyLogging {
     annotator.processor.annotateEntities(configBuilder.get).asScala.toList
   }
 
-  def makeTriples(pmid: String, annotations: List[EntityAnnotation], meshIDs: Set[String]): Set[Statement] = {
+  def makeTriples(pmid: String, annotations: List[EntityAnnotation], meshIDs: Set[String], date: String): Set[Statement] = {
     val pmidIRI = ResourceFactory.createResource(s"$PMIDNamespace/$pmid")
     val meshIRIs = meshIDs.map(id => ResourceFactory.createResource(s"$MESHNamespace/$id"))
+    val dateIRI = ResourceFactory.createResource(s"$date")
     val statements = annotations.map { annotation =>
       ResourceFactory.createStatement(pmidIRI, DCTReferences, ResourceFactory.createResource(annotation.getToken.getId))
     }
     val meshStatements = meshIRIs.map { meshIRI =>
       ResourceFactory.createStatement(pmidIRI, DCTReferences, meshIRI)
     }
-    statements.toSet ++ meshStatements
+    val dateStatement = date.map { dateIRI =>
+      ResourceFactory.createStatement(pmidIRI, DCTReferences, dateIRI)
+    }
+    statements.toSet ++ meshStatements + dateStatement
   }
 
   dataFiles.foreach { file =>
@@ -106,8 +110,8 @@ object Main extends App with LazyLogging {
     val rdfStream = StreamRDFWriter.getWriterStream(outStream, Lang.TURTLE)
     rdfStream.start()
     val done = Source(articlesWithText).mapAsyncUnordered(parallelism) {
-      case ArticleInfo(pmid, text, meshIDs) => Future {
-        makeTriples(pmid, annotateWithSciGraph(text), meshIDs).map(_.asTriple)
+      case ArticleInfo(pmid, text, meshIDs, date) => Future {
+        makeTriples(pmid, annotateWithSciGraph(text), meshIDs, date).map(_.asTriple)
       }
     }.runForeach { triples =>
       StreamOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
