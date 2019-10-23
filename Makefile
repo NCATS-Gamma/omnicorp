@@ -26,7 +26,7 @@ omnicorp-scigraph: ontologies-merged.ttl SciGraph
 	rm -rf $@ && cd SciGraph/SciGraph-core &&\
 	mvn exec:java -DXmx8G -Dexec.mainClass="io.scigraph.owlapi.loader.BatchOwlLoader" -Dexec.args="-c ../../scigraph.yaml"
 
-$(OMNICORP):
+$(OMNICORP): SciGraph
 	sbt stage
 
 output: $(OMNICORP) pubmed-annual-baseline omnicorp-scigraph
