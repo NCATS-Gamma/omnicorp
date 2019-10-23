@@ -24,7 +24,7 @@ ontologies-merged.ttl: robot ontologies.ofn
 
 omnicorp-scigraph: ontologies-merged.ttl SciGraph
 	rm -rf $@ && cd SciGraph/SciGraph-core &&\
-	mvn exec:java -DXmx8G -Dexec.mainClass="io.scigraph.owlapi.loader.BatchOwlLoader" -Dexec.args="-c ../../scigraph.yaml"
+	MAVEN_OPTS="-Xmx8G" mvn exec:java -Dexec.mainClass="io.scigraph.owlapi.loader.BatchOwlLoader" -Dexec.args="-c ../../scigraph.yaml"
 
 $(OMNICORP): SciGraph
 	sbt stage
