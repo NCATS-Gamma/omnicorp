@@ -1,7 +1,18 @@
+# Omnicorp executable path.
 OMNICORP = ./target/universal/stage/bin/omnicorp
+
+# Maximum memory to use.
+MEMORY = 16G
+
+# Number of parallel jobs to start.
+PARALLEL = 4
 
 .PHONY: all
 all: output
+
+clean:
+	sbt clean
+	rm -rf output SciGraph omnicorp-scigraph pubmed-annual-baseline robot robot.jar
 
 pubmed-annual-baseline:
 	mkdir -p $@ && cd $@ &&\
@@ -20,15 +31,15 @@ robot: robot.jar
 	curl -L -O https://raw.githubusercontent.com/ontodev/robot/master/bin/robot && chmod +x robot
 
 ontologies-merged.ttl: robot ontologies.ofn
-	ROBOT_JAVA_ARGS=-Xmx8G ./robot merge -i ontologies.ofn -o ontologies-merged.ttl
+	ROBOT_JAVA_ARGS=-Xmx$(MEMORY) ./robot merge -i ontologies.ofn -o ontologies-merged.ttl
 
 omnicorp-scigraph: ontologies-merged.ttl SciGraph
 	rm -rf $@ && cd SciGraph/SciGraph-core &&\
-	mvn exec:java -DXmx8G -Dexec.mainClass="io.scigraph.owlapi.loader.BatchOwlLoader" -Dexec.args="-c ../../scigraph.yaml"
+	MAVEN_OPTS="-Xmx$(MEMORY)" mvn exec:java -Dexec.mainClass="io.scigraph.owlapi.loader.BatchOwlLoader" -Dexec.args="-c ../../scigraph.yaml"
 
-$(OMNICORP):
+$(OMNICORP): SciGraph
 	sbt stage
 
 output: $(OMNICORP) pubmed-annual-baseline omnicorp-scigraph
 	rm -rf $@ && mkdir -p $@ &&\
-	JAVA_OPTS=-Xmx80G $(OMNICORP) omnicorp-scigraph pubmed-annual-baseline $@ 20
+	JAVA_OPTS="-Xmx$(MEMORY)" $(OMNICORP) omnicorp-scigraph pubmed-annual-baseline $@ $(PARALLEL)
