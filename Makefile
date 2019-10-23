@@ -10,6 +10,10 @@ PARALLEL = 4
 .PHONY: all
 all: output
 
+clean:
+	sbt clean
+	rm -rf output SciGraph omnicorp-scigraph pubmed-annual-baseline
+
 pubmed-annual-baseline:
 	mkdir -p $@ && cd $@ &&\
 	curl --ftp-method singlecwd -O ftp://ftp.ncbi.nlm.nih.gov/pubmed/baseline/pubmed19n0[001-970].xml.gz
