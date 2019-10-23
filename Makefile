@@ -12,7 +12,7 @@ all: output
 
 clean:
 	sbt clean
-	rm -rf output SciGraph omnicorp-scigraph pubmed-annual-baseline
+	rm -rf output SciGraph omnicorp-scigraph pubmed-annual-baseline robot robot.jar
 
 pubmed-annual-baseline:
 	mkdir -p $@ && cd $@ &&\
