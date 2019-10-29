@@ -1,59 +1,51 @@
 package org.renci.chemotext
 
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.StringReader
-import java.text.SimpleDateFormat
-import java.time.{LocalDate, LocalDateTime, Year, YearMonth}
+import java.io.{File, FileInputStream, FileOutputStream, StringReader}
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
-import java.util
-import java.util.Calendar
+import java.time.{LocalDate, LocalDateTime, Month, Year, YearMonth}
 import java.util.zip.GZIPInputStream
 
-import scala.collection.JavaConverters._
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
-import scala.concurrent.duration.Duration
-import scala.util.{Failure, Try}
-import scala.util.matching.Regex
-import scala.xml.{Elem, Node, NodeSeq}
-import org.apache.jena.rdf.model.{Property, ResourceFactory}
-import org.apache.jena.riot.Lang
-import org.apache.jena.riot.system.StreamOps
-import org.apache.jena.riot.system.StreamRDFWriter
-import org.apache.jena.vocabulary.DCTerms
-import org.apache.lucene.queryparser.classic.QueryParserBase
-import com.typesafe.scalalogging.LazyLogging
 import akka.actor.ActorSystem
 import akka.stream._
 import akka.stream.scaladsl._
-import io.scigraph.annotation.EntityAnnotation
-import io.scigraph.annotation.EntityFormatConfiguration
-import org.apache.jena.datatypes.xsd.{XSDDatatype, XSDDateTime}
+import com.typesafe.scalalogging.LazyLogging
+import io.scigraph.annotation.{EntityAnnotation, EntityFormatConfiguration}
+import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.graph
+import org.apache.jena.rdf.model.ResourceFactory
+import org.apache.jena.riot.Lang
+import org.apache.jena.riot.system.{StreamOps, StreamRDFWriter}
+import org.apache.jena.vocabulary.DCTerms
+import org.apache.lucene.queryparser.classic.QueryParserBase
 
-/** A class for wrapping a PubMed article from an XML dump. */
-class PubMedArticleWrapper(article: Node) {
-  def pmid: String = (article \ "MedlineCitation" \ "PMID").text
-  def title: String = (article \\ "ArticleTitle").map(_.text).mkString(" ")
-  def abstractText: String = (article \\ "AbstractText").map(_.text).mkString(" ")
+import scala.collection.JavaConverters._
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.util.{Failure, Try}
+import scala.xml.{Elem, Node, NodeSeq}
 
-  def pubDatesAsNodes: NodeSeq = article \\ "PubDate"
-  def articleDatesAsNodes: NodeSeq = article \\ "ArticleDate"
+/** An object containing code for working with PubMed articles. */
+object PubMedArticleWrapper {
+  /** Convert dates in PubMed articles into TemporalAccessors wrapping those dates. */
   def parseDates(dates: NodeSeq): Seq[TemporalAccessor] = dates.map(date => {
-    val year = Try((date \\ "Year").text.toInt)
-    val dayOfMonth = Try((date \\ "Day").text.toInt)
-    val month = Try(LocalDateTime.parse((date \\ "Month").text, DateTimeFormatter.ofPattern("MM")).getMonth)
+    // Extract the Year/Month/Day fields. Note that the month requires additional
+    // processing, since it may be a month name ("Apr") or a number ("4").
+    val year:Try[Int] = Try((date \\ "Year").text.toInt)
+    val dayOfMonth:Try[Int] = Try((date \\ "Day").text.toInt)
+    val month:Try[Month] = Try(LocalDateTime.parse((date \\ "Month").text, DateTimeFormatter.ofPattern("MM")).getMonth)
 
     if (year.isFailure) {
       // No year? That's probably because we have a MedlineDate instead.
-      val medlineDateYearMatcher = """^(\d{4})\s*(.*)$""".r
+      // MedlineDates have different forms (e.g. "1989 Dec-1999 Jan", "2000 Spring", "2000 Dec 23-30").
+      // For now, we check to see if it starts with four digits, suggesting an year.
+      // See https://www.nlm.nih.gov/bsd/licensee/elements_descriptions.html#medlinedate for more details.
+      val medlineDateYearMatcher = """^\s*(\d{4})\b.*$""".r
       val medlineDate = (date \\ "MedlineDate").text
 
       medlineDate match {
-        case medlineDateYearMatcher(year, rest) => Year.of(year.toInt)
-        case _ => throw new RuntimeException("Date entry is missing both a 'Year' and a parseable 'MedlineDate', cannot process: " + date)
+        case medlineDateYearMatcher(year) => Year.of(year.toInt)
+        case _ => throw new RuntimeException("Date entry is missing either a 'Year' or a parsable 'MedlineDate', cannot process: " + date)
       }
     } else if (month.isSuccess && dayOfMonth.isSuccess)
       LocalDate.of(year.get, month.get.getValue, dayOfMonth.get)
@@ -62,50 +54,37 @@ class PubMedArticleWrapper(article: Node) {
     else
       Year.of(year.get)
   })
-  def pubDates: Seq[TemporalAccessor] = parseDates(pubDatesAsNodes)
-  def articleDates: Seq[TemporalAccessor] = parseDates(articleDatesAsNodes)
+}
 
-  def geneSymbols: String = (article \\ "GeneSymbol").map(_.text).mkString(" ")
+/** A companion class for wrapping a PubMed article from an XML dump. */
+class PubMedArticleWrapper(val article: Node) {
+  // The following methods extract particular fields from the wrapped PubMed article.
+  val pmid: String = (article \ "MedlineCitation" \ "PMID").text
+  val title: String = (article \\ "ArticleTitle").map(_.text).mkString(" ")
+  val abstractText: String = (article \\ "AbstractText").map(_.text).mkString(" ")
+  val pubDatesAsNodes: NodeSeq = article \\ "PubDate"
+  val articleDatesAsNodes: NodeSeq = article \\ "ArticleDate"
+  val pubDates: Seq[TemporalAccessor] = PubMedArticleWrapper.parseDates(pubDatesAsNodes)
+  val articleDates: Seq[TemporalAccessor] = PubMedArticleWrapper.parseDates(articleDatesAsNodes)
+
+  // Extract gene symbols and MeSH headings.
+  val geneSymbols: String = (article \\ "GeneSymbol").map(_.text).mkString(" ")
   val (meshTermIDs, meshLabels) = (article \\ "MeshHeading").map { mh =>
     val (dMeshIds, dMeshLabels) = (mh \ "DescriptorName").map(mesh => ((mesh \ "@UI").text, mesh.text)).unzip
     val (qMeshIds, qMeshLabels) = (mh \ "QualifierName").map(mesh => ((mesh \ "@UI").text, mesh.text)).unzip
     (dMeshIds ++ qMeshIds, (dMeshLabels ++ qMeshLabels).mkString(" "))
   }.unzip
   val (meshSubstanceIDs, meshSubstanceLabels) = (article \\ "NameOfSubstance").map(substance => ((substance \ "@UI").text, substance.text)).unzip
-  def allMeshTermIDs: Set[String] = meshTermIDs.flatten.toSet ++ meshSubstanceIDs
-  def allMeshLabels: Set[String] = meshLabels.toSet ++ meshSubstanceLabels
-  def asString: String = s"$title $abstractText ${allMeshLabels.mkString(" ")} $geneSymbols"
-  def annotations(annotator: Annotator): List[EntityAnnotation] = {
-    val configBuilder = new EntityFormatConfiguration.Builder(new StringReader(QueryParserBase.escape(asString)))
-    configBuilder.longestOnly(true)
-    configBuilder.minLength(3)
-    annotator.processor.annotateEntities(configBuilder.get).asScala.toList
-  }
+  val allMeshTermIDs: Set[String] = meshTermIDs.flatten.toSet ++ meshSubstanceIDs
+  val allMeshLabels: Set[String] = meshLabels.toSet ++ meshSubstanceLabels
 
-  def triples(annotator: Annotator): Set[graph.Triple] = {
-    // Namespaces and properties.
+  // Represent this PubMedArticleWrapper as a string.
+  val asString: String = s"$title $abstractText ${allMeshLabels.mkString(" ")} $geneSymbols"
+
+  // Generate an IRI for this PubMedArticleWrapper.
+  val iriAsString: String = {
     val PMIDNamespace = "https://www.ncbi.nlm.nih.gov/pubmed"
-    val MESHNamespace = "http://id.nlm.nih.gov/mesh"
-
-    val pmidIRI = ResourceFactory.createResource(s"$PMIDNamespace/$pmid")
-    val meshIRIs = allMeshTermIDs.map(id => ResourceFactory.createResource(s"$MESHNamespace/$id"))
-    val statements = annotations(annotator).map { annotation =>
-      ResourceFactory.createStatement(pmidIRI, DCTerms.references, ResourceFactory.createResource(annotation.getToken.getId))
-    }
-    val meshStatements = meshIRIs.map { meshIRI =>
-      ResourceFactory.createStatement(pmidIRI, DCTerms.references, meshIRI)
-    }
-    val dateStatements = pubDates.map { date:TemporalAccessor =>
-      ResourceFactory.createStatement(pmidIRI, DCTerms.issued,
-        date match {
-          case localDate: LocalDate => ResourceFactory.createTypedLiteral(localDate.toString, XSDDatatype.XSDdate)
-          case yearMonth: YearMonth => ResourceFactory.createTypedLiteral(yearMonth.toString, XSDDatatype.XSDgYearMonth)
-          case year: Year => ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
-        }
-      )
-    }
-    val allStatements = statements.toSet ++ meshStatements ++ dateStatements
-    allStatements.map(_.asTriple)
+    s"$PMIDNamespace/$pmid"
   }
 }
 
@@ -124,6 +103,7 @@ object Main extends App with LazyLogging {
   val dataFiles = if (dataDir.isFile) List(dataDir)
   else dataDir.listFiles().filter(_.getName.endsWith(".xml.gz")).toList
 
+  /** Read a GZipped XML file and returns the root element. */
   def readXMLFromGZip(file: File): Elem = {
     val stream = new GZIPInputStream(new FileInputStream(file))
     val elem = scala.xml.XML.load(stream)
@@ -131,18 +111,64 @@ object Main extends App with LazyLogging {
     elem
   }
 
+  /** Extract annotations from a particular string using a particular Annotator. */
+  def extractAnnotations(str:String): List[EntityAnnotation] = {
+    val configBuilder = new EntityFormatConfiguration.Builder(new StringReader(QueryParserBase.escape(str)))
+    configBuilder.longestOnly(true)
+    configBuilder.minLength(3)
+    annotator.processor.annotateEntities(configBuilder.get).asScala.toList
+  }
+
+  /** Generate the triples for a particular PubMed article. */
+  def generateTriples(pubMedArticleWrapped: PubMedArticleWrapper): Set[graph.Triple] = {
+    // Generate an IRI for this PubMed article.
+    val pmidIRI = ResourceFactory.createResource(pubMedArticleWrapped.iriAsString)
+
+    // Extract meshIRIs as RDF statements.
+    val MESHNamespace = "http://id.nlm.nih.gov/mesh"
+    val meshIRIs = pubMedArticleWrapped.allMeshTermIDs.map(id => ResourceFactory.createResource(s"$MESHNamespace/$id"))
+    val meshStatements = meshIRIs.map { meshIRI =>
+      ResourceFactory.createStatement(pmidIRI, DCTerms.references, meshIRI)
+    }
+
+    // Extract dates as RDF statements.
+    val dateStatements = pubMedArticleWrapped.pubDates.map { date:TemporalAccessor =>
+      ResourceFactory.createStatement(pmidIRI, DCTerms.issued,
+        date match {
+          case localDate: LocalDate => ResourceFactory.createTypedLiteral(localDate.toString, XSDDatatype.XSDdate)
+          case yearMonth: YearMonth => ResourceFactory.createTypedLiteral(yearMonth.toString, XSDDatatype.XSDgYearMonth)
+          case year: Year => ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
+        }
+      )
+    }
+
+    // Extract annotations using SciGraph and convert into RDF statements.
+    val annotationStatements = extractAnnotations(pubMedArticleWrapped.asString).map { annotation =>
+      ResourceFactory.createStatement(pmidIRI, DCTerms.references, ResourceFactory.createResource(annotation.getToken.getId))
+    }
+
+    // Combine all statements into a single set and export as triples.
+    val allStatements = annotationStatements.toSet ++ meshStatements ++ dateStatements
+    allStatements.map(_.asTriple)
+  }
+
   dataFiles.foreach { file =>
+    // Load all articles and wrap them with PubMedArticleWrappers.
     val rootElement = readXMLFromGZip(file)
     val wrappedArticles = (rootElement \ "PubmedArticle").map(new PubMedArticleWrapper(_))
 
     logger.info(s"Begin processing $file")
     logger.info(s"Will process total articles: ${wrappedArticles.size}")
+
+    // Prepare to write out triples in RDF/Turtle.
     val outStream = new FileOutputStream(new File(s"$outDir/${file.getName}.ttl"))
     val rdfStream = StreamRDFWriter.getWriterStream(outStream, Lang.TURTLE)
     rdfStream.start()
+
+    // Generate triples for all wrapped PubMed articles.
     val done = Source(wrappedArticles)
       .mapAsyncUnordered(parallelism) { article: PubMedArticleWrapper =>
-        Future { article.triples(annotator) }
+        Future { generateTriples(article) }
       }
       .runForeach { triples =>
         StreamOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
