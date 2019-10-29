@@ -89,10 +89,9 @@ object Main extends App with LazyLogging {
     annotator.processor.annotateEntities(configBuilder.get).asScala.toList
   }
 
-  def makeTriples(pmid: String, annotations: List[EntityAnnotation], meshIDs: Set[String], date: String): Set[Statement] = {
-    val pmidIRI = ResourceFactory.createResource(s"$PMIDNamespace/$pmid")
-    val meshIRIs = meshIDs.map(id => ResourceFactory.createResource(s"$MESHNamespace/$id"))
-    val dateIRI = ResourceFactory.createResource(s"$date")
+  def makeTriples(articleInfo: ArticleInfo, annotations: List[EntityAnnotation]): Set[Statement] = {
+    val pmidIRI = ResourceFactory.createResource(s"$PMIDNamespace/${articleInfo.pmid}")
+    val meshIRIs = articleInfo.meshTermIDs.map(id => ResourceFactory.createResource(s"$MESHNamespace/$id"))
     val statements = annotations.map { annotation =>
       ResourceFactory.createStatement(pmidIRI, DCTReferences, ResourceFactory.createResource(annotation.getToken.getId))
     }
@@ -114,9 +113,9 @@ object Main extends App with LazyLogging {
     val outStream = new FileOutputStream(new File(s"$outDir/${file.getName}.ttl"))
     val rdfStream = StreamRDFWriter.getWriterStream(outStream, Lang.TURTLE)
     rdfStream.start()
-    val done = Source(articlesWithText).mapAsyncUnordered(parallelism) {
-      case ArticleInfo(pmid, text, meshIDs, date) => Future {
-        makeTriples(pmid, annotateWithSciGraph(text), meshIDs, date).map(_.asTriple)
+    val done = Source(articlesWithText).mapAsyncUnordered(parallelism) { article =>
+      Future {
+        makeTriples(article, annotateWithSciGraph(article.info)).map(_.asTriple)
       }
     }.runForeach { triples =>
       StreamOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
