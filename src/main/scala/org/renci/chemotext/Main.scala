@@ -4,6 +4,11 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.StringReader
+import java.text.SimpleDateFormat
+import java.time.{LocalDate, LocalDateTime, Year, YearMonth}
+import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAccessor
+import java.util
 import java.util.Calendar
 import java.util.zip.GZIPInputStream
 
@@ -11,6 +16,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Try}
+import scala.util.matching.Regex
 import scala.xml.{Elem, Node, NodeSeq}
 import org.apache.jena.rdf.model.{Property, ResourceFactory}
 import org.apache.jena.riot.Lang
@@ -24,35 +30,40 @@ import akka.stream._
 import akka.stream.scaladsl._
 import io.scigraph.annotation.EntityAnnotation
 import io.scigraph.annotation.EntityFormatConfiguration
-import org.apache.jena.datatypes.xsd.XSDDateTime
+import org.apache.jena.datatypes.xsd.{XSDDatatype, XSDDateTime}
 import org.apache.jena.graph
-
-import scala.util.matching.Regex
-
-/** A case class for modeling simple dates, like PubDate and ArticleDate in PubMed. */
-case class Date (year: Option[Int], month: Option[Int], day: Option[Int])
 
 /** A class for wrapping a PubMed article from an XML dump. */
 class PubMedArticleWrapper(article: Node) {
-  val PMIDNamespace = "https://www.ncbi.nlm.nih.gov/pubmed"
-  val MESHNamespace = "http://id.nlm.nih.gov/mesh"
-  val DCTReferences: Property = DCTerms.references
-  val DCTIssued: Property = DCTerms.issued
-  val CURIE: Regex = "^([^:]*):(.*)$".r
-
   def pmid: String = (article \ "MedlineCitation" \ "PMID").text
   def title: String = (article \\ "ArticleTitle").map(_.text).mkString(" ")
   def abstractText: String = (article \\ "AbstractText").map(_.text).mkString(" ")
 
   def pubDatesAsNodes: NodeSeq = article \\ "PubDate"
   def articleDatesAsNodes: NodeSeq = article \\ "ArticleDate"
-  def parseDates(dates: NodeSeq): Seq[Date] = dates.map(date => Date(
-    Try((date \\ "Year").text.toInt).toOption,
-    Try((date \\ "Month").text.toInt).toOption,
-    Try((date \\ "Day").text.toInt).toOption
-  ))
-  def pubDates: Seq[Date] = parseDates(pubDatesAsNodes)
-  def articleDates: Seq[Date] = parseDates(articleDatesAsNodes)
+  def parseDates(dates: NodeSeq): Seq[TemporalAccessor] = dates.map(date => {
+    val year = Try((date \\ "Year").text.toInt)
+    val dayOfMonth = Try((date \\ "Day").text.toInt)
+    val month = Try(LocalDateTime.parse((date \\ "Month").text, DateTimeFormatter.ofPattern("MM")).getMonth)
+
+    if (year.isFailure) {
+      // No year? That's probably because we have a MedlineDate instead.
+      val medlineDateYearMatcher = """^(\d{4})\s*(.*)$""".r
+      val medlineDate = (date \\ "MedlineDate").text
+
+      medlineDate match {
+        case medlineDateYearMatcher(year, rest) => Year.of(year.toInt)
+        case _ => throw new RuntimeException("Date entry is missing both a 'Year' and a parseable 'MedlineDate', cannot process: " + date)
+      }
+    } else if (month.isSuccess && dayOfMonth.isSuccess)
+      LocalDate.of(year.get, month.get.getValue, dayOfMonth.get)
+    else if (month.isSuccess)
+      YearMonth.of(year.get, month.get.getValue)
+    else
+      Year.of(year.get)
+  })
+  def pubDates: Seq[TemporalAccessor] = parseDates(pubDatesAsNodes)
+  def articleDates: Seq[TemporalAccessor] = parseDates(articleDatesAsNodes)
 
   def geneSymbols: String = (article \\ "GeneSymbol").map(_.text).mkString(" ")
   val (meshTermIDs, meshLabels) = (article \\ "MeshHeading").map { mh =>
@@ -70,28 +81,27 @@ class PubMedArticleWrapper(article: Node) {
     configBuilder.minLength(3)
     annotator.processor.annotateEntities(configBuilder.get).asScala.toList
   }
+
   def triples(annotator: Annotator): Set[graph.Triple] = {
+    // Namespaces and properties.
+    val PMIDNamespace = "https://www.ncbi.nlm.nih.gov/pubmed"
+    val MESHNamespace = "http://id.nlm.nih.gov/mesh"
+
     val pmidIRI = ResourceFactory.createResource(s"$PMIDNamespace/$pmid")
     val meshIRIs = allMeshTermIDs.map(id => ResourceFactory.createResource(s"$MESHNamespace/$id"))
     val statements = annotations(annotator).map { annotation =>
-      ResourceFactory.createStatement(pmidIRI, DCTReferences, ResourceFactory.createResource(annotation.getToken.getId))
+      ResourceFactory.createStatement(pmidIRI, DCTerms.references, ResourceFactory.createResource(annotation.getToken.getId))
     }
     val meshStatements = meshIRIs.map { meshIRI =>
-      ResourceFactory.createStatement(pmidIRI, DCTReferences, meshIRI)
+      ResourceFactory.createStatement(pmidIRI, DCTerms.references, meshIRI)
     }
-    val dateStatements = pubDates.map { date =>
-      val calendar = Calendar.getInstance()
-
-      if (date.year.isDefined) calendar.set(Calendar.YEAR, date.year.get)
-      if (date.month.isDefined) calendar.set(Calendar.MONTH, date.month.get)
-      if (date.day.isDefined) calendar.set(Calendar.DAY_OF_MONTH, date.day.get)
-      val xsdDateTime = new XSDDateTime(calendar)
-
-      ResourceFactory.createStatement(pmidIRI, DCTIssued,
-        ResourceFactory.createTypedLiteral(
-          xsdDateTime.toString,
-          xsdDateTime.getNarrowedDatatype
-        )
+    val dateStatements = pubDates.map { date:TemporalAccessor =>
+      ResourceFactory.createStatement(pmidIRI, DCTerms.issued,
+        date match {
+          case localDate: LocalDate => ResourceFactory.createTypedLiteral(localDate.toString, XSDDatatype.XSDdate)
+          case yearMonth: YearMonth => ResourceFactory.createTypedLiteral(yearMonth.toString, XSDDatatype.XSDgYearMonth)
+          case year: Year => ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
+        }
       )
     }
     val allStatements = statements.toSet ++ meshStatements ++ dateStatements
