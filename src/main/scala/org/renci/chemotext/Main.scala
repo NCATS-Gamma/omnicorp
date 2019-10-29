@@ -28,8 +28,9 @@ import akka.stream._
 import akka.stream.scaladsl._
 import io.scigraph.annotation.EntityAnnotation
 import io.scigraph.annotation.EntityFormatConfiguration
+import org.apache.jena.datatypes.xsd.XSDDatatype
 
-case class ArticleInfo(pmid:String,info:String,meshTermIDs:Set[String],date:String)
+case class ArticleInfo(pmid:String,info:String,meshTermIDs:Set[String],years:Seq[String])
 
 object Main extends App with LazyLogging {
 
@@ -47,6 +48,7 @@ object Main extends App with LazyLogging {
   val PMIDNamespace = "https://www.ncbi.nlm.nih.gov/pubmed"
   val MESHNamespace = "http://id.nlm.nih.gov/mesh"
   val DCTReferences = DCTerms.references
+  val DCTIssued = DCTerms.issued
   val CURIE = "^([^:]*):(.*)$".r
 
   val dataFiles = if (dataDir.isFile) List(dataDir)
@@ -65,7 +67,8 @@ object Main extends App with LazyLogging {
       pmidEl <- article \ "MedlineCitation" \ "PMID"
       pmid = pmidEl.text
       title = (article \\ "ArticleTitle").map(_.text).mkString(" ")
-      date = (article \\ "PubDate").headOption.map(pub => (pub \ "Year").text).mkString(" ")
+      dates = (article \\ "PubDate")
+      years = dates.map(pub => (pub \ "Year").text)
       abstractText = (article \\ "AbstractText").map(_.text).mkString(" ")
       geneSymbols = (article \\ "GeneSymbol").map(_.text).mkString(" ")
       (meshTermIDs, meshLabels) = (article \\ "MeshHeading").map { mh =>
@@ -76,7 +79,7 @@ object Main extends App with LazyLogging {
       (meshSubstanceIDs, meshSubstanceLabels) = (article \\ "NameOfSubstance").map(substance => ((substance \ "@UI").text, substance.text)).unzip
       allMeshTermIDs = meshTermIDs.flatten.toSet ++ meshSubstanceIDs
       allMeshLabels = meshLabels.toSet ++ meshSubstanceLabels
-    } yield ArticleInfo(pmid, s"$title $abstractText ${allMeshLabels.mkString(" ")} $geneSymbols", allMeshTermIDs, s"$date")
+    } yield ArticleInfo(pmid, s"$title $abstractText ${allMeshLabels.mkString(" ")} $geneSymbols", allMeshTermIDs, years)
   }
 
   def annotateWithSciGraph(text: String): List[EntityAnnotation] = {
@@ -96,10 +99,12 @@ object Main extends App with LazyLogging {
     val meshStatements = meshIRIs.map { meshIRI =>
       ResourceFactory.createStatement(pmidIRI, DCTReferences, meshIRI)
     }
-    val dateStatement = date.map { dateIRI =>
-      ResourceFactory.createStatement(pmidIRI, DCTReferences, dateIRI)
+    val dateStatement = articleInfo.years.map { year =>
+      ResourceFactory.createStatement(pmidIRI, DCTIssued,
+        ResourceFactory.createTypedLiteral(year, XSDDatatype.XSDgYear)
+      )
     }
-    statements.toSet ++ meshStatements + dateStatement
+    statements.toSet ++ meshStatements ++ dateStatement
   }
 
   dataFiles.foreach { file =>
