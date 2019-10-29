@@ -30,7 +30,32 @@ import io.scigraph.annotation.EntityAnnotation
 import io.scigraph.annotation.EntityFormatConfiguration
 import org.apache.jena.datatypes.xsd.XSDDatatype
 
-case class ArticleInfo(pmid:String,info:String,meshTermIDs:Set[String],years:Seq[String])
+import scala.collection.{SortedSet, immutable}
+
+case class ArticleInfo(pmid:String,info:String,meshTermIDs:Set[String],years:Set[String])
+
+object TextExtractor {
+  def extractArticleInfos(articleSet: Elem): List[ArticleInfo] = {
+    for {
+      article <- (articleSet \ "PubmedArticle").toList
+      pmidEl <- article \ "MedlineCitation" \ "PMID"
+      pmid = pmidEl.text
+      title = (article \\ "ArticleTitle").map(_.text).mkString(" ")
+      dates = (article \\ "PubDate")
+      years = dates.map(pub => (pub \ "Year")).filter(_.nonEmpty).map(_.text).toSet
+      abstractText = (article \\ "AbstractText").map(_.text).mkString(" ")
+      geneSymbols = (article \\ "GeneSymbol").map(_.text).mkString(" ")
+      (meshTermIDs, meshLabels) = (article \\ "MeshHeading").map { mh =>
+        val (dMeshIds, dMeshLabels) = (mh \ "DescriptorName").map(mesh => ((mesh \ "@UI").text, mesh.text)).unzip
+        val (qMeshIds, qMeshLabels) = (mh \ "QualifierName").map(mesh => ((mesh \ "@UI").text, mesh.text)).unzip
+        ((dMeshIds ++ qMeshIds), (dMeshLabels ++ qMeshLabels).mkString(" "))
+      }.unzip
+      (meshSubstanceIDs, meshSubstanceLabels) = (article \\ "NameOfSubstance").map(substance => ((substance \ "@UI").text, substance.text)).unzip
+      allMeshTermIDs = meshTermIDs.flatten.toSet ++ meshSubstanceIDs
+      allMeshLabels = meshLabels.toSet ++ meshSubstanceLabels
+    } yield ArticleInfo(pmid, s"$title $abstractText ${allMeshLabels.mkString(" ")} $geneSymbols", allMeshTermIDs, years)
+  }
+}
 
 object Main extends App with LazyLogging {
 
@@ -61,27 +86,6 @@ object Main extends App with LazyLogging {
     elem
   }
 
-  def extractText(articleSet: Elem): List[ArticleInfo] = {
-    for {
-      article <- (articleSet \ "PubmedArticle").toList
-      pmidEl <- article \ "MedlineCitation" \ "PMID"
-      pmid = pmidEl.text
-      title = (article \\ "ArticleTitle").map(_.text).mkString(" ")
-      dates = (article \\ "PubDate")
-      years = dates.map(pub => (pub \ "Year").text)
-      abstractText = (article \\ "AbstractText").map(_.text).mkString(" ")
-      geneSymbols = (article \\ "GeneSymbol").map(_.text).mkString(" ")
-      (meshTermIDs, meshLabels) = (article \\ "MeshHeading").map { mh =>
-        val (dMeshIds, dMeshLabels) = (mh \ "DescriptorName").map(mesh => ((mesh \ "@UI").text, mesh.text)).unzip
-        val (qMeshIds, qMeshLabels) = (mh \ "QualifierName").map(mesh => ((mesh \ "@UI").text, mesh.text)).unzip
-        ((dMeshIds ++ qMeshIds), (dMeshLabels ++ qMeshLabels).mkString(" "))
-      }.unzip
-      (meshSubstanceIDs, meshSubstanceLabels) = (article \\ "NameOfSubstance").map(substance => ((substance \ "@UI").text, substance.text)).unzip
-      allMeshTermIDs = meshTermIDs.flatten.toSet ++ meshSubstanceIDs
-      allMeshLabels = meshLabels.toSet ++ meshSubstanceLabels
-    } yield ArticleInfo(pmid, s"$title $abstractText ${allMeshLabels.mkString(" ")} $geneSymbols", allMeshTermIDs, years)
-  }
-
   def annotateWithSciGraph(text: String): List[EntityAnnotation] = {
     val configBuilder = new EntityFormatConfiguration.Builder(new StringReader(QueryParserBase.escape(text)))
     configBuilder.longestOnly(true)
@@ -107,7 +111,7 @@ object Main extends App with LazyLogging {
   }
 
   dataFiles.foreach { file =>
-    val articlesWithText = extractText(readXMLFromGZip(file))
+    val articlesWithText = TextExtractor.extractArticleInfos(readXMLFromGZip(file))
     logger.info(s"Begin processing $file")
     logger.info(s"Will process total articles: ${articlesWithText.size}")
     val outStream = new FileOutputStream(new File(s"$outDir/${file.getName}.ttl"))
