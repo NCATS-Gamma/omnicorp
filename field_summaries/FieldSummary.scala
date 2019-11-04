@@ -36,11 +36,26 @@ import scala.collection.parallel.ForkJoinTaskSupport
      elem
    }
 
+   /* Some configuration options */
+   /** We expand all possible values for these attributes */
+   val expandAttributeValues = Set(
+     "PubMedPubDate/PubStatus"
+   )
+
    def describeElem(el: Node, parentLabel: String = ""): Seq[(String, String)] = {
      val nodeFullName = parentLabel + "." + el.label
      val descriptions = el match {
        case Text(str) => Seq((parentLabel, str))
-       case _ => el.attributes.map(attr => (nodeFullName + '/' + attr.key, attr.value.map(_.text).mkString(", "))).toSeq
+       case _ => el.attributes.map(attr => {
+           val attrName = s"${el.label}/${attr.key}"
+           val attrFullName = s"$parentLabel.$attrName"
+           val valueStr = attr.value.map(_.text).mkString(", ")
+
+           if (expandAttributeValues contains attrName)
+             (s"$attrFullName#$valueStr", valueStr)
+           else
+             (attrFullName, valueStr)
+         }).toSeq
      }
 
      return descriptions ++ el.nonEmptyChildren.flatMap(describeElem(_, nodeFullName))
