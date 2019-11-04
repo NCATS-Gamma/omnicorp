@@ -59,7 +59,7 @@ import scala.collection.parallel.ForkJoinTaskSupport
      val fields = parallelArticles.flatMap(describeElem(_, rootElement.label))
      val summary = fields.groupBy(_._1).mapValues(_.size)
      val outStream = new PrintStream(new GZIPOutputStream(new FileOutputStream(new File(s"$outDir/${file.getName}.fields.txt.gz"))))
-     summary.toSeq.seq.sortBy(_._1).foreach(outStream.println(_))
+     summary.toSeq.seq.sortBy(_._1).foreach(count => outStream.println(s"${count._2}\t${count._1}"))
      outStream.close()
 
      val timeTaken = (System.nanoTime() - startTime).toDouble/NANOSECONDS
