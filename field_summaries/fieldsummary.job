@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# For future reference:
+#  - Running 50 jobs at once seems to be okay -- we're
+#    mainly running on largemem-0-0 and largemem-1-0,
+#    with occasional compute nodes thrown in.
+#  - 32G starts stressing the processing out -- at 40G,
+#    the average rate seems to be around 1.6ms/article,
+#    while at 32G it goes up to 2.2ms/article approx.
+#
+#SBATCH --job-name=PubMedFieldSummary
+#SBATCH --output=logs/output.%a.txt
+#SBATCH --error=logs/error.%a.txt
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --mem=50000
+#SBATCH --time=00:10:00
+#SBATCH --mail-user=gaurav@renci.org
+
+FILENAME="pubmed19n$(printf "%04d" $SLURM_ARRAY_TASK_ID).xml.gz"
+
+if [ ! -f "output/${FILENAME}.fields.txt.gz" ]; then
+  srun sbt -mem 50000 "runMain FieldSummary ../pubmed-annual-baseline/${FILENAME} output 16"
+fi
