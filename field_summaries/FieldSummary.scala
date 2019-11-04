@@ -41,11 +41,13 @@ import scala.collection.parallel.ForkJoinTaskSupport
      return descriptions ++ el.nonEmptyChildren.flatMap(describeElem(_, nodeFullName))
    }
 
-   val NANOSECOND = 1000000000
+   val NANOSECONDS = 1000000000
+   val MILLISECONDS = 1000
 
    dataFiles.foreach { file =>
-     val startTime = System.nanoTime()
      logger.info(s"Began processing $file")
+     val startTime = System.nanoTime()
+
      val rootElement = readXMLFromGZip(file)
      val parallelArticles = rootElement.nonEmptyChildren.par
      parallelArticles.tasksupport = new ForkJoinTaskSupport(forkJoinPool)
@@ -53,8 +55,11 @@ import scala.collection.parallel.ForkJoinTaskSupport
      val summary = fields.groupBy(_._1).mapValues(_.size)
      val outStream = new PrintStream(new GZIPOutputStream(new FileOutputStream(new File(s"$outDir/${file.getName}.fields.txt.gz"))))
      summary.toSeq.seq.sortBy(_._1).foreach(outStream.println(_))
-     logger.info(f"Completed processing $file in ${(System.nanoTime() - startTime).toDouble/NANOSECOND}%.2f seconds.")
      outStream.close()
+
+     val timeTaken = (System.nanoTime() - startTime).toDouble/NANOSECONDS
+     val numArticles = parallelArticles.size
+     logger.info(f"Completed processing $numArticles articles from $file in ${timeTaken}%.2f seconds (${(timeTaken/numArticles)*MILLISECONDS}%.5f ms per article).")
    }
    forkJoinPool.shutdown()
  }
