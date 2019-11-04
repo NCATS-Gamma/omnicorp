@@ -20,6 +20,11 @@ import scala.collection.parallel.ForkJoinTaskSupport
    // See https://docs.scala-lang.org/overviews/parallel-collections/configuration.html
    val forkJoinPool = new ForkJoinPool(parallelism.toInt)
 
+   // We've been having some problems with setting memory usage in build.sbt, so I'm logging this
+   // so we can figure out when we're messing this up.
+   val MEGABYTE = 1024 * 1024
+   logger.info(f"Free memory available: ${Runtime.getRuntime.freeMemory/MEGABYTE}%.2f MB")
+
    // Which files do we need to read?
    val dataFiles = if (dataDir.isFile) List(dataDir)
    else dataDir.listFiles().filter(_.getName.endsWith(".xml.gz")).toList
