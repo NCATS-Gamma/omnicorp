@@ -32,7 +32,7 @@ import org.apache.jena.datatypes.xsd.XSDDatatype
 
 import scala.collection.{SortedSet, immutable}
 
-case class ArticleInfo(pmid: String, info: String, meshTermIDs: Set[String], years: Set[String])
+case class ArticleInfo(pmid: String, info: String, meshTermIDs: Set[String], year: Option[String])
 
 object TextExtractor {
   def extractArticleInfos(articleSet: Elem): List[ArticleInfo] = {
@@ -42,7 +42,7 @@ object TextExtractor {
       pmid = pmidEl.text
       title = (article \\ "ArticleTitle").map(_.text).mkString(" ")
       dates = (article \\ "PubDate")
-      years = dates.map(pub => (pub \ "Year")).filter(_.nonEmpty).map(_.text).toSet
+      year = dates.map(pub => (pub \ "Year")).filter(_.nonEmpty).map(_.text).headOption
       abstractText = (article \\ "AbstractText").map(_.text).mkString(" ")
       geneSymbols = (article \\ "GeneSymbol").map(_.text).mkString(" ")
       (meshTermIDs, meshLabels) = (article \\ "MeshHeading").map { mh =>
@@ -53,7 +53,7 @@ object TextExtractor {
       (meshSubstanceIDs, meshSubstanceLabels) = (article \\ "NameOfSubstance").map(substance => ((substance \ "@UI").text, substance.text)).unzip
       allMeshTermIDs = meshTermIDs.flatten.toSet ++ meshSubstanceIDs
       allMeshLabels = meshLabels.toSet ++ meshSubstanceLabels
-    } yield ArticleInfo(pmid, s"$title $abstractText ${allMeshLabels.mkString(" ")} $geneSymbols", allMeshTermIDs, years)
+    } yield ArticleInfo(pmid, s"$title $abstractText ${allMeshLabels.mkString(" ")} $geneSymbols", allMeshTermIDs, year)
   }
 }
 
@@ -102,7 +102,7 @@ object Main extends App with LazyLogging {
     val meshStatements = meshIRIs.map { meshIRI =>
       ResourceFactory.createStatement(pmidIRI, DCTReferences, meshIRI)
     }
-    val dateStatement = articleInfo.years.map { year =>
+    val dateStatement = articleInfo.year.map { year =>
       ResourceFactory.createStatement(pmidIRI, DCTIssued,
         ResourceFactory.createTypedLiteral(year, XSDDatatype.XSDgYear)
       )
