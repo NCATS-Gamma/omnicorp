@@ -32,7 +32,7 @@ import org.apache.jena.datatypes.xsd.XSDDatatype
 
 import scala.collection.{SortedSet, immutable}
 
-case class ArticleInfo(pmid:String,info:String,meshTermIDs:Set[String],years:Set[String])
+case class ArticleInfo(pmid: String, info: String, meshTermIDs: Set[String], years: Set[String])
 
 object TextExtractor {
   def extractArticleInfos(articleSet: Elem): List[ArticleInfo] = {
