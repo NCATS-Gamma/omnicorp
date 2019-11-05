@@ -31,28 +31,30 @@ object PubMedArticleWrapper {
   def parseDates(dates: NodeSeq): Seq[TemporalAccessor] = dates.map(date => {
     // Extract the Year/Month/Day fields. Note that the month requires additional
     // processing, since it may be a month name ("Apr") or a number ("4").
-    val year:Try[Int] = Try((date \\ "Year").text.toInt)
-    val dayOfMonth:Try[Int] = Try((date \\ "Day").text.toInt)
-    val month:Try[Month] = Try(LocalDateTime.parse((date \\ "Month").text, DateTimeFormatter.ofPattern("MM")).getMonth)
+    val maybeYear: Try[Int] = Try((date \\ "Year").text.toInt)
+    val maybeDayOfMonth: Try[Int] = Try((date \\ "Day").text.toInt)
+    val maybeMonth: Try[Month] = Try(LocalDateTime.parse((date \\ "Month").text, DateTimeFormatter.ofPattern("MM")).getMonth)
 
-    if (year.isFailure) {
+    def parseMedlineDate(node: Node) = {
       // No year? That's probably because we have a MedlineDate instead.
       // MedlineDates have different forms (e.g. "1989 Dec-1999 Jan", "2000 Spring", "2000 Dec 23-30").
       // For now, we check to see if it starts with four digits, suggesting an year.
       // See https://www.nlm.nih.gov/bsd/licensee/elements_descriptions.html#medlinedate for more details.
       val medlineDateYearMatcher = """^\s*(\d{4})\b.*$""".r
       val medlineDate = (date \\ "MedlineDate").text
-
       medlineDate match {
         case medlineDateYearMatcher(year) => Year.of(year.toInt)
-        case _ => throw new RuntimeException("Date entry is missing either a 'Year' or a parsable 'MedlineDate', cannot process: " + date)
+        case _                            => throw new RuntimeException("Date entry is missing either a 'Year' or a parsable 'MedlineDate', cannot process: " + date)
       }
-    } else if (month.isSuccess && dayOfMonth.isSuccess)
-      LocalDate.of(year.get, month.get.getValue, dayOfMonth.get)
-    else if (month.isSuccess)
-      YearMonth.of(year.get, month.get.getValue)
-    else
-      Year.of(year.get)
+    }
+
+    maybeYear.map { year =>
+      maybeMonth.map { month =>
+        maybeDayOfMonth.map { day =>
+          LocalDate.of(year, month.getValue, day)
+        }.getOrElse(YearMonth.of(year, month.getValue))
+      }.getOrElse(Year.of(year))
+    }.getOrElse(parseMedlineDate(date))
   })
 }
 
@@ -112,7 +114,7 @@ object Main extends App with LazyLogging {
   }
 
   /** Extract annotations from a particular string using a particular Annotator. */
-  def extractAnnotations(str:String): List[EntityAnnotation] = {
+  def extractAnnotations(str: String): List[EntityAnnotation] = {
     val configBuilder = new EntityFormatConfiguration.Builder(new StringReader(QueryParserBase.escape(str)))
     configBuilder.longestOnly(true)
     configBuilder.minLength(3)
@@ -132,12 +134,12 @@ object Main extends App with LazyLogging {
     }
 
     // Extract dates as RDF statements.
-    val dateStatements = pubMedArticleWrapped.pubDates.map { date:TemporalAccessor =>
+    val dateStatements = pubMedArticleWrapped.pubDates.map { date: TemporalAccessor =>
       ResourceFactory.createStatement(pmidIRI, DCTerms.issued,
         date match {
           case localDate: LocalDate => ResourceFactory.createTypedLiteral(localDate.toString, XSDDatatype.XSDdate)
           case yearMonth: YearMonth => ResourceFactory.createTypedLiteral(yearMonth.toString, XSDDatatype.XSDgYearMonth)
-          case year: Year => ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
+          case year: Year           => ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
         }
       )
     }
@@ -168,7 +170,9 @@ object Main extends App with LazyLogging {
     // Generate triples for all wrapped PubMed articles.
     val done = Source(wrappedArticles)
       .mapAsyncUnordered(parallelism) { article: PubMedArticleWrapper =>
-        Future { generateTriples(article) }
+        Future {
+          generateTriples(article)
+        }
       }
       .runForeach { triples =>
         StreamOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
@@ -182,7 +186,7 @@ object Main extends App with LazyLogging {
         system.terminate()
         annotator.dispose()
         System.exit(1)
-      case _ =>
+      case _          =>
         rdfStream.finish()
         outStream.close()
     }
