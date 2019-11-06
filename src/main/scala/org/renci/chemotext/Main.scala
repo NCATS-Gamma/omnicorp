@@ -28,6 +28,34 @@ import akka.stream._
 import akka.stream.scaladsl._
 import io.scigraph.annotation.EntityAnnotation
 import io.scigraph.annotation.EntityFormatConfiguration
+import org.apache.jena.datatypes.xsd.XSDDatatype
+
+import scala.collection.{SortedSet, immutable}
+
+case class ArticleInfo(pmid: String, info: String, meshTermIDs: Set[String], year: Option[String])
+
+object TextExtractor {
+  def extractArticleInfos(articleSet: Elem): List[ArticleInfo] = {
+    for {
+      article <- (articleSet \ "PubmedArticle").toList
+      pmidEl <- article \ "MedlineCitation" \ "PMID"
+      pmid = pmidEl.text
+      title = (article \\ "ArticleTitle").map(_.text).mkString(" ")
+      dates = (article \\ "PubDate")
+      year = dates.map(pub => (pub \ "Year")).filter(_.nonEmpty).map(_.text).headOption
+      abstractText = (article \\ "AbstractText").map(_.text).mkString(" ")
+      geneSymbols = (article \\ "GeneSymbol").map(_.text).mkString(" ")
+      (meshTermIDs, meshLabels) = (article \\ "MeshHeading").map { mh =>
+        val (dMeshIds, dMeshLabels) = (mh \ "DescriptorName").map(mesh => ((mesh \ "@UI").text, mesh.text)).unzip
+        val (qMeshIds, qMeshLabels) = (mh \ "QualifierName").map(mesh => ((mesh \ "@UI").text, mesh.text)).unzip
+        ((dMeshIds ++ qMeshIds), (dMeshLabels ++ qMeshLabels).mkString(" "))
+      }.unzip
+      (meshSubstanceIDs, meshSubstanceLabels) = (article \\ "NameOfSubstance").map(substance => ((substance \ "@UI").text, substance.text)).unzip
+      allMeshTermIDs = meshTermIDs.flatten.toSet ++ meshSubstanceIDs
+      allMeshLabels = meshLabels.toSet ++ meshSubstanceLabels
+    } yield ArticleInfo(pmid, s"$title $abstractText ${allMeshLabels.mkString(" ")} $geneSymbols", allMeshTermIDs, year)
+  }
+}
 
 object Main extends App with LazyLogging {
 
@@ -45,6 +73,7 @@ object Main extends App with LazyLogging {
   val PMIDNamespace = "https://www.ncbi.nlm.nih.gov/pubmed"
   val MESHNamespace = "http://id.nlm.nih.gov/mesh"
   val DCTReferences = DCTerms.references
+  val DCTIssued = DCTerms.issued
   val CURIE = "^([^:]*):(.*)$".r
 
   val dataFiles = if (dataDir.isFile) List(dataDir)
@@ -57,25 +86,6 @@ object Main extends App with LazyLogging {
     elem
   }
 
-  def extractText(articleSet: Elem): List[(String, String, Set[String])] = {
-    for {
-      article <- (articleSet \ "PubmedArticle").toList
-      pmidEl <- article \ "MedlineCitation" \ "PMID"
-      pmid = pmidEl.text
-      title = (article \\ "ArticleTitle").map(_.text).mkString(" ")
-      abstractText = (article \\ "AbstractText").map(_.text).mkString(" ")
-      geneSymbols = (article \\ "GeneSymbol").map(_.text).mkString(" ")
-      (meshTermIDs, meshLabels) = (article \\ "MeshHeading").map { mh =>
-        val (dMeshIds, dMeshLabels) = (mh \ "DescriptorName").map(mesh => ((mesh \ "@UI").text, mesh.text)).unzip
-        val (qMeshIds, qMeshLabels) = (mh \ "QualifierName").map(mesh => ((mesh \ "@UI").text, mesh.text)).unzip
-        ((dMeshIds ++ qMeshIds), (dMeshLabels ++ qMeshLabels).mkString(" "))
-      }.unzip
-      (meshSubstanceIDs, meshSubstanceLabels) = (article \\ "NameOfSubstance").map(substance => ((substance \ "@UI").text, substance.text)).unzip
-      allMeshTermIDs = meshTermIDs.flatten.toSet ++ meshSubstanceIDs
-      allMeshLabels = meshLabels.toSet ++ meshSubstanceLabels
-    } yield (pmid, s"$title $abstractText ${allMeshLabels.mkString(" ")} $geneSymbols", allMeshTermIDs)
-  }
-
   def annotateWithSciGraph(text: String): List[EntityAnnotation] = {
     val configBuilder = new EntityFormatConfiguration.Builder(new StringReader(QueryParserBase.escape(text)))
     configBuilder.longestOnly(true)
@@ -83,28 +93,33 @@ object Main extends App with LazyLogging {
     annotator.processor.annotateEntities(configBuilder.get).asScala.toList
   }
 
-  def makeTriples(pmid: String, annotations: List[EntityAnnotation], meshIDs: Set[String]): Set[Statement] = {
-    val pmidIRI = ResourceFactory.createResource(s"$PMIDNamespace/$pmid")
-    val meshIRIs = meshIDs.map(id => ResourceFactory.createResource(s"$MESHNamespace/$id"))
+  def makeTriples(articleInfo: ArticleInfo, annotations: List[EntityAnnotation]): Set[Statement] = {
+    val pmidIRI = ResourceFactory.createResource(s"$PMIDNamespace/${articleInfo.pmid}")
+    val meshIRIs = articleInfo.meshTermIDs.map(id => ResourceFactory.createResource(s"$MESHNamespace/$id"))
     val statements = annotations.map { annotation =>
       ResourceFactory.createStatement(pmidIRI, DCTReferences, ResourceFactory.createResource(annotation.getToken.getId))
     }
     val meshStatements = meshIRIs.map { meshIRI =>
       ResourceFactory.createStatement(pmidIRI, DCTReferences, meshIRI)
     }
-    statements.toSet ++ meshStatements
+    val dateStatement = articleInfo.year.map { year =>
+      ResourceFactory.createStatement(pmidIRI, DCTIssued,
+        ResourceFactory.createTypedLiteral(year, XSDDatatype.XSDgYear)
+      )
+    }
+    statements.toSet ++ meshStatements ++ dateStatement
   }
 
   dataFiles.foreach { file =>
-    val articlesWithText = extractText(readXMLFromGZip(file))
+    val articlesWithText = TextExtractor.extractArticleInfos(readXMLFromGZip(file))
     logger.info(s"Begin processing $file")
     logger.info(s"Will process total articles: ${articlesWithText.size}")
     val outStream = new FileOutputStream(new File(s"$outDir/${file.getName}.ttl"))
     val rdfStream = StreamRDFWriter.getWriterStream(outStream, Lang.TURTLE)
     rdfStream.start()
-    val done = Source(articlesWithText).mapAsyncUnordered(parallelism) {
-      case (pmid, text, meshIDs) => Future {
-        makeTriples(pmid, annotateWithSciGraph(text), meshIDs).map(_.asTriple)
+    val done = Source(articlesWithText).mapAsyncUnordered(parallelism) { article =>
+      Future {
+        makeTriples(article, annotateWithSciGraph(article.info)).map(_.asTriple)
       }
     }.runForeach { triples =>
       StreamOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
