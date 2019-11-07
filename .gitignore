@@ -11,3 +11,18 @@ target
 /omnicorp-scigraph
 /.idea
 ontologies-merged.ttl
+
+# Ignore input and output directories.
+/pubmed-annual-baseline
+/output
+
+# Ignore robot.
+/robot
+/robot.jar
+
+# Ignore log files.
+/pubmed-terms.log
+
+# Ignore Bloop and Metals files used by Atom in providing a Scala IDE.
+.bloop
+.metals
