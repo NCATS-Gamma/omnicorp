@@ -3,7 +3,7 @@ package org.renci.chemotext
 import java.io.{File, FileInputStream, FileOutputStream, StringReader}
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
-import java.time.{LocalDate, LocalDateTime, Month, Year, YearMonth}
+import java.time._
 import java.util.zip.GZIPInputStream
 
 import akka.actor.ActorSystem
