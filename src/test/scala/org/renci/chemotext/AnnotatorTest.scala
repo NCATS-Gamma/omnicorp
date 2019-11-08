@@ -1,154 +1,50 @@
 package org.renci.chemotext
 
+import java.time.{LocalDate, Year, YearMonth}
+
 import utest._
 
+import scala.xml.XML
+
 object AnnotatorTest extends TestSuite {
+  val examplesForTests = XML.loadFile(getClass.getResource("/pubmedXML/examplesForTests.xml").getPath)
+  val pubmedArticles = examplesForTests \ "PubmedArticle"
+
   val tests = Tests {
-    test("An example entry from pubmed19n0013.xml") {
-      val exampleEntry = <PubmedArticleSet>
-        <PubmedArticle>
-          <MedlineCitation Status="MEDLINE" Owner="NLM">
-            <PMID Version="1">368090</PMID>
-            <DateCompleted>
-              <Year>1979</Year>
-              <Month>04</Month>
-              <Day>28</Day>
-            </DateCompleted>
-            <DateRevised>
-              <Year>2009</Year>
-              <Month>11</Month>
-              <Day>11</Day>
-            </DateRevised>
-            <Article PubModel="Print">
-              <Journal>
-                <ISSN IssnType="Print">1945-1954</ISSN>
-                <JournalIssue CitedMedium="Print">
-                  <Volume>46</Volume>
-                  <Issue>1</Issue>
-                  <PubDate>
-                    <MedlineDate>1979 Jan-Feb</MedlineDate>
-                  </PubDate>
-                </JournalIssue>
-                <Title>ASDC journal of dentistry for children</Title>
-                <ISOAbbreviation>ASDC J Dent Child</ISOAbbreviation>
-              </Journal>
-              <ArticleTitle>Mechanical pretreatments and etching of primary-tooth enamel.</ArticleTitle>
-              <Pagination>
-                <MedlinePgn>43-9</MedlinePgn>
-              </Pagination>
-              <AuthorList CompleteYN="Y">
-                <Author ValidYN="Y">
-                  <LastName>Bozalis</LastName>
-                  <ForeName>W G</ForeName>
-                  <Initials>WG</Initials>
-                </Author>
-                <Author ValidYN="Y">
-                  <LastName>Marshall</LastName>
-                  <ForeName>G W</ForeName>
-                  <Initials>GW</Initials>
-                  <Suffix>Jr</Suffix>
-                </Author>
-                <Author ValidYN="Y">
-                  <LastName>Cooley</LastName>
-                  <ForeName>R O</ForeName>
-                  <Initials>RO</Initials>
-                </Author>
-              </AuthorList>
-              <Language>eng</Language>
-              <PublicationTypeList>
-                <PublicationType UI="D003160">Comparative Study</PublicationType>
-                <PublicationType UI="D016428">Journal Article</PublicationType>
-              </PublicationTypeList>
-            </Article>
-            <MedlineJournalInfo>
-              <Country>United States</Country>
-              <MedlineTA>ASDC J Dent Child</MedlineTA>
-              <NlmUniqueID>0146172</NlmUniqueID>
-              <ISSNLinking>1945-1954</ISSNLinking>
-            </MedlineJournalInfo>
-            <ChemicalList>
-              <Chemical>
-                <RegistryNumber>0</RegistryNumber>
-                <NameOfSubstance UI="D003188">Composite Resins</NameOfSubstance>
-              </Chemical>
-            </ChemicalList>
-            <CitationSubset>D</CitationSubset>
-            <CitationSubset>IM</CitationSubset>
-            <MeshHeadingList>
-              <MeshHeading>
-                <DescriptorName UI="D000134" MajorTopicYN="Y">Acid Etching, Dental</DescriptorName>
-              </MeshHeading>
-              <MeshHeading>
-                <DescriptorName UI="D000268" MajorTopicYN="N">Adhesiveness</DescriptorName>
-              </MeshHeading>
-              <MeshHeading>
-                <DescriptorName UI="D003188" MajorTopicYN="N">Composite Resins</DescriptorName>
-              </MeshHeading>
-              <MeshHeading>
-                <DescriptorName UI="D001840" MajorTopicYN="Y">Dental Bonding</DescriptorName>
-                <QualifierName UI="Q000379" MajorTopicYN="Y">methods</QualifierName>
-              </MeshHeading>
-              <MeshHeading>
-                <DescriptorName UI="D003743" MajorTopicYN="N">Dental Enamel</DescriptorName>
-                <QualifierName UI="Q000648" MajorTopicYN="Y">ultrastructure</QualifierName>
-              </MeshHeading>
-              <MeshHeading>
-                <DescriptorName UI="D006801" MajorTopicYN="N">Humans</DescriptorName>
-              </MeshHeading>
-              <MeshHeading>
-                <DescriptorName UI="D013314" MajorTopicYN="N">Stress, Mechanical</DescriptorName>
-              </MeshHeading>
-              <MeshHeading>
-                <DescriptorName UI="D014072" MajorTopicYN="N">Tooth Abrasion</DescriptorName>
-                <QualifierName UI="Q000473" MajorTopicYN="N">pathology</QualifierName>
-              </MeshHeading>
-              <MeshHeading>
-                <DescriptorName UI="D014094" MajorTopicYN="N">Tooth, Deciduous</DescriptorName>
-                <QualifierName UI="Q000648" MajorTopicYN="Y">ultrastructure</QualifierName>
-              </MeshHeading>
-            </MeshHeadingList>
-          </MedlineCitation>
-          <PubmedData>
-            <History>
-              <PubMedPubDate PubStatus="pubmed">
-                <Year>1979</Year>
-                <Month>1</Month>
-                <Day>1</Day>
-              </PubMedPubDate>
-              <PubMedPubDate PubStatus="medline">
-                <Year>2001</Year>
-                <Month>3</Month>
-                <Day>28</Day>
-                <Hour>10</Hour>
-                <Minute>1</Minute>
-              </PubMedPubDate>
-              <PubMedPubDate PubStatus="entrez">
-                <Year>1979</Year>
-                <Month>1</Month>
-                <Day>1</Day>
-                <Hour>0</Hour>
-                <Minute>0</Minute>
-              </PubMedPubDate>
-            </History>
-            <PublicationStatus>ppublish</PublicationStatus>
-            <ArticleIdList>
-              <ArticleId IdType="pubmed">368090</ArticleId>
-            </ArticleIdList>
-          </PubmedData>
-        </PubmedArticle>
-      </PubmedArticleSet>
+    test("An example with day, month and year") {
+      val wrappedArticle = new PubMedArticleWrapper(pubmedArticles(0))
 
-      val articleInfos = TextExtractor.extractArticleInfos(exampleEntry)
+      assert(wrappedArticle.pmid == "11237011")
+      assert(wrappedArticle.asString == "Initial sequencing and analysis of the human genome. The human genome holds an extraordinary trove of information about human development, physiology, medicine and evolution. Here we report the results of an international collaboration to produce and make freely available a draft sequence of the human genome. We also present an initial analysis of the data, describing some of the insights that can be gleaned from the sequence. Genetics, Medical CpG Islands Public Sector Gene Duplication Proteins Databases, Factual Proteome Proteins genetics Repetitive Sequences, Nucleic Acid Forecasting GC Rich Sequence Drug Industry Genes Sequence Analysis, DNA methods Humans Animals DNA Transposable Elements Private Sector Mutation Conserved Sequence Genome, Human RNA RNA genetics Evolution, Molecular Human Genome Project Chromosome Mapping Species Specificity Genetic Diseases, Inborn ")
+      assert(wrappedArticle.allMeshTermIDs == Set("D002874", "D019143", "D017124", "D005826", "D013045", "D005796", "D018899", "D016208", "D012313", "D000818", "D015894", "D017149", "D006801", "D004345", "D020862", "D020543", "D017422", "D004251", "D017150", "D009154", "D005544", "D016045", "Q000235", "D011506", "Q000379", "D020440", "D012091", "D030342"))
+      assert(wrappedArticle.pubDates == Seq(LocalDate.of(2001, 2, 15)))
+    }
 
-      // We only have one article.
-      assert(articleInfos.size == 1)
+    test("An example with month and year") {
+      val wrappedArticle = new PubMedArticleWrapper(pubmedArticles(1))
 
-      // Check whether all fields in the first article are as expected.
-      val firstArticle = articleInfos.head
-      assert(firstArticle.pmid == "368090")
-      assert(firstArticle.info == "Mechanical pretreatments and etching of primary-tooth enamel.  Dental Enamel ultrastructure Dental Bonding methods Composite Resins Tooth Abrasion pathology Humans Tooth, Deciduous ultrastructure Adhesiveness Acid Etching, Dental Stress, Mechanical ")
-      assert(firstArticle.meshTermIDs == Set("Q000648", "D013314", "D001840", "D003188", "D006801", "D014072", "D003743", "D014094", "Q000473", "Q000379", "D000268", "D000134"))
-      assert(firstArticle.years == Set()) // We don't support MedlineDate entries yet.
+      assert(wrappedArticle.pmid == "17060194")
+      assert(wrappedArticle.asString == "DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success. DNA barcoding and DNA taxonomy have recently been proposed as solutions to the crisis of taxonomy and received significant attention from scientific journals, grant agencies, natural history museums, and mainstream media. Here, we test two key claims of molecular taxonomy using 1333 mitochondrial COI sequences for 449 species of Diptera. We investigate whether sequences can be used for species identification (\"DNA barcoding\") and find a relatively low success rate (< 70%) based on tree-based and newly proposed species identification criteria. Misidentifications are due to wide overlap between intra- and interspecific genetic variability, which causes 6.5% of all query sequences to have allospecific or a mixture of allo- and conspecific (3.6%) best-matching barcodes. Even when two COI sequences are identical, there is a 6% chance that they belong to different species. We also find that 21% of all species lack unique barcodes when consensus sequences of all conspecific sequences are used. Lastly, we test whether DNA sequences yield an unambiguous species-level taxonomy when sequence profiles are assembled based on pairwise distance thresholds. We find many sequence triplets for which two of the three pairwise distances remain below the threshold, whereas the third exceeds it; i.e., it is impossible to consistently delimit species based on pairwise distances. Furthermore, for species profiles based on a 3% threshold, only 47% of all profiles are consistent with currently accepted species limits, 20% contain more than one species, and 33% only some sequences from one species; i.e., adopting such a DNA taxonomy would require the redescription of a large proportion of the known species, thus worsening the taxonomic impediment. We conclude with an outlook on the prospects of obtaining complete barcode databases and the future use of DNA sequences in a modern integrative taxonomy. Electron Transport Complex IV DNA, Mitochondrial Sequence Analysis, DNA DNA, Mitochondrial chemistry Animals Electron Transport Complex IV chemistry genetics Base Sequence Genetic Variation Classification methods Diptera classification genetics Phylogeny Consensus Sequence Species Specificity ")
+      assert(wrappedArticle.allMeshTermIDs == Set("D004175", "D001483", "D013045", "D016384", "D000818", "D010802", "D004272", "D002965", "D017422", "D003576", "Q000737", "Q000145", "Q000235", "D014644", "Q000379"))
+      assert(wrappedArticle.pubDates == Seq(YearMonth.of(2006, 10)))
+    }
+
+    test("An example with year only") {
+      val wrappedArticle = new PubMedArticleWrapper(pubmedArticles(2))
+
+      assert(wrappedArticle.pmid == "22859891")
+      assert(wrappedArticle.asString == "From documents to datasets: A MediaWiki-based method of annotating and extracting species observations in century-old field notebooks. Part diary, part scientific record, biological field notebooks often contain details necessary to understanding the location and environmental conditions existent during collecting events. Despite their clear value for (and recent use in) global change studies, the text-mining outputs from field notebooks have been idiosyncratic to specific research projects, and impossible to discover or re-use. Best practices and workflows for digitization, transcription, extraction, and integration with other sources are nascent or non-existent. In this paper, we demonstrate a workflow to generate structured outputs while also maintaining links to the original texts. The first step in this workflow was to place already digitized and transcribed field notebooks from the University of Colorado Museum of Natural History founder, Junius Henderson, on Wikisource, an open text transcription platform. Next, we created Wikisource templates to document places, dates, and taxa to facilitate annotation and wiki-linking. We then requested help from the public, through social media tools, to take advantage of volunteer efforts and energy. After three notebooks were fully annotated, content was converted into XML and annotations were extracted and cross-walked into Darwin Core compliant record sets. Finally, these recordsets were vetted, to provide valid taxon names, via a process we call \"taxonomic referencing.\" The result is identification and mobilization of 1,068 observations from three of Henderson's thirteen notebooks and a publishable Darwin Core record set for use in other analyses. Although challenges remain, this work demonstrates a feasible approach to unlock observations from field notebooks that enhances their discovery and interoperability without losing the narrative context from which those observations are drawn.\"Compose your notes as if you were writing a letter to someone a century in the future.\"Perrine and Patton (2011).  ")
+      assert(wrappedArticle.allMeshTermIDs == Set())
+      assert(wrappedArticle.pubDates == Seq(Year.of(2012)))
+    }
+
+    test("An example with a MedlineDate") {
+      val wrappedArticle = new PubMedArticleWrapper(pubmedArticles(3))
+
+      assert(wrappedArticle.pmid == "10542500")
+      assert(wrappedArticle.asString == "Thirty years of service.  Parkinson Disease therapy United Kingdom Humans Organizational Objectives Information Services Societies ")
+      assert(wrappedArticle.allMeshTermIDs == Set("D012952", "D007255", "D006801", "D010300", "D006113", "Q000628", "D009937"))
+      assert(wrappedArticle.pubDates == Seq(Year.of(1998)))
     }
   }
 }
