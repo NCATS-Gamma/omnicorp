@@ -1,9 +1,10 @@
 package org.renci.chemotext
 
-import java.time.{LocalDate, YearMonth, Year}
+import java.time.{LocalDate, Year, YearMonth}
+
+import utest._
 
 import scala.xml.XML
-import utest._
 
 object AnnotatorTest extends TestSuite {
   val examplesForTests = XML.loadFile(getClass.getResource("/pubmedXML/examplesForTests.xml").getPath)

@@ -1,10 +1,9 @@
 package org.renci.chemotext
 
 import java.io.{File, FileInputStream, FileOutputStream, StringReader}
-import java.text.SimpleDateFormat
+import java.time._
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
-import java.time._
 import java.util.zip.GZIPInputStream
 
 import akka.actor.ActorSystem
