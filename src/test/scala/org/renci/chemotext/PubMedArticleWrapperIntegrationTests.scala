@@ -6,7 +6,10 @@ import utest._
 
 import scala.xml.XML
 
-object AnnotatorTest extends TestSuite {
+/**
+ * Integration tests of PubmedArticleWrapper.
+ */
+object PubMedArticleWrapperIntegrationTests extends TestSuite {
   val examplesForTests = XML.loadFile(getClass.getResource("/pubmedXML/examplesForTests.xml").getPath)
   val pubmedArticles = examplesForTests \ "PubmedArticle"
 
