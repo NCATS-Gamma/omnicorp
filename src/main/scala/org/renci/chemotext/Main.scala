@@ -1,6 +1,7 @@
 package org.renci.chemotext
 
 import java.io.{File, FileInputStream, FileOutputStream, StringReader}
+import java.text.SimpleDateFormat
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
 import java.time._
@@ -31,9 +32,6 @@ object PubMedArticleWrapper {
   def parseDates(dates: NodeSeq): Seq[TemporalAccessor] = dates.map(date => {
     // Extract the Year/Month/Day fields. Note that the month requires additional
     // processing, since it may be a month name ("Apr") or a number ("4").
-    val maybeYear: Try[Int] = Try((date \\ "Year").text.toInt)
-    val maybeDayOfMonth: Try[Int] = Try((date \\ "Day").text.toInt)
-    val maybeMonth: Try[Month] = Try(LocalDateTime.parse((date \\ "Month").text, DateTimeFormatter.ofPattern("MM")).getMonth)
 
     def parseMedlineDate(node: Node) = {
       // No year? That's probably because we have a MedlineDate instead.
@@ -48,11 +46,19 @@ object PubMedArticleWrapper {
       }
     }
 
+    // Parse the year and day-of-year, if possible.
+    val maybeYear: Try[Int] = Try((date \\ "Year").text.toInt)
+    val maybeDayOfMonth: Try[Int] = Try((date \\ "Day").text.toInt)
+
     maybeYear.map { year =>
+      // We can't parse a month-only date: to parse it, we need to include the year as well.
+      val monthStr = (date \\ "Month").text
+      val maybeMonth: Try[Int] = Try(YearMonth.parse(s"$year-$monthStr", DateTimeFormatter.ofPattern("uuuu-MMM")).getMonth.getValue)
+
       maybeMonth.map { month =>
         maybeDayOfMonth.map { day =>
-          LocalDate.of(year, month.getValue, day)
-        }.getOrElse(YearMonth.of(year, month.getValue))
+          LocalDate.of(year, month, day)
+        }.getOrElse(YearMonth.of(year, month))
       }.getOrElse(Year.of(year))
     }.getOrElse(parseMedlineDate(date))
   })
@@ -80,8 +86,11 @@ class PubMedArticleWrapper(val article: Node) {
   val allMeshTermIDs: Set[String] = meshTermIDs.flatten.toSet ++ meshSubstanceIDs
   val allMeshLabels: Set[String] = meshLabels.toSet ++ meshSubstanceLabels
 
-  // Represent this PubMedArticleWrapper as a string.
+  // Represent this PubMedArticleWrapper as a string containing all the useful information.
   val asString: String = s"$title $abstractText ${allMeshLabels.mkString(" ")} $geneSymbols"
+
+  // Display properties of this PubMedArticleWrapper for debugging.
+  override val toString: String = s"PMID ${pmid} (${pubDates}): ${asString} (MeSH: ${allMeshTermIDs})"
 
   // Generate an IRI for this PubMedArticleWrapper.
   val iriAsString: String = {
