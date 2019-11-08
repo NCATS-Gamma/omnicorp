@@ -6,10 +6,10 @@ import scala.xml.XML
 import utest._
 
 object AnnotatorTest extends TestSuite {
-  val tests = Tests {
-    val examplesForTests = XML.loadFile(getClass.getResource("/pubmedXML/examplesForTests.xml").getPath)
-    val pubmedArticles = examplesForTests \ "PubmedArticle"
+  val examplesForTests = XML.loadFile(getClass.getResource("/pubmedXML/examplesForTests.xml").getPath)
+  val pubmedArticles = examplesForTests \ "PubmedArticle"
 
+  val tests = Tests {
     test("An example with day, month and year") {
       val wrappedArticle = new PubMedArticleWrapper(pubmedArticles(0))
 
