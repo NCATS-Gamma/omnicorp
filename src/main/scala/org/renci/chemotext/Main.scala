@@ -22,17 +22,17 @@ import org.apache.lucene.queryparser.classic.QueryParserBase
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
-import scala.util.{Failure, Try}
+import scala.util.{Failure, Try, Success}
 import scala.xml.{Elem, Node, NodeSeq}
 
 /** An object containing code for working with PubMed articles. */
 object PubMedArticleWrapper {
   /** Convert dates in PubMed articles into TemporalAccessors wrapping those dates. */
-  def parseDates(dates: NodeSeq): Seq[TemporalAccessor] = dates.map(date => {
+  def parseDate(date: Node): Try[TemporalAccessor] = {
     // Extract the Year/Month/Day fields. Note that the month requires additional
     // processing, since it may be a month name ("Apr") or a number ("4").
 
-    def parseMedlineDate(node: Node) = {
+    def parseMedlineDate(node: Node): Try[TemporalAccessor] = {
       // No year? That's probably because we have a MedlineDate instead.
       // MedlineDates have different forms (e.g. "1989 Dec-1999 Jan", "2000 Spring", "2000 Dec 23-30").
       // For now, we check to see if it starts with four digits, suggesting an year.
@@ -40,8 +40,8 @@ object PubMedArticleWrapper {
       val medlineDateYearMatcher = """^\s*(\d{4})\b.*$""".r
       val medlineDate = (date \\ "MedlineDate").text
       medlineDate match {
-        case medlineDateYearMatcher(year) => Year.of(year.toInt)
-        case _                            => throw new RuntimeException("Date entry is missing either a 'Year' or a parsable 'MedlineDate', cannot process: " + date)
+        case medlineDateYearMatcher(year) => Success(Year.of(year.toInt))
+        case _                            => Failure(new IllegalArgumentException("Could not parse XML node as date: " + date))
       }
     }
 
@@ -56,11 +56,11 @@ object PubMedArticleWrapper {
 
       maybeMonth.map { month =>
         maybeDayOfMonth.map { day =>
-          LocalDate.of(year, month, day)
-        }.getOrElse(YearMonth.of(year, month))
-      }.getOrElse(Year.of(year))
+          Success(LocalDate.of(year, month, day))
+        }.getOrElse(Success(YearMonth.of(year, month)))
+      }.getOrElse(Success(Year.of(year)))
     }.getOrElse(parseMedlineDate(date))
-  })
+  }
 }
 
 /** A companion class for wrapping a PubMed article from an XML dump. */
@@ -71,8 +71,10 @@ class PubMedArticleWrapper(val article: Node) {
   val abstractText: String = (article \\ "AbstractText").map(_.text).mkString(" ")
   val pubDatesAsNodes: NodeSeq = article \\ "PubDate"
   val articleDatesAsNodes: NodeSeq = article \\ "ArticleDate"
-  val pubDates: Seq[TemporalAccessor] = PubMedArticleWrapper.parseDates(pubDatesAsNodes)
-  val articleDates: Seq[TemporalAccessor] = PubMedArticleWrapper.parseDates(articleDatesAsNodes)
+  val pubDatesParseResults: Seq[Try[TemporalAccessor]] = pubDatesAsNodes.map(PubMedArticleWrapper.parseDate)
+  val articleDatesParseResults: Seq[Try[TemporalAccessor]] = articleDatesAsNodes.map(PubMedArticleWrapper.parseDate)
+  val pubDates: Seq[TemporalAccessor] = pubDatesParseResults.map(_.toOption).flatten
+  val articleDates: Seq[TemporalAccessor] = articleDatesParseResults.map(_.toOption).flatten
 
   // Extract gene symbols and MeSH headings.
   val geneSymbols: String = (article \\ "GeneSymbol").map(_.text).mkString(" ")
@@ -142,12 +144,14 @@ object Main extends App with LazyLogging {
     }
 
     // Extract dates as RDF statements.
-    val dateStatements = pubMedArticleWrapped.pubDates.map { date: TemporalAccessor =>
+    val dateStatements = pubMedArticleWrapped.pubDatesParseResults.map { date: Try[TemporalAccessor] =>
       ResourceFactory.createStatement(pmidIRI, DCTerms.issued,
         date match {
-          case localDate: LocalDate => ResourceFactory.createTypedLiteral(localDate.toString, XSDDatatype.XSDdate)
-          case yearMonth: YearMonth => ResourceFactory.createTypedLiteral(yearMonth.toString, XSDDatatype.XSDgYearMonth)
-          case year: Year           => ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
+          case Success(localDate: LocalDate) => ResourceFactory.createTypedLiteral(localDate.toString, XSDDatatype.XSDdate)
+          case Success(yearMonth: YearMonth) => ResourceFactory.createTypedLiteral(yearMonth.toString, XSDDatatype.XSDgYearMonth)
+          case Success(year: Year)           => ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
+          case Success(ta: TemporalAccessor) => throw new RuntimeException("Unexpected temporal accessor found by parsing date: " + ta)
+          case Failure(error: Throwable)     => throw error
         }
       )
     }
