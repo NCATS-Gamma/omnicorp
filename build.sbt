@@ -20,7 +20,7 @@ mainClass in Compile := Some("org.renci.chemotext.Main")
 
 // Code formatting and linting tools.
 
-wartremoverErrors ++= Warts.unsafe
+wartremoverWarnings ++= Warts.unsafe
 
 // Running and command line options.
 
