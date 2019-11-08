@@ -13,7 +13,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.scigraph.annotation.{EntityAnnotation, EntityFormatConfiguration}
 import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.graph
-import org.apache.jena.rdf.model.ResourceFactory
+import org.apache.jena.rdf.model.{Property, ResourceFactory, Statement}
 import org.apache.jena.riot.Lang
 import org.apache.jena.riot.system.{StreamOps, StreamRDFWriter}
 import org.apache.jena.vocabulary.DCTerms
@@ -52,7 +52,10 @@ object PubMedArticleWrapper {
     maybeYear.map { year =>
       // We can't parse a month-only date: to parse it, we need to include the year as well.
       val monthStr = (date \\ "Month").text
-      val maybeMonth: Try[Int] = Try(YearMonth.parse(s"$year-$monthStr", DateTimeFormatter.ofPattern("uuuu-MMM")).getMonth.getValue)
+      val maybeMonth: Try[Int] = Try({
+        if (monthStr.forall(Character.isDigit)) monthStr.toInt
+        else YearMonth.parse(s"$year-$monthStr", DateTimeFormatter.ofPattern("uuuu-MMM")).getMonth.getValue
+      })
 
       maybeMonth.map { month =>
         maybeDayOfMonth.map { day =>
@@ -76,10 +79,13 @@ class PubMedArticleWrapper(val article: Node) {
   val abstractText: String = (article \\ "AbstractText").map(_.text).mkString(" ")
   val pubDatesAsNodes: NodeSeq = article \\ "PubDate"
   val articleDatesAsNodes: NodeSeq = article \\ "ArticleDate"
+  val revisedDatesAsNodes: NodeSeq = article \\ "DateRevised"
   val pubDatesParseResults: Seq[Try[TemporalAccessor]] = pubDatesAsNodes.map(PubMedArticleWrapper.parseDate)
   val articleDatesParseResults: Seq[Try[TemporalAccessor]] = articleDatesAsNodes.map(PubMedArticleWrapper.parseDate)
+  val revisedDatesParseResults: Seq[Try[TemporalAccessor]] = revisedDatesAsNodes.map(PubMedArticleWrapper.parseDate)
   val pubDates: Seq[TemporalAccessor] = pubDatesParseResults.map(_.toOption).flatten
   val articleDates: Seq[TemporalAccessor] = articleDatesParseResults.map(_.toOption).flatten
+  val revisedDates: Seq[TemporalAccessor] = revisedDatesParseResults.map(_.toOption).flatten
 
   // Extract gene symbols and MeSH headings.
   val geneSymbols: String = (article \\ "GeneSymbol").map(_.text).mkString(" ")
@@ -149,8 +155,8 @@ object Main extends App with LazyLogging {
     }
 
     // Extract dates as RDF statements.
-    val dateStatements = pubMedArticleWrapped.pubDatesParseResults.map { date: Try[TemporalAccessor] =>
-      ResourceFactory.createStatement(pmidIRI, DCTerms.issued,
+    def convertDatesToTriples(property: Property)(date: Try[TemporalAccessor]): Statement = {
+      ResourceFactory.createStatement(pmidIRI, property,
         date match {
           case Success(localDate: LocalDate) => ResourceFactory.createTypedLiteral(localDate.toString, XSDDatatype.XSDdate)
           case Success(yearMonth: YearMonth) => ResourceFactory.createTypedLiteral(yearMonth.toString, XSDDatatype.XSDgYearMonth)
@@ -161,13 +167,16 @@ object Main extends App with LazyLogging {
       )
     }
 
+    val issuedDateStatements = pubMedArticleWrapped.pubDatesParseResults.map(convertDatesToTriples(DCTerms.issued))
+    val modifiedDateStatements = pubMedArticleWrapped.revisedDatesParseResults.map(convertDatesToTriples(DCTerms.modified))
+
     // Extract annotations using SciGraph and convert into RDF statements.
     val annotationStatements = extractAnnotations(pubMedArticleWrapped.asString).map { annotation =>
       ResourceFactory.createStatement(pmidIRI, DCTerms.references, ResourceFactory.createResource(annotation.getToken.getId))
     }
 
     // Combine all statements into a single set and export as triples.
-    val allStatements = annotationStatements.toSet ++ meshStatements ++ dateStatements
+    val allStatements = annotationStatements.toSet ++ meshStatements ++ issuedDateStatements ++ modifiedDateStatements
     allStatements.map(_.asTriple)
   }
 
