@@ -58,7 +58,12 @@ object PubMedArticleWrapper {
         maybeDayOfMonth.map { day =>
           Success(LocalDate.of(year, month, day))
         }.getOrElse(Success(YearMonth.of(year, month)))
-      }.getOrElse(Success(Year.of(year)))
+      }.getOrElse({
+        // What if we have a maybeYear and a maybeDayOfMonth, but no maybeMonth?
+        // That suggests that we didn't read the month correctly!
+        if (maybeYear.isSuccess && maybeDayOfMonth.isSuccess && maybeMonth.isFailure) Failure(new RuntimeException("Could not extract month from node: " + date))
+        else Success(Year.of(year))
+      })
     }.getOrElse(parseMedlineDate(date))
   }
 }
