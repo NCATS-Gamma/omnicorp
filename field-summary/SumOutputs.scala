@@ -19,15 +19,20 @@ object SumOutputs extends App with LazyLogging {
     if (outDir.isFile) List(outDir)
     else outDir.listFiles().filter(_.getName.endsWith(".fields.txt.gz")).toList
 
+  // Read all output files.
   val lines = outFiles.flatMap(file => {
     val stream = new GZIPInputStream(new FileInputStream(file))
     Source.fromInputStream(stream, "utf8").getLines
   })
 
+  // Read output files produced by FieldSummary.
   val countFormat = """^(\d+)\t(.*)$""".r
   val counts = lines.map {
     case countFormat(count, field) => (field, count.toInt)
-    case str                       => throw new RuntimeException(s"Unable to parse line '${str.toString}'")
+    case line                      => throw new RuntimeException(s"Unable to parse line '$line'")
   }
+
+  // Group counts by field name and add all counts for each field name.
+  // Print resulting tuples.
   counts.groupBy(_._1).mapValues(_.map(_._2).sum).toSeq.sortBy(_._1).foreach(println(_))
 }
