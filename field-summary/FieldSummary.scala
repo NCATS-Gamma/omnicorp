@@ -51,7 +51,7 @@ object FieldSummary extends App with LazyLogging {
         }).toSeq
     }
 
-    return descriptions ++ el.nonEmptyChildren.flatMap(describeElem(_, nodeFullName))
+    descriptions ++ el.nonEmptyChildren.flatMap(describeElem(_, nodeFullName))
   }
 
   // Use a fork-join pool to limit the number of parallel processes to
