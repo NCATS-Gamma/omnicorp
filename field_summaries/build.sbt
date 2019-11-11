@@ -14,6 +14,12 @@ fork in Test := true
 
 resolvers += Resolver.mavenLocal
 
+// Code formatting and linting tools.
+
+wartremoverWarnings ++= Warts.unsafe
+
+// Library dependencies.
+
 libraryDependencies ++= {
   Seq(
     "org.scala-lang.modules"      %% "scala-xml"              % "1.0.6",
