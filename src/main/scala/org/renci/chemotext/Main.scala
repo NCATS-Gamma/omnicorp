@@ -41,7 +41,7 @@ object PubMedArticleWrapper {
       val medlineDate            = (date \\ "MedlineDate").text
       medlineDate match {
         case medlineDateYearMatcher(year) => Success(Year.of(year.toInt))
-        case _                            => Failure(new IllegalArgumentException("Could not parse XML node as date: " + date))
+        case _                            => Failure(new IllegalArgumentException(s"Could not parse XML node as date: $date"))
       }
     }
 
@@ -67,7 +67,7 @@ object PubMedArticleWrapper {
         // What if we have a maybeYear and a maybeDayOfMonth, but no maybeMonth?
         // That suggests that we didn't read the month correctly!
         if (maybeYear.isSuccess && maybeDayOfMonth.isSuccess && maybeMonth.isFailure)
-          Failure(new RuntimeException("Could not extract month from node: " + date))
+          Failure(new RuntimeException(s"Could not extract month from node: $date"))
         else Success(Year.of(year))
       })
     } getOrElse (parseMedlineDate(date))
@@ -182,7 +182,7 @@ object Main extends App with LazyLogging {
           case Success(year: Year) =>
             ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
           case Success(ta: TemporalAccessor) =>
-            throw new RuntimeException("Unexpected temporal accessor found by parsing date: " + ta)
+            throw new RuntimeException(s"Unexpected temporal accessor found by parsing date: $ta")
           case Failure(error: Throwable) => throw error
         }
       )
