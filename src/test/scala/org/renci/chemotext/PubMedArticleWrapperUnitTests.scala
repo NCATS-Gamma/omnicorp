@@ -18,7 +18,11 @@ object PubMedArticleWrapperUnitTests extends TestSuite {
           (Year.of(2006),               <PubDate><Year>2006</Year></PubDate>),
           (YearMonth.of(2006, 10),      <PubDate><Year>2006</Year><Month>Oct</Month></PubDate>),
           (LocalDate.of(2006, 10, 21),  <PubDate><Year>2006</Year><Day>21</Day><Month>Oct</Month></PubDate>),
-          (Year.of(1998),               <PubDate><MedlineDate>1998 Dec-1999 Jan</MedlineDate></PubDate>)
+          (Year.of(1998),               <PubDate><MedlineDate>1998 Dec-1999 Jan</MedlineDate></PubDate>),
+          (
+            LocalDate.of(2006, 10, 21),
+            <PubDate><Year>2006</Year><Day>21</Day><Month>10</Month></PubDate>
+          )
         )
 
         datesTested.foreach({ case (expected, xmlNode) =>
