@@ -52,10 +52,8 @@ object PubMedArticleWrapper {
     maybeYear.map { year =>
       // We can't parse a month-only date: to parse it, we need to include the year as well.
       val monthStr = (date \\ "Month").text
-      val maybeMonth: Try[Int] = Try({
-        if (monthStr.forall(Character.isDigit)) monthStr.toInt
-        else YearMonth.parse(s"$year-$monthStr", DateTimeFormatter.ofPattern("uuuu-MMM")).getMonth.getValue
-      })
+      val maybeMonth: Try[Int] = Try(monthStr.toInt)
+        .orElse(Try(YearMonth.parse(s"$year-$monthStr", DateTimeFormatter.ofPattern("uuuu-MMM")).getMonth.getValue))
 
       maybeMonth.map { month =>
         maybeDayOfMonth.map { day =>
