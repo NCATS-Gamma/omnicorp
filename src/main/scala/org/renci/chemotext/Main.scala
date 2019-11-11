@@ -49,37 +49,28 @@ object PubMedArticleWrapper {
     val maybeYear: Try[Int]       = Try((date \\ "Year").text.toInt)
     val maybeDayOfMonth: Try[Int] = Try((date \\ "Day").text.toInt)
 
-    maybeYear
-      .map { year =>
-        // We can't parse a month-only date: to parse it, we need to include the year as well.
-        val monthStr = (date \\ "Month").text
-        val maybeMonth: Try[Int] = Try(monthStr.toInt)
-          .orElse(
-            Try(
-              YearMonth
-                .parse(s"$year-$monthStr", DateTimeFormatter.ofPattern("uuuu-MMM"))
-                .getMonth
-                .getValue
-            )
-          )
+    maybeYear map { year =>
+      // We can't parse a month-only date: to parse it, we need to include the year as well.
+      val monthStr = (date \\ "Month").text
+      val maybeMonth: Try[Int] = Try(monthStr.toInt) orElse (Try(
+        YearMonth
+          .parse(s"$year-$monthStr", DateTimeFormatter.ofPattern("uuuu-MMM"))
+          .getMonth
+          .getValue
+      ))
 
-        maybeMonth
-          .map { month =>
-            maybeDayOfMonth
-              .map { day =>
-                Success(LocalDate.of(year, month, day))
-              }
-              .getOrElse(Success(YearMonth.of(year, month)))
-          }
-          .getOrElse({
-            // What if we have a maybeYear and a maybeDayOfMonth, but no maybeMonth?
-            // That suggests that we didn't read the month correctly!
-            if (maybeYear.isSuccess && maybeDayOfMonth.isSuccess && maybeMonth.isFailure)
-              Failure(new RuntimeException("Could not extract month from node: " + date))
-            else Success(Year.of(year))
-          })
-      }
-      .getOrElse(parseMedlineDate(date))
+      maybeMonth map { month =>
+        maybeDayOfMonth map { day =>
+          Success(LocalDate.of(year, month, day))
+        } getOrElse (Success(YearMonth.of(year, month)))
+      } getOrElse ({
+        // What if we have a maybeYear and a maybeDayOfMonth, but no maybeMonth?
+        // That suggests that we didn't read the month correctly!
+        if (maybeYear.isSuccess && maybeDayOfMonth.isSuccess && maybeMonth.isFailure)
+          Failure(new RuntimeException("Could not extract month from node: " + date))
+        else Success(Year.of(year))
+      })
+    } getOrElse (parseMedlineDate(date))
   }
 }
 
@@ -93,11 +84,11 @@ class PubMedArticleWrapper(val article: Node) {
   val articleDatesAsNodes: NodeSeq = article \\ "ArticleDate"
   val revisedDatesAsNodes: NodeSeq = article \\ "DateRevised"
   val pubDatesParseResults: Seq[Try[TemporalAccessor]] =
-    pubDatesAsNodes.map(PubMedArticleWrapper.parseDate)
+    pubDatesAsNodes map PubMedArticleWrapper.parseDate
   val articleDatesParseResults: Seq[Try[TemporalAccessor]] =
-    articleDatesAsNodes.map(PubMedArticleWrapper.parseDate)
+    articleDatesAsNodes map PubMedArticleWrapper.parseDate
   val revisedDatesParseResults: Seq[Try[TemporalAccessor]] =
-    revisedDatesAsNodes.map(PubMedArticleWrapper.parseDate)
+    revisedDatesAsNodes map PubMedArticleWrapper.parseDate
   val pubDates: Seq[TemporalAccessor]     = pubDatesParseResults.map(_.toOption).flatten
   val articleDates: Seq[TemporalAccessor] = articleDatesParseResults.map(_.toOption).flatten
   val revisedDates: Seq[TemporalAccessor] = revisedDatesParseResults.map(_.toOption).flatten
@@ -106,9 +97,9 @@ class PubMedArticleWrapper(val article: Node) {
   val geneSymbols: String = (article \\ "GeneSymbol").map(_.text).mkString(" ")
   val (meshTermIDs, meshLabels) = (article \\ "MeshHeading").map { mh =>
     val (dMeshIds, dMeshLabels) =
-      (mh \ "DescriptorName").map(mesh => ((mesh \ "@UI").text, mesh.text)).unzip
+      (mh \ "DescriptorName").map({ mesh => ((mesh \ "@UI").text, mesh.text) }).unzip
     val (qMeshIds, qMeshLabels) =
-      (mh \ "QualifierName").map(mesh => ((mesh \ "@UI").text, mesh.text)).unzip
+      (mh \ "QualifierName").map({ mesh => ((mesh \ "@UI").text, mesh.text) }).unzip
     (dMeshIds ++ qMeshIds, (dMeshLabels ++ qMeshLabels).mkString(" "))
   }.unzip
   val (meshSubstanceIDs, meshSubstanceLabels) = (article \\ "NameOfSubstance")
@@ -171,7 +162,7 @@ object Main extends App with LazyLogging {
 
     // Extract meshIRIs as RDF statements.
     val MESHNamespace = "http://id.nlm.nih.gov/mesh"
-    val meshIRIs = pubMedArticleWrapped.allMeshTermIDs.map(
+    val meshIRIs = pubMedArticleWrapped.allMeshTermIDs map (
       id => ResourceFactory.createResource(s"$MESHNamespace/$id")
     )
     val meshStatements = meshIRIs.map { meshIRI =>
@@ -198,12 +189,12 @@ object Main extends App with LazyLogging {
     }
 
     val issuedDateStatements =
-      pubMedArticleWrapped.pubDatesParseResults.map(convertDatesToTriples(DCTerms.issued))
+      pubMedArticleWrapped.pubDatesParseResults map convertDatesToTriples(DCTerms.issued)
     val modifiedDateStatements =
-      pubMedArticleWrapped.revisedDatesParseResults.map(convertDatesToTriples(DCTerms.modified))
+      pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(DCTerms.modified)
 
     // Extract annotations using SciGraph and convert into RDF statements.
-    val annotationStatements = extractAnnotations(pubMedArticleWrapped.asString).map { annotation =>
+    val annotationStatements = extractAnnotations(pubMedArticleWrapped.asString) map { annotation =>
       ResourceFactory.createStatement(
         pmidIRI,
         DCTerms.references,
