@@ -100,7 +100,7 @@ object FieldSummary extends App with LazyLogging {
     val timeTaken   = (System.nanoTime() - startTime).toDouble / NANOSECONDS
     val numArticles = parallelArticles.size
     logger.info(
-      f"Completed processing $numArticles articles from $file in ${timeTaken}%.2f seconds (${(timeTaken / numArticles) * MILLISECONDS}%.5f ms per article)."
+      f"Completed processing $numArticles articles from $file in ${timeTaken}%.2f seconds (${(timeTaken / numArticles) * MILLISECONDS}%.2f ms per article)."
     )
   }
   forkJoinPool.shutdown()
