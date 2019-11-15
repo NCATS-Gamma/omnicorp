@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/NCATS-Gamma/omnicorp.svg?branch=master)](https://travis-ci.org/NCATS-Gamma/omnicorp)
+
 # OmniCorp
 
 Extract ontology terms referenced from PubMed abstracts as per the [MEDLINE/PubMed Baseline Repository](https://mbr.nlm.nih.gov/) by using [SciGraph](https://github.com/SciGraph/SciGraph) against a set of ontologies.
