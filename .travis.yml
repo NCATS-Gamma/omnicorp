@@ -13,4 +13,4 @@ cache:
 
 # We need to install SciGraph to run Omnicorp for testing.
 before_script:
-  - make SciGraph > /dev/null 2>&1
+  - MAVEN_OPTS=-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn make SciGraph
