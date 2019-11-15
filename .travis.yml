@@ -3,3 +3,7 @@ scala:
   - "2.12.8"
 jdk:
   - openjdk8
+
+# We need to install SciGraph to run Omnicorp for testing.
+before_script:
+  - make SciGraph
