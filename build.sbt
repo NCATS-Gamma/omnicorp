@@ -8,19 +8,29 @@ version       := "0.1-SNAPSHOT"
 
 licenses := Seq("MIT" -> url("https://opensource.org/licenses/MIT"))
 
+// Scalac options.
+
 scalaVersion  := "2.12.8" //Neo4j has a 2.11 Scala dependency but it seems to be only for the cypher parser
 
-scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
 scalacOptions in Test ++= Seq("-Yrangepos")
 
 mainClass in Compile := Some("org.renci.chemotext.Main")
+
+// Code formatting and linting tools.
+
+wartremoverWarnings ++= Warts.unsafe
+
+// Running and command line options.
 
 javaOptions += "-Xmx20G"
 
 fork in Test := true
 
 testFrameworks += new TestFramework("utest.runner.Framework")
+
+// Dependency information.
 
 resolvers += Resolver.mavenLocal
 
