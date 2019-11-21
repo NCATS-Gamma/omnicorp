@@ -128,7 +128,7 @@ class PubMedArticleWrapper(val article: Node) {
   }
 }
 
-/** Methods for generating an RDF description of a PubMedArticleWrapper. */
+/** Methods for extracting annotations from text using SciGraph */
 class Annotator(neo4jLocation: String) {
   private val curieUtil: CurieUtil         = new CurieUtil(new HashMap())
   private val transformer: NodeTransformer = new NodeTransformer()
@@ -150,9 +150,12 @@ class Annotator(neo4jLocation: String) {
     configBuilder.minLength(3)
     processor.annotateEntities(configBuilder.get).asScala.toList
   }
+}
 
+/** Methods for generating an RDF description of a PubMedArticleWrapper. */
+object PubMedTripleGenerator {
   /** Generate the triples for a particular PubMed article. */
-  def generateTriples(pubMedArticleWrapped: PubMedArticleWrapper): Set[graph.Triple] = {
+  def generateTriples(pubMedArticleWrapped: PubMedArticleWrapper, annotator: Option[Annotator]): Set[graph.Triple] = {
     // Generate an IRI for this PubMed article.
     val pmidIRI = ResourceFactory.createResource(pubMedArticleWrapped.iriAsString)
 
@@ -190,13 +193,13 @@ class Annotator(neo4jLocation: String) {
       pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(DCTerms.modified)
 
     // Extract annotations using SciGraph and convert into RDF statements.
-    val annotationStatements = extractAnnotations(pubMedArticleWrapped.asString) map { annotation =>
+    val annotationStatements = annotator.map(_.extractAnnotations(pubMedArticleWrapped.asString) map { annotation =>
       ResourceFactory.createStatement(
         pmidIRI,
         DCTerms.references,
         ResourceFactory.createResource(annotation.getToken.getId)
       )
-    }
+    }).getOrElse(Seq())
 
     // Combine all statements into a single set and export as triples.
     val allStatements = annotationStatements.toSet ++ meshStatements ++ issuedDateStatements ++ modifiedDateStatements
@@ -210,7 +213,7 @@ object Main extends App with LazyLogging {
   val outDir           = args(2)
   val parallelism      = args(3).toInt
 
-  val annotator = new Annotator(scigraphLocation)
+  val annotator: Option[Annotator] = if (scigraphLocation == "none") None else Some(new Annotator(scigraphLocation))
 
   implicit val system: ActorSystem                  = ActorSystem("pubmed-actors")
   implicit val dispatcher: ExecutionContextExecutor = system.dispatcher
@@ -245,7 +248,7 @@ object Main extends App with LazyLogging {
     val done = Source(wrappedArticles)
       .mapAsyncUnordered(parallelism) { article: PubMedArticleWrapper =>
         Future {
-          annotator.generateTriples(article)
+          PubMedTripleGenerator.generateTriples(article, annotator)
         }
       }
       .runForeach { triples =>
@@ -258,7 +261,7 @@ object Main extends App with LazyLogging {
         rdfStream.finish()
         outStream.close()
         system.terminate()
-        annotator.dispose()
+        annotator.foreach(_.dispose)
         System.exit(1)
       case _ =>
         rdfStream.finish()
@@ -266,6 +269,6 @@ object Main extends App with LazyLogging {
     }
     logger.info(s"Done processing $file")
   }
-  annotator.dispose()
+  annotator.foreach(_.dispose)
   system.terminate()
 }
