@@ -28,15 +28,17 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
     //   )
     //   ...
     // )
-    triples.groupBy(_.getSubject.getURI).mapValues(_.groupBy(_.getPredicate.getURI).mapValues(triples => {
-      (triples.toSeq map { triple: graph.Triple =>
-        val node = triple.getObject
-        if (node.isBlank) "blank"
-        else if (node.isVariable) "variable"
-        else if (node.isURI) "URI"
-        else node.getLiteralDatatypeURI
-      }) groupBy (strType => strType) mapValues (_.size)
-    }))
+    triples
+      .groupBy(_.getSubject.getURI)
+      .mapValues(_.groupBy(_.getPredicate.getURI).mapValues(triples => {
+        (triples.toSeq map { triple: graph.Triple =>
+          val node = triple.getObject
+          if (node.isBlank) "blank"
+          else if (node.isVariable) "variable"
+          else if (node.isURI) "URI"
+          else node.getLiteralDatatypeURI
+        }) groupBy (strType => strType) mapValues (_.size)
+      }))
   }
 
   val tests = Tests {
@@ -82,14 +84,17 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       assert(wrappedArticle.pubDates == Seq(LocalDate.of(2001, 2, 15)))
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2019, 2, 8)))
 
-      val summarizedTriples = summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
-      assert(summarizedTriples == Map(
-        "https://www.ncbi.nlm.nih.gov/pubmed/11237011" -> Map(
-          "http://purl.org/dc/terms/references" -> Map ( "URI" -> 28 ),
-          "http://purl.org/dc/terms/issued" -> Map ( "http://www.w3.org/2001/XMLSchema#date" -> 1 ),
-          "http://purl.org/dc/terms/modified" -> Map ( "http://www.w3.org/2001/XMLSchema#date" -> 1 )
+      val summarizedTriples =
+        summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
+      assert(
+        summarizedTriples == Map(
+          "https://www.ncbi.nlm.nih.gov/pubmed/11237011" -> Map(
+            "http://purl.org/dc/terms/references" -> Map("URI"                                   -> 28),
+            "http://purl.org/dc/terms/issued"     -> Map("http://www.w3.org/2001/XMLSchema#date" -> 1),
+            "http://purl.org/dc/terms/modified"   -> Map("http://www.w3.org/2001/XMLSchema#date" -> 1)
+          )
         )
-      ))
+      )
     }
 
     test("An example with month and year") {
@@ -121,14 +126,19 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       assert(wrappedArticle.pubDates == Seq(YearMonth.of(2006, 10)))
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2008, 11, 21)))
 
-      val summarizedTriples = summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
-      assert(summarizedTriples == Map(
-        "https://www.ncbi.nlm.nih.gov/pubmed/17060194" -> Map(
-          "http://purl.org/dc/terms/references" -> Map ( "URI" -> 15 ),
-          "http://purl.org/dc/terms/issued" -> Map ( "http://www.w3.org/2001/XMLSchema#gYearMonth" -> 1 ),
-          "http://purl.org/dc/terms/modified" -> Map ( "http://www.w3.org/2001/XMLSchema#date" -> 1 )
+      val summarizedTriples =
+        summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
+      assert(
+        summarizedTriples == Map(
+          "https://www.ncbi.nlm.nih.gov/pubmed/17060194" -> Map(
+            "http://purl.org/dc/terms/references" -> Map("URI" -> 15),
+            "http://purl.org/dc/terms/issued" -> Map(
+              "http://www.w3.org/2001/XMLSchema#gYearMonth" -> 1
+            ),
+            "http://purl.org/dc/terms/modified" -> Map("http://www.w3.org/2001/XMLSchema#date" -> 1)
+          )
         )
-      ))
+      )
     }
 
     test("An example with year only") {
@@ -142,13 +152,16 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       assert(wrappedArticle.pubDates == Seq(Year.of(2012)))
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2018, 11, 13)))
 
-      val summarizedTriples = summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
-      assert(summarizedTriples == Map(
-        "https://www.ncbi.nlm.nih.gov/pubmed/22859891" -> Map(
-          "http://purl.org/dc/terms/issued" -> Map ( "http://www.w3.org/2001/XMLSchema#gYear" -> 1 ),
-          "http://purl.org/dc/terms/modified" -> Map ( "http://www.w3.org/2001/XMLSchema#date" -> 1 )
+      val summarizedTriples =
+        summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
+      assert(
+        summarizedTriples == Map(
+          "https://www.ncbi.nlm.nih.gov/pubmed/22859891" -> Map(
+            "http://purl.org/dc/terms/issued"   -> Map("http://www.w3.org/2001/XMLSchema#gYear" -> 1),
+            "http://purl.org/dc/terms/modified" -> Map("http://www.w3.org/2001/XMLSchema#date"  -> 1)
+          )
         )
-      ))
+      )
     }
 
     test("An example with a MedlineDate") {
@@ -172,14 +185,17 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       assert(wrappedArticle.pubDates == Seq(Year.of(1998)))
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2016, 11, 24)))
 
-      val summarizedTriples = summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
-      assert(summarizedTriples == Map(
-        "https://www.ncbi.nlm.nih.gov/pubmed/10542500" -> Map(
-          "http://purl.org/dc/terms/references" -> Map ( "URI" -> 7 ),
-          "http://purl.org/dc/terms/issued" -> Map ( "http://www.w3.org/2001/XMLSchema#gYear" -> 1 ),
-          "http://purl.org/dc/terms/modified" -> Map ( "http://www.w3.org/2001/XMLSchema#date" -> 1 )
+      val summarizedTriples =
+        summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
+      assert(
+        summarizedTriples == Map(
+          "https://www.ncbi.nlm.nih.gov/pubmed/10542500" -> Map(
+            "http://purl.org/dc/terms/references" -> Map("URI"                                    -> 7),
+            "http://purl.org/dc/terms/issued"     -> Map("http://www.w3.org/2001/XMLSchema#gYear" -> 1),
+            "http://purl.org/dc/terms/modified"   -> Map("http://www.w3.org/2001/XMLSchema#date"  -> 1)
+          )
         )
-      ))
+      )
     }
   }
 }

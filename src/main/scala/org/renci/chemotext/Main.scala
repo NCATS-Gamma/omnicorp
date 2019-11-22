@@ -11,7 +11,12 @@ import akka.actor.ActorSystem
 import akka.stream._
 import akka.stream.scaladsl._
 import com.typesafe.scalalogging.LazyLogging
-import io.scigraph.annotation.{EntityAnnotation, EntityFormatConfiguration, EntityProcessorImpl, EntityRecognizer}
+import io.scigraph.annotation.{
+  EntityAnnotation,
+  EntityFormatConfiguration,
+  EntityProcessorImpl,
+  EntityRecognizer
+}
 import io.scigraph.neo4j.NodeTransformer
 import io.scigraph.vocabulary.{Vocabulary, VocabularyNeo4jImpl}
 import org.apache.jena.datatypes.xsd.XSDDatatype
@@ -103,9 +108,17 @@ class PubMedArticleWrapper(val article: Node) {
   val geneSymbols: String = (article \\ "GeneSymbol").map(_.text).mkString(" ")
   val (meshTermIDs, meshLabels) = (article \\ "MeshHeading").map { mh =>
     val (dMeshIds, dMeshLabels) =
-      (mh \ "DescriptorName").map({ mesh => ((mesh \ "@UI").text, mesh.text) }).unzip
+      (mh \ "DescriptorName")
+        .map({ mesh =>
+          ((mesh \ "@UI").text, mesh.text)
+        })
+        .unzip
     val (qMeshIds, qMeshLabels) =
-      (mh \ "QualifierName").map({ mesh => ((mesh \ "@UI").text, mesh.text) }).unzip
+      (mh \ "QualifierName")
+        .map({ mesh =>
+          ((mesh \ "@UI").text, mesh.text)
+        })
+        .unzip
     (dMeshIds ++ qMeshIds, (dMeshLabels ++ qMeshLabels).mkString(" "))
   }.unzip
   val (meshSubstanceIDs, meshSubstanceLabels) = (article \\ "NameOfSubstance")
@@ -155,7 +168,10 @@ class Annotator(neo4jLocation: String) {
 /** Methods for generating an RDF description of a PubMedArticleWrapper. */
 object PubMedTripleGenerator {
   /** Generate the triples for a particular PubMed article. */
-  def generateTriples(pubMedArticleWrapped: PubMedArticleWrapper, annotator: Option[Annotator]): Set[graph.Triple] = {
+  def generateTriples(
+    pubMedArticleWrapped: PubMedArticleWrapper,
+    annotator: Option[Annotator]
+  ): Set[graph.Triple] = {
     // Generate an IRI for this PubMed article.
     val pmidIRI = ResourceFactory.createResource(pubMedArticleWrapped.iriAsString)
 
@@ -193,13 +209,15 @@ object PubMedTripleGenerator {
       pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(DCTerms.modified)
 
     // Extract annotations using SciGraph and convert into RDF statements.
-    val annotationStatements = annotator.map(_.extractAnnotations(pubMedArticleWrapped.asString) map { annotation =>
-      ResourceFactory.createStatement(
-        pmidIRI,
-        DCTerms.references,
-        ResourceFactory.createResource(annotation.getToken.getId)
-      )
-    }).getOrElse(Seq())
+    val annotationStatements = annotator
+      .map(_.extractAnnotations(pubMedArticleWrapped.asString) map { annotation =>
+        ResourceFactory.createStatement(
+          pmidIRI,
+          DCTerms.references,
+          ResourceFactory.createResource(annotation.getToken.getId)
+        )
+      })
+      .getOrElse(Seq())
 
     // Combine all statements into a single set and export as triples.
     val allStatements = annotationStatements.toSet ++ meshStatements ++ issuedDateStatements ++ modifiedDateStatements
@@ -213,7 +231,8 @@ object Main extends App with LazyLogging {
   val outDir           = args(2)
   val parallelism      = args(3).toInt
 
-  val annotator: Option[Annotator] = if (scigraphLocation == "none") None else Some(new Annotator(scigraphLocation))
+  val annotator: Option[Annotator] =
+    if (scigraphLocation == "none") None else Some(new Annotator(scigraphLocation))
 
   implicit val system: ActorSystem                  = ActorSystem("pubmed-actors")
   implicit val dispatcher: ExecutionContextExecutor = system.dispatcher
