@@ -120,6 +120,15 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       )
       assert(wrappedArticle.pubDates == Seq(YearMonth.of(2006, 10)))
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2008, 11, 21)))
+
+      val summarizedTriples = summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
+      assert(summarizedTriples == Map(
+        "https://www.ncbi.nlm.nih.gov/pubmed/17060194" -> Map(
+          "http://purl.org/dc/terms/references" -> Map ( "URI" -> 15 ),
+          "http://purl.org/dc/terms/issued" -> Map ( "http://www.w3.org/2001/XMLSchema#gYearMonth" -> 1 ),
+          "http://purl.org/dc/terms/modified" -> Map ( "http://www.w3.org/2001/XMLSchema#date" -> 1 )
+        )
+      ))
     }
 
     test("An example with year only") {
@@ -132,6 +141,14 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       assert(wrappedArticle.allMeshTermIDs == Set())
       assert(wrappedArticle.pubDates == Seq(Year.of(2012)))
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2018, 11, 13)))
+
+      val summarizedTriples = summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
+      assert(summarizedTriples == Map(
+        "https://www.ncbi.nlm.nih.gov/pubmed/22859891" -> Map(
+          "http://purl.org/dc/terms/issued" -> Map ( "http://www.w3.org/2001/XMLSchema#gYear" -> 1 ),
+          "http://purl.org/dc/terms/modified" -> Map ( "http://www.w3.org/2001/XMLSchema#date" -> 1 )
+        )
+      ))
     }
 
     test("An example with a MedlineDate") {
@@ -154,6 +171,15 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       )
       assert(wrappedArticle.pubDates == Seq(Year.of(1998)))
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2016, 11, 24)))
+
+      val summarizedTriples = summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
+      assert(summarizedTriples == Map(
+        "https://www.ncbi.nlm.nih.gov/pubmed/10542500" -> Map(
+          "http://purl.org/dc/terms/references" -> Map ( "URI" -> 7 ),
+          "http://purl.org/dc/terms/issued" -> Map ( "http://www.w3.org/2001/XMLSchema#gYear" -> 1 ),
+          "http://purl.org/dc/terms/modified" -> Map ( "http://www.w3.org/2001/XMLSchema#date" -> 1 )
+        )
+      ))
     }
   }
 }
