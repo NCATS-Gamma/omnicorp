@@ -170,7 +170,7 @@ object PubMedTripleGenerator {
   /** Generate the triples for a particular PubMed article. */
   def generateTriples(
     pubMedArticleWrapped: PubMedArticleWrapper,
-    annotator: Option[Annotator]
+    optAnnotator: Option[Annotator]
   ): Set[graph.Triple] = {
     // Generate an IRI for this PubMed article.
     val pmidIRI = ResourceFactory.createResource(pubMedArticleWrapped.iriAsString)
@@ -209,7 +209,7 @@ object PubMedTripleGenerator {
       pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(DCTerms.modified)
 
     // Extract annotations using SciGraph and convert into RDF statements.
-    val annotationStatements = annotator
+    val annotationStatements = optAnnotator
       .map(_.extractAnnotations(pubMedArticleWrapped.asString) map { annotation =>
         ResourceFactory.createStatement(
           pmidIRI,
@@ -231,7 +231,7 @@ object Main extends App with LazyLogging {
   val outDir           = args(2)
   val parallelism      = args(3).toInt
 
-  val annotator: Option[Annotator] =
+  val optAnnotator: Option[Annotator] =
     if (scigraphLocation == "none") None else Some(new Annotator(scigraphLocation))
 
   implicit val system: ActorSystem                  = ActorSystem("pubmed-actors")
@@ -267,7 +267,7 @@ object Main extends App with LazyLogging {
     val done = Source(wrappedArticles)
       .mapAsyncUnordered(parallelism) { article: PubMedArticleWrapper =>
         Future {
-          PubMedTripleGenerator.generateTriples(article, annotator)
+          PubMedTripleGenerator.generateTriples(article, optAnnotator)
         }
       }
       .runForeach { triples =>
@@ -280,7 +280,7 @@ object Main extends App with LazyLogging {
         rdfStream.finish()
         outStream.close()
         system.terminate()
-        annotator.foreach(_.dispose)
+        optAnnotator.foreach(_.dispose)
         System.exit(1)
       case _ =>
         rdfStream.finish()
@@ -288,6 +288,6 @@ object Main extends App with LazyLogging {
     }
     logger.info(s"Done processing $file")
   }
-  annotator.foreach(_.dispose)
+  optAnnotator.foreach(_.dispose)
   system.terminate()
 }
