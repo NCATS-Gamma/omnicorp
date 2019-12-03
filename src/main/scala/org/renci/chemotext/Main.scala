@@ -21,7 +21,7 @@ import io.scigraph.neo4j.NodeTransformer
 import io.scigraph.vocabulary.{Vocabulary, VocabularyNeo4jImpl}
 import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.graph
-import org.apache.jena.rdf.model.{Property, ResourceFactory, Statement}
+import org.apache.jena.rdf.model.{Property, Resource, ResourceFactory, Statement}
 import org.apache.jena.riot.Lang
 import org.apache.jena.riot.system.{StreamOps, StreamRDFWriter}
 import org.apache.jena.vocabulary.DCTerms
@@ -105,8 +105,14 @@ class PubMedArticleWrapper(val article: Node) {
   val revisedDates: Seq[TemporalAccessor] = revisedDatesParseResults.map(_.toOption).flatten
 
   // Extract journal metadata.
-  val articleInfo: Map[String, Seq[String]] = ???
-  val doi: Seq[String] = articleInfo("doi")
+  val articleIdInfo: Map[String, Seq[String]] = (article \\ "ArticleIdList" \ "ArticleId")
+    .groupBy(                         // Group on the basis of attribute name, by
+      _.attribute("IdType")           // getting all values for attributes named "IdType";
+        .getOrElse(Seq("unknown"))    // if none are present, default to "unknown", but
+        .mkString(" & ")              // if there are multiple, combine them with ' & '.
+    )
+    .mapValues(_.map(_.text))
+  val doi: Seq[String] = articleIdInfo.getOrElse("doi", Seq())
 
   // Extract gene symbols and MeSH headings.
   val geneSymbols: String = (article \\ "GeneSymbol").map(_.text).mkString(" ")
@@ -171,6 +177,25 @@ class Annotator(neo4jLocation: String) {
 
 /** Methods for generating an RDF description of a PubMedArticleWrapper. */
 object PubMedTripleGenerator {
+  // Extract dates as RDF statements.
+  def convertDatesToTriples(pmidIRI: Resource, property: Property)(date: Try[TemporalAccessor]): Statement = {
+    ResourceFactory.createStatement(
+      pmidIRI,
+      property,
+      date match {
+        case Success(localDate: LocalDate) =>
+          ResourceFactory.createTypedLiteral(localDate.toString, XSDDatatype.XSDdate)
+        case Success(yearMonth: YearMonth) =>
+          ResourceFactory.createTypedLiteral(yearMonth.toString, XSDDatatype.XSDgYearMonth)
+        case Success(year: Year) =>
+          ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
+        case Success(ta: TemporalAccessor) =>
+          throw new RuntimeException(s"Unexpected temporal accessor found by parsing date: $ta")
+        case Failure(error: Throwable) => throw error
+      }
+    )
+  }
+
   /** Generate the triples for a particular PubMed article. */
   def generateTriples(
     pubMedArticleWrapped: PubMedArticleWrapper,
@@ -178,6 +203,17 @@ object PubMedTripleGenerator {
   ): Set[graph.Triple] = {
     // Generate an IRI for this PubMed article.
     val pmidIRI = ResourceFactory.createResource(pubMedArticleWrapped.iriAsString)
+
+    // Add publication metadata.
+    val publicationMetadata = Seq(
+      ResourceFactory.createProperty("http://prismstandard.org/namespaces/basic/3.0/doi") -> pubMedArticleWrapped.doi
+    )
+    val publicationMetadataStatements = publicationMetadata.filter(!_._2.isEmpty)
+      .map({ case (prop, value) => ResourceFactory.createStatement(pmidIRI, prop, ResourceFactory.createTypedLiteral(value.mkString(", "), XSDDatatype.XSDstring)) })
+
+    val metadataStatements = publicationMetadataStatements ++
+      (pubMedArticleWrapped.pubDatesParseResults map convertDatesToTriples(pmidIRI, DCTerms.issued)) ++
+      (pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(pmidIRI, DCTerms.modified))
 
     // Extract meshIRIs as RDF statements.
     val MESHNamespace = "http://id.nlm.nih.gov/mesh"
@@ -187,30 +223,6 @@ object PubMedTripleGenerator {
     val meshStatements = meshIRIs.map { meshIRI =>
       ResourceFactory.createStatement(pmidIRI, DCTerms.references, meshIRI)
     }
-
-    // Extract dates as RDF statements.
-    def convertDatesToTriples(property: Property)(date: Try[TemporalAccessor]): Statement = {
-      ResourceFactory.createStatement(
-        pmidIRI,
-        property,
-        date match {
-          case Success(localDate: LocalDate) =>
-            ResourceFactory.createTypedLiteral(localDate.toString, XSDDatatype.XSDdate)
-          case Success(yearMonth: YearMonth) =>
-            ResourceFactory.createTypedLiteral(yearMonth.toString, XSDDatatype.XSDgYearMonth)
-          case Success(year: Year) =>
-            ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
-          case Success(ta: TemporalAccessor) =>
-            throw new RuntimeException(s"Unexpected temporal accessor found by parsing date: $ta")
-          case Failure(error: Throwable) => throw error
-        }
-      )
-    }
-
-    val issuedDateStatements =
-      pubMedArticleWrapped.pubDatesParseResults map convertDatesToTriples(DCTerms.issued)
-    val modifiedDateStatements =
-      pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(DCTerms.modified)
 
     // Extract annotations using SciGraph and convert into RDF statements.
     val annotationStatements = optAnnotator
@@ -224,7 +236,7 @@ object PubMedTripleGenerator {
       .getOrElse(Seq())
 
     // Combine all statements into a single set and export as triples.
-    val allStatements = annotationStatements.toSet ++ meshStatements ++ issuedDateStatements ++ modifiedDateStatements
+    val allStatements = metadataStatements.toSet ++ annotationStatements.toSet ++ meshStatements ++ annotationStatements
     allStatements.map(_.asTriple)
   }
 }
