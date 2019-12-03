@@ -104,6 +104,10 @@ class PubMedArticleWrapper(val article: Node) {
   val articleDates: Seq[TemporalAccessor] = articleDatesParseResults.map(_.toOption).flatten
   val revisedDates: Seq[TemporalAccessor] = revisedDatesParseResults.map(_.toOption).flatten
 
+  // Extract journal metadata.
+  val articleInfo: Map[String, Seq[String]] = ???
+  val doi: Seq[String] = articleInfo("doi")
+
   // Extract gene symbols and MeSH headings.
   val geneSymbols: String = (article \\ "GeneSymbol").map(_.text).mkString(" ")
   val (meshTermIDs, meshLabels) = (article \\ "MeshHeading").map { mh =>

@@ -83,6 +83,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       )
       assert(wrappedArticle.pubDates == Seq(LocalDate.of(2001, 2, 15)))
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2019, 2, 8)))
+      assert(wrappedArticle.doi == Seq("10.1038/35057062"))
 
       val summarizedTriples =
         summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
@@ -91,7 +92,8 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
           "https://www.ncbi.nlm.nih.gov/pubmed/11237011" -> Map(
             "http://purl.org/dc/terms/references" -> Map("URI"                                   -> 28),
             "http://purl.org/dc/terms/issued"     -> Map("http://www.w3.org/2001/XMLSchema#date" -> 1),
-            "http://purl.org/dc/terms/modified"   -> Map("http://www.w3.org/2001/XMLSchema#date" -> 1)
+            "http://purl.org/dc/terms/modified"   -> Map("http://www.w3.org/2001/XMLSchema#date" -> 1),
+            "http://prismstandard.org/namespaces/basic/3.0/doi" -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1)
           )
         )
       )
@@ -125,6 +127,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       )
       assert(wrappedArticle.pubDates == Seq(YearMonth.of(2006, 10)))
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2008, 11, 21)))
+      assert(wrappedArticle.doi == Seq("10.1080/10635150600969864"))
 
       val summarizedTriples =
         summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
@@ -135,7 +138,8 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
             "http://purl.org/dc/terms/issued" -> Map(
               "http://www.w3.org/2001/XMLSchema#gYearMonth" -> 1
             ),
-            "http://purl.org/dc/terms/modified" -> Map("http://www.w3.org/2001/XMLSchema#date" -> 1)
+            "http://purl.org/dc/terms/modified" -> Map("http://www.w3.org/2001/XMLSchema#date" -> 1),
+            "http://prismstandard.org/namespaces/basic/3.0/doi" -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1)
           )
         )
       )
@@ -151,6 +155,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       assert(wrappedArticle.allMeshTermIDs == Set())
       assert(wrappedArticle.pubDates == Seq(Year.of(2012)))
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2018, 11, 13)))
+      assert(wrappedArticle.doi == Seq("10.3897/zookeys.209.3247"))
 
       val summarizedTriples =
         summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
@@ -158,7 +163,8 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         summarizedTriples == Map(
           "https://www.ncbi.nlm.nih.gov/pubmed/22859891" -> Map(
             "http://purl.org/dc/terms/issued"   -> Map("http://www.w3.org/2001/XMLSchema#gYear" -> 1),
-            "http://purl.org/dc/terms/modified" -> Map("http://www.w3.org/2001/XMLSchema#date"  -> 1)
+            "http://purl.org/dc/terms/modified" -> Map("http://www.w3.org/2001/XMLSchema#date"  -> 1),
+            "http://prismstandard.org/namespaces/basic/3.0/doi" -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1)
           )
         )
       )
@@ -184,6 +190,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       )
       assert(wrappedArticle.pubDates == Seq(Year.of(1998)))
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2016, 11, 24)))
+      assert(wrappedArticle.doi == Seq())
 
       val summarizedTriples =
         summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
