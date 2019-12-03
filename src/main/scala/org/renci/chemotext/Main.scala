@@ -106,10 +106,10 @@ class PubMedArticleWrapper(val article: Node) {
 
   // Extract journal metadata.
   val articleIdInfo: Map[String, Seq[String]] = (article \\ "ArticleIdList" \ "ArticleId")
-    .groupBy(                         // Group on the basis of attribute name, by
-      _.attribute("IdType")           // getting all values for attributes named "IdType";
-        .getOrElse(Seq("unknown"))    // if none are present, default to "unknown", but
-        .mkString(" & ")              // if there are multiple, combine them with ' & '.
+    .groupBy(                      // Group on the basis of attribute name, by
+      _.attribute("IdType")        // getting all values for attributes named "IdType";
+        .getOrElse(Seq("unknown")) // if none are present, default to "unknown", but
+        .mkString(" & ")           // if there are multiple, combine them with ' & '.
     )
     .mapValues(_.map(_.text))
   val doi: Seq[String] = articleIdInfo.getOrElse("doi", Seq())
@@ -178,7 +178,9 @@ class Annotator(neo4jLocation: String) {
 /** Methods for generating an RDF description of a PubMedArticleWrapper. */
 object PubMedTripleGenerator {
   // Extract dates as RDF statements.
-  def convertDatesToTriples(pmidIRI: Resource, property: Property)(date: Try[TemporalAccessor]): Statement = {
+  def convertDatesToTriples(pmidIRI: Resource, property: Property)(
+    date: Try[TemporalAccessor]
+  ): Statement = {
     ResourceFactory.createStatement(
       pmidIRI,
       property,
@@ -206,14 +208,26 @@ object PubMedTripleGenerator {
 
     // Add publication metadata.
     val publicationMetadata = Seq(
-      ResourceFactory.createProperty("http://prismstandard.org/namespaces/basic/3.0/doi") -> pubMedArticleWrapped.doi
+      ResourceFactory
+        .createProperty("http://prismstandard.org/namespaces/basic/3.0/doi") -> pubMedArticleWrapped.doi
     )
-    val publicationMetadataStatements = publicationMetadata.filter(!_._2.isEmpty)
-      .map({ case (prop, value) => ResourceFactory.createStatement(pmidIRI, prop, ResourceFactory.createTypedLiteral(value.mkString(", "), XSDDatatype.XSDstring)) })
+    val publicationMetadataStatements = publicationMetadata
+      .filter(!_._2.isEmpty)
+      .map({
+        case (prop, value) =>
+          ResourceFactory.createStatement(
+            pmidIRI,
+            prop,
+            ResourceFactory.createTypedLiteral(value.mkString(", "), XSDDatatype.XSDstring)
+          )
+      })
 
     val metadataStatements = publicationMetadataStatements ++
       (pubMedArticleWrapped.pubDatesParseResults map convertDatesToTriples(pmidIRI, DCTerms.issued)) ++
-      (pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(pmidIRI, DCTerms.modified))
+      (pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(
+        pmidIRI,
+        DCTerms.modified
+      ))
 
     // Extract meshIRIs as RDF statements.
     val MESHNamespace = "http://id.nlm.nih.gov/mesh"
