@@ -177,6 +177,10 @@ class Annotator(neo4jLocation: String) {
 
 /** Methods for generating an RDF description of a PubMedArticleWrapper. */
 object PubMedTripleGenerator {
+  // Some namespaces.
+  val MESHNamespace = "http://id.nlm.nih.gov/mesh"
+  val PRISMBasicNamespace = "http://prismstandard.org/namespaces/basic/3.0"
+
   // Extract dates as RDF statements.
   def convertDatesToTriples(pmidIRI: Resource, property: Property)(
     date: Try[TemporalAccessor]
@@ -208,8 +212,8 @@ object PubMedTripleGenerator {
 
     // Add publication metadata.
     val publicationMetadata = Seq(
-      ResourceFactory
-        .createProperty("http://prismstandard.org/namespaces/basic/3.0/doi") -> pubMedArticleWrapped.doi
+      DCTerms.title -> Seq(pubMedArticleWrapped.title),
+      ResourceFactory.createProperty(s"$PRISMBasicNamespace/doi") -> pubMedArticleWrapped.doi
     )
     val publicationMetadataStatements = publicationMetadata
       .filter(!_._2.isEmpty)
@@ -230,7 +234,6 @@ object PubMedTripleGenerator {
       ))
 
     // Extract meshIRIs as RDF statements.
-    val MESHNamespace = "http://id.nlm.nih.gov/mesh"
     val meshIRIs = pubMedArticleWrapped.allMeshTermIDs map (
       id => ResourceFactory.createResource(s"$MESHNamespace/$id")
     )

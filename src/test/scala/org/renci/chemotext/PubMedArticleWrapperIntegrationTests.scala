@@ -46,6 +46,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       val wrappedArticle = new PubMedArticleWrapper(pubmedArticles(0))
 
       assert(wrappedArticle.pmid == "11237011")
+      assert(wrappedArticle.title == "Initial sequencing and analysis of the human genome.")
       assert(
         wrappedArticle.asString == "Initial sequencing and analysis of the human genome. The human genome holds an extraordinary trove of information about human development, physiology, medicine and evolution. Here we report the results of an international collaboration to produce and make freely available a draft sequence of the human genome. We also present an initial analysis of the data, describing some of the insights that can be gleaned from the sequence. Genetics, Medical CpG Islands Public Sector Gene Duplication Proteins Databases, Factual Proteome Proteins genetics Repetitive Sequences, Nucleic Acid Forecasting GC Rich Sequence Drug Industry Genes Sequence Analysis, DNA methods Humans Animals DNA Transposable Elements Private Sector Mutation Conserved Sequence Genome, Human RNA RNA genetics Evolution, Molecular Human Genome Project Chromosome Mapping Species Specificity Genetic Diseases, Inborn "
       )
@@ -90,6 +91,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       assert(
         summarizedTriples == Map(
           "https://www.ncbi.nlm.nih.gov/pubmed/11237011" -> Map(
+            "http://purl.org/dc/terms/title"      -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
             "http://purl.org/dc/terms/references" -> Map("URI"                                   -> 28),
             "http://purl.org/dc/terms/issued"     -> Map("http://www.w3.org/2001/XMLSchema#date" -> 1),
             "http://purl.org/dc/terms/modified" -> Map(
@@ -107,6 +109,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       val wrappedArticle = new PubMedArticleWrapper(pubmedArticles(1))
 
       assert(wrappedArticle.pmid == "17060194")
+      assert(wrappedArticle.title == "DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success.")
       assert(
         wrappedArticle.asString == "DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success. DNA barcoding and DNA taxonomy have recently been proposed as solutions to the crisis of taxonomy and received significant attention from scientific journals, grant agencies, natural history museums, and mainstream media. Here, we test two key claims of molecular taxonomy using 1333 mitochondrial COI sequences for 449 species of Diptera. We investigate whether sequences can be used for species identification (\"DNA barcoding\") and find a relatively low success rate (< 70%) based on tree-based and newly proposed species identification criteria. Misidentifications are due to wide overlap between intra- and interspecific genetic variability, which causes 6.5% of all query sequences to have allospecific or a mixture of allo- and conspecific (3.6%) best-matching barcodes. Even when two COI sequences are identical, there is a 6% chance that they belong to different species. We also find that 21% of all species lack unique barcodes when consensus sequences of all conspecific sequences are used. Lastly, we test whether DNA sequences yield an unambiguous species-level taxonomy when sequence profiles are assembled based on pairwise distance thresholds. We find many sequence triplets for which two of the three pairwise distances remain below the threshold, whereas the third exceeds it; i.e., it is impossible to consistently delimit species based on pairwise distances. Furthermore, for species profiles based on a 3% threshold, only 47% of all profiles are consistent with currently accepted species limits, 20% contain more than one species, and 33% only some sequences from one species; i.e., adopting such a DNA taxonomy would require the redescription of a large proportion of the known species, thus worsening the taxonomic impediment. We conclude with an outlook on the prospects of obtaining complete barcode databases and the future use of DNA sequences in a modern integrative taxonomy. Electron Transport Complex IV DNA, Mitochondrial Sequence Analysis, DNA DNA, Mitochondrial chemistry Animals Electron Transport Complex IV chemistry genetics Base Sequence Genetic Variation Classification methods Diptera classification genetics Phylogeny Consensus Sequence Species Specificity "
       )
@@ -138,6 +141,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       assert(
         summarizedTriples == Map(
           "https://www.ncbi.nlm.nih.gov/pubmed/17060194" -> Map(
+            "http://purl.org/dc/terms/title"      -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
             "http://purl.org/dc/terms/references" -> Map("URI" -> 15),
             "http://purl.org/dc/terms/issued" -> Map(
               "http://www.w3.org/2001/XMLSchema#gYearMonth" -> 1
@@ -157,6 +161,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       val wrappedArticle = new PubMedArticleWrapper(pubmedArticles(2))
 
       assert(wrappedArticle.pmid == "22859891")
+      assert(wrappedArticle.title == "From documents to datasets: A MediaWiki-based method of annotating and extracting species observations in century-old field notebooks.")
       assert(
         wrappedArticle.asString == "From documents to datasets: A MediaWiki-based method of annotating and extracting species observations in century-old field notebooks. Part diary, part scientific record, biological field notebooks often contain details necessary to understanding the location and environmental conditions existent during collecting events. Despite their clear value for (and recent use in) global change studies, the text-mining outputs from field notebooks have been idiosyncratic to specific research projects, and impossible to discover or re-use. Best practices and workflows for digitization, transcription, extraction, and integration with other sources are nascent or non-existent. In this paper, we demonstrate a workflow to generate structured outputs while also maintaining links to the original texts. The first step in this workflow was to place already digitized and transcribed field notebooks from the University of Colorado Museum of Natural History founder, Junius Henderson, on Wikisource, an open text transcription platform. Next, we created Wikisource templates to document places, dates, and taxa to facilitate annotation and wiki-linking. We then requested help from the public, through social media tools, to take advantage of volunteer efforts and energy. After three notebooks were fully annotated, content was converted into XML and annotations were extracted and cross-walked into Darwin Core compliant record sets. Finally, these recordsets were vetted, to provide valid taxon names, via a process we call \"taxonomic referencing.\" The result is identification and mobilization of 1,068 observations from three of Henderson's thirteen notebooks and a publishable Darwin Core record set for use in other analyses. Although challenges remain, this work demonstrates a feasible approach to unlock observations from field notebooks that enhances their discovery and interoperability without losing the narrative context from which those observations are drawn.\"Compose your notes as if you were writing a letter to someone a century in the future.\"Perrine and Patton (2011).  "
       )
@@ -170,6 +175,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       assert(
         summarizedTriples == Map(
           "https://www.ncbi.nlm.nih.gov/pubmed/22859891" -> Map(
+            "http://purl.org/dc/terms/title"      -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
             "http://purl.org/dc/terms/issued" -> Map("http://www.w3.org/2001/XMLSchema#gYear" -> 1),
             "http://purl.org/dc/terms/modified" -> Map(
               "http://www.w3.org/2001/XMLSchema#date" -> 1
@@ -186,6 +192,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       val wrappedArticle = new PubMedArticleWrapper(pubmedArticles(3))
 
       assert(wrappedArticle.pmid == "10542500")
+      assert(wrappedArticle.title == "Thirty years of service.")
       assert(
         wrappedArticle.asString == "Thirty years of service.  Parkinson Disease therapy United Kingdom Humans Organizational Objectives Information Services Societies "
       )
@@ -209,9 +216,10 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       assert(
         summarizedTriples == Map(
           "https://www.ncbi.nlm.nih.gov/pubmed/10542500" -> Map(
-            "http://purl.org/dc/terms/references" -> Map("URI"                                    -> 7),
-            "http://purl.org/dc/terms/issued"     -> Map("http://www.w3.org/2001/XMLSchema#gYear" -> 1),
-            "http://purl.org/dc/terms/modified"   -> Map("http://www.w3.org/2001/XMLSchema#date"  -> 1)
+            "http://purl.org/dc/terms/title"      -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
+            "http://purl.org/dc/terms/references" -> Map("URI"                                     -> 7),
+            "http://purl.org/dc/terms/issued"     -> Map("http://www.w3.org/2001/XMLSchema#gYear"  -> 1),
+            "http://purl.org/dc/terms/modified"   -> Map("http://www.w3.org/2001/XMLSchema#date"   -> 1)
           )
         )
       )
