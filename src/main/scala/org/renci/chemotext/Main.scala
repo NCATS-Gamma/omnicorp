@@ -24,7 +24,8 @@ import org.apache.jena.graph
 import org.apache.jena.rdf.model.{Property, Resource, ResourceFactory, Statement}
 import org.apache.jena.riot.Lang
 import org.apache.jena.riot.system.{StreamOps, StreamRDFWriter}
-import org.apache.jena.vocabulary.DCTerms
+import org.apache.jena.vocabulary.{DCTerms, RDF}
+import org.apache.jena.sparql.vocabulary.FOAF
 import org.apache.lucene.queryparser.classic.QueryParserBase
 import org.neo4j.graphdb.GraphDatabaseService
 import org.neo4j.graphdb.factory.GraphDatabaseFactory
@@ -35,6 +36,33 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success, Try}
 import scala.xml.{Elem, Node, NodeSeq}
+
+/** Author name management. */
+class AuthorWrapper(node: Node) {
+  val isSpellingCorrect = ((node \ "ValidYN").text == "Y")
+  val collectiveName = (node \ "CollectiveName").text
+  val lastName = (node \ "LastName").text
+  val foreName = (node \ "ForeName").text
+  val suffix = (node \ "Suffix").text
+  val initials = (node \ "Initials").text
+  // TODO: add support for <AffiliationInfo>
+  // TODO: add support for <EqualContrib>
+
+  // Support for identifiers.
+  val identifier = (node \ "Identifier").map(id => (id.attribute("Source") -> id.text))
+  val orcIds: Seq[String] = identifier.filter(_._1 == "ORCID").map(_._2)
+
+  // FOAF uses foaf:givenName and foaf:familyName.
+  val givenName: String = foreName
+  val familyName: String = {
+    if (suffix.isEmpty) lastName else s"$lastName $suffix"
+  }
+  val name: String = if (!collectiveName.isEmpty) collectiveName else s"$givenName $familyName"
+}
+
+object AuthorWrapper {
+  val ET_AL: AuthorWrapper = new AuthorWrapper(<Author><LastName>et al.</LastName></Author>)
+}
 
 /** An object containing code for working with PubMed articles. */
 object PubMedArticleWrapper {
@@ -113,6 +141,13 @@ class PubMedArticleWrapper(val article: Node) {
     )
     .mapValues(_.map(_.text))
   val dois: Seq[String] = articleIdInfo.getOrElse("doi", Seq())
+  val authors: Seq[AuthorWrapper] = {
+    val authorListNode = (article \\ "AuthorList").head
+    val authorList = authorListNode.nonEmptyChildren.map(new AuthorWrapper(_))
+    if (authorListNode.attribute("CompleteYN") == "Y")
+      (authorList :+ AuthorWrapper.ET_AL)
+    else authorList
+  }
 
   // Extract gene symbols and MeSH headings.
   val geneSymbols: String = (article \\ "GeneSymbol").map(_.text).mkString(" ")
@@ -180,6 +215,7 @@ object PubMedTripleGenerator {
   // Some namespaces.
   val MESHNamespace = "http://id.nlm.nih.gov/mesh"
   val PRISMBasicNamespace = "http://prismstandard.org/namespaces/basic/3.0"
+  val FOAFNamespace = "http://xmlns.com/foaf/0.1"
 
   // Extract dates as RDF statements.
   def convertDatesToTriples(pmidIRI: Resource, property: Property)(
@@ -226,7 +262,29 @@ object PubMedTripleGenerator {
           )
       })
 
+    val authorStatements = pubMedArticleWrapped.authors.flatMap({ author =>
+      val authorRes = ResourceFactory.createResource()
+      Seq(
+        ResourceFactory.createStatement(
+          pmidIRI,
+          DCTerms.creator,
+          authorRes
+        ),
+        ResourceFactory.createStatement(
+          authorRes,
+          ResourceFactory.createProperty(s"$FOAFNamespace/familyName"),
+          ResourceFactory.createTypedLiteral(author.familyName, XSDDatatype.XSDstring)
+        ),
+        ResourceFactory.createStatement(
+          authorRes,
+          ResourceFactory.createProperty(s"$FOAFNamespace/givenName"),
+          ResourceFactory.createTypedLiteral(author.givenName, XSDDatatype.XSDstring)
+        )
+      )
+    })
+
     val metadataStatements = publicationMetadataStatements ++
+      authorStatements ++
       (pubMedArticleWrapped.pubDatesParseResults map convertDatesToTriples(pmidIRI, DCTerms.issued)) ++
       (pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(
         pmidIRI,

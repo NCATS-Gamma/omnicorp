@@ -29,6 +29,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
     //   ...
     // )
     triples
+      .filter(!_.getSubject.isBlank) // Remove blank nodes.
       .groupBy(_.getSubject.getURI)
       .mapValues(_.groupBy(_.getPredicate.getURI).mapValues(triples => {
         (triples.toSeq map { triple: graph.Triple =>
@@ -92,6 +93,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         summarizedTriples == Map(
           "https://www.ncbi.nlm.nih.gov/pubmed/11237011" -> Map(
             "http://purl.org/dc/terms/title"      -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
+            "http://purl.org/dc/terms/creator"    -> Map("blank" -> 257),
             "http://purl.org/dc/terms/references" -> Map("URI"                                   -> 28),
             "http://purl.org/dc/terms/issued"     -> Map("http://www.w3.org/2001/XMLSchema#date" -> 1),
             "http://purl.org/dc/terms/modified" -> Map(
@@ -110,6 +112,12 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
 
       assert(wrappedArticle.pmid == "17060194")
       assert(wrappedArticle.title == "DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success.")
+      assert(wrappedArticle.authors.map(_.name) == Seq(
+        "Rudolf Meier",
+        "Kwong Shiyang",
+        "Gaurav Vaidya",
+        "Peter K L Ng"
+      ))
       assert(
         wrappedArticle.asString == "DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success. DNA barcoding and DNA taxonomy have recently been proposed as solutions to the crisis of taxonomy and received significant attention from scientific journals, grant agencies, natural history museums, and mainstream media. Here, we test two key claims of molecular taxonomy using 1333 mitochondrial COI sequences for 449 species of Diptera. We investigate whether sequences can be used for species identification (\"DNA barcoding\") and find a relatively low success rate (< 70%) based on tree-based and newly proposed species identification criteria. Misidentifications are due to wide overlap between intra- and interspecific genetic variability, which causes 6.5% of all query sequences to have allospecific or a mixture of allo- and conspecific (3.6%) best-matching barcodes. Even when two COI sequences are identical, there is a 6% chance that they belong to different species. We also find that 21% of all species lack unique barcodes when consensus sequences of all conspecific sequences are used. Lastly, we test whether DNA sequences yield an unambiguous species-level taxonomy when sequence profiles are assembled based on pairwise distance thresholds. We find many sequence triplets for which two of the three pairwise distances remain below the threshold, whereas the third exceeds it; i.e., it is impossible to consistently delimit species based on pairwise distances. Furthermore, for species profiles based on a 3% threshold, only 47% of all profiles are consistent with currently accepted species limits, 20% contain more than one species, and 33% only some sequences from one species; i.e., adopting such a DNA taxonomy would require the redescription of a large proportion of the known species, thus worsening the taxonomic impediment. We conclude with an outlook on the prospects of obtaining complete barcode databases and the future use of DNA sequences in a modern integrative taxonomy. Electron Transport Complex IV DNA, Mitochondrial Sequence Analysis, DNA DNA, Mitochondrial chemistry Animals Electron Transport Complex IV chemistry genetics Base Sequence Genetic Variation Classification methods Diptera classification genetics Phylogeny Consensus Sequence Species Specificity "
       )
@@ -138,10 +146,12 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
 
       val summarizedTriples =
         summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
+      println(summarizedTriples)
       assert(
         summarizedTriples == Map(
           "https://www.ncbi.nlm.nih.gov/pubmed/17060194" -> Map(
             "http://purl.org/dc/terms/title"      -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
+            "http://purl.org/dc/terms/creator"    -> Map("blank" -> 4),
             "http://purl.org/dc/terms/references" -> Map("URI" -> 15),
             "http://purl.org/dc/terms/issued" -> Map(
               "http://www.w3.org/2001/XMLSchema#gYearMonth" -> 1
@@ -175,9 +185,10 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       assert(
         summarizedTriples == Map(
           "https://www.ncbi.nlm.nih.gov/pubmed/22859891" -> Map(
-            "http://purl.org/dc/terms/title"      -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
-            "http://purl.org/dc/terms/issued" -> Map("http://www.w3.org/2001/XMLSchema#gYear" -> 1),
-            "http://purl.org/dc/terms/modified" -> Map(
+            "http://purl.org/dc/terms/title"          -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
+            "http://purl.org/dc/terms/creator"        -> Map("blank" -> 5),
+            "http://purl.org/dc/terms/issued"         -> Map("http://www.w3.org/2001/XMLSchema#gYear" -> 1),
+            "http://purl.org/dc/terms/modified"       -> Map(
               "http://www.w3.org/2001/XMLSchema#date" -> 1
             ),
             "http://prismstandard.org/namespaces/basic/3.0/doi" -> Map(
@@ -217,6 +228,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         summarizedTriples == Map(
           "https://www.ncbi.nlm.nih.gov/pubmed/10542500" -> Map(
             "http://purl.org/dc/terms/title"      -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
+            "http://purl.org/dc/terms/creator"    -> Map("blank" -> 1),
             "http://purl.org/dc/terms/references" -> Map("URI"                                     -> 7),
             "http://purl.org/dc/terms/issued"     -> Map("http://www.w3.org/2001/XMLSchema#gYear"  -> 1),
             "http://purl.org/dc/terms/modified"   -> Map("http://www.w3.org/2001/XMLSchema#date"   -> 1)
