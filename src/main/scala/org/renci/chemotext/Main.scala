@@ -112,7 +112,7 @@ class PubMedArticleWrapper(val article: Node) {
         .mkString(" & ")           // if there are multiple, combine them with ' & '.
     )
     .mapValues(_.map(_.text))
-  val doi: Seq[String] = articleIdInfo.getOrElse("doi", Seq())
+  val dois: Seq[String] = articleIdInfo.getOrElse("doi", Seq())
 
   // Extract gene symbols and MeSH headings.
   val geneSymbols: String = (article \\ "GeneSymbol").map(_.text).mkString(" ")
@@ -213,7 +213,7 @@ object PubMedTripleGenerator {
     // Add publication metadata.
     val publicationMetadata = Seq(
       DCTerms.title -> Seq(pubMedArticleWrapped.title),
-      ResourceFactory.createProperty(s"$PRISMBasicNamespace/doi") -> pubMedArticleWrapped.doi
+      ResourceFactory.createProperty(s"$PRISMBasicNamespace/doi") -> pubMedArticleWrapped.dois
     )
     val publicationMetadataStatements = publicationMetadata
       .filter(!_._2.isEmpty)

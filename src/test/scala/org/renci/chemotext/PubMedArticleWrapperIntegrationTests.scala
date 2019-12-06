@@ -84,7 +84,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       )
       assert(wrappedArticle.pubDates == Seq(LocalDate.of(2001, 2, 15)))
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2019, 2, 8)))
-      assert(wrappedArticle.doi == Seq("10.1038/35057062"))
+      assert(wrappedArticle.dois == Seq("10.1038/35057062"))
 
       val summarizedTriples =
         summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
@@ -134,7 +134,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       )
       assert(wrappedArticle.pubDates == Seq(YearMonth.of(2006, 10)))
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2008, 11, 21)))
-      assert(wrappedArticle.doi == Seq("10.1080/10635150600969864"))
+      assert(wrappedArticle.dois == Seq("10.1080/10635150600969864"))
 
       val summarizedTriples =
         summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
@@ -168,7 +168,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       assert(wrappedArticle.allMeshTermIDs == Set())
       assert(wrappedArticle.pubDates == Seq(Year.of(2012)))
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2018, 11, 13)))
-      assert(wrappedArticle.doi == Seq("10.3897/zookeys.209.3247"))
+      assert(wrappedArticle.dois == Seq("10.3897/zookeys.209.3247"))
 
       val summarizedTriples =
         summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
@@ -209,7 +209,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       )
       assert(wrappedArticle.pubDates == Seq(Year.of(1998)))
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2016, 11, 24)))
-      assert(wrappedArticle.doi == Seq())
+      assert(wrappedArticle.dois == Seq())
 
       val summarizedTriples =
         summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
