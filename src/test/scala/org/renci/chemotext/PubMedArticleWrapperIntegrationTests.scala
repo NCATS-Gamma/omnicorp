@@ -147,7 +147,6 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
 
       val summarizedTriples =
         summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
-      println(summarizedTriples)
       assert(
         summarizedTriples == Map(
           "https://www.ncbi.nlm.nih.gov/pubmed/17060194" -> Map(
