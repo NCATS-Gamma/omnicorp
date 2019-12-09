@@ -1,11 +1,14 @@
 package org.renci.chemotext
 
+import java.io.{StringReader, StringWriter}
 import java.time.{LocalDate, Year, YearMonth}
 
 import org.apache.jena.graph
-import org.apache.jena.rdf.model.{Property, ResourceFactory, Statement}
+import org.apache.jena.rdf.model.{Property, ResourceFactory, Statement, ModelFactory}
 import utest._
 
+import collection.mutable
+import collection.JavaConverters._
 import scala.xml.XML
 
 /**
@@ -146,8 +149,8 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2008, 11, 21)))
       assert(wrappedArticle.dois == Seq("10.1080/10635150600969864"))
 
-      val summarizedTriples =
-        summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
+      val triples = PubMedTripleGenerator.generateTriples(wrappedArticle, None)
+      val summarizedTriples = summarizeTriples(triples)
       assert(
         summarizedTriples == Map(
           "https://www.ncbi.nlm.nih.gov/pubmed/17060194" -> Map(
@@ -168,6 +171,51 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
           )
         )
       )
+
+      // Since this example is relatively small, we'll actually test all the triples.
+      val expectedTriplesAsTurtle = """@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix fabio: <http://purl.org/spar/fabio/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix prism: <http://prismstandard.org/namespaces/basic/3.0/> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+
+<https://www.ncbi.nlm.nih.gov/pubmed/17060194>
+        a                         fabio:Article ;
+        prism:doi                 "10.1080/10635150600969864" ;
+        dct:creator               [ foaf:familyName  "Vaidya" ;
+                                    foaf:givenName   "Gaurav"
+                                  ] ;
+        dct:creator               [ foaf:familyName  "Shiyang" ;
+                                    foaf:givenName   "Kwong"
+                                  ] ;
+        dct:creator               [ foaf:familyName  "Ng" ;
+                                    foaf:givenName   "Peter K L"
+                                  ] ;
+        dct:creator               [ foaf:familyName  "Meier" ;
+                                    foaf:givenName   "Rudolf"
+                                  ] ;
+        dct:issued                "2006-10"^^xsd:gYearMonth ;
+        dct:modified              "2008-11-21"^^xsd:date ;
+        dct:references            <http://id.nlm.nih.gov/mesh/D017422> , <http://id.nlm.nih.gov/mesh/Q000235> , <http://id.nlm.nih.gov/mesh/D004175> , <http://id.nlm.nih.gov/mesh/D000818> , <http://id.nlm.nih.gov/mesh/Q000379> , <http://id.nlm.nih.gov/mesh/D014644> , <http://id.nlm.nih.gov/mesh/D013045> , <http://id.nlm.nih.gov/mesh/D010802> , <http://id.nlm.nih.gov/mesh/Q000737> , <http://id.nlm.nih.gov/mesh/D016384> , <http://id.nlm.nih.gov/mesh/D003576> , <http://id.nlm.nih.gov/mesh/D001483> , <http://id.nlm.nih.gov/mesh/D002965> , <http://id.nlm.nih.gov/mesh/D004272> , <http://id.nlm.nih.gov/mesh/Q000145> ;
+        dct:title                 "DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success." ;
+        fabio:hasPublicationYear  "2006"^^xsd:gYear .
+"""
+
+      val foundGraph = graph.Factory.createDefaultGraph
+      triples.foreach(foundGraph.add(_))
+      val stringWriter = new StringWriter()
+      val model = ModelFactory.createModelForGraph(foundGraph)
+      model.setNsPrefixes(Map(
+        "dct" -> "http://purl.org/dc/terms/",
+        "fabio" -> "http://purl.org/spar/fabio/",
+        "foaf" -> "http://xmlns.com/foaf/0.1/",
+        "xsd" -> "http://www.w3.org/2001/XMLSchema#",
+        "prism" -> "http://prismstandard.org/namespaces/basic/3.0/"
+      ).asJava)
+      model.write(stringWriter, "Turtle")
+      println(s"1<${stringWriter.toString}>")
+      println(s"2<${expectedTriplesAsTurtle}>")
+      assert(stringWriter.toString == expectedTriplesAsTurtle)
     }
 
     test("An example with year only") {
