@@ -216,6 +216,7 @@ object PubMedTripleGenerator {
   val MESHNamespace = "http://id.nlm.nih.gov/mesh"
   val PRISMBasicNamespace = "http://prismstandard.org/namespaces/basic/3.0"
   val FOAFNamespace = "http://xmlns.com/foaf/0.1"
+  val FaBiONamespace = "http://purl.org/spar/fabio"
 
   // Extract dates as RDF statements.
   def convertDatesToTriples(pmidIRI: Resource, property: Property)(
@@ -260,7 +261,14 @@ object PubMedTripleGenerator {
             prop,
             ResourceFactory.createTypedLiteral(value.mkString(", "), XSDDatatype.XSDstring)
           )
-      })
+      }) ++ Seq(
+        // <pmidIRI> a fabio:Article
+        ResourceFactory.createStatement(
+          pmidIRI,
+          RDF.`type`,
+          ResourceFactory.createResource(s"$FaBiONamespace/Article")
+        )
+      )
 
     val authorStatements = pubMedArticleWrapped.authors.flatMap({ author =>
       val authorRes = ResourceFactory.createResource()
