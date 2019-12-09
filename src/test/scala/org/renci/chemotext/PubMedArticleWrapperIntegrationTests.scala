@@ -93,6 +93,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         summarizedTriples == Map(
           "https://www.ncbi.nlm.nih.gov/pubmed/11237011" -> Map(
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI" -> 1),
+            "http://purl.org/spar/fabio/hasPublicationYear" -> Map("http://www.w3.org/2001/XMLSchema#gYear" -> 1),
             "http://purl.org/dc/terms/title"      -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
             "http://purl.org/dc/terms/creator"    -> Map("blank" -> 257),
             "http://purl.org/dc/terms/references" -> Map("URI"                                   -> 28),
@@ -151,6 +152,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         summarizedTriples == Map(
           "https://www.ncbi.nlm.nih.gov/pubmed/17060194" -> Map(
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI" -> 1),
+            "http://purl.org/spar/fabio/hasPublicationYear" -> Map("http://www.w3.org/2001/XMLSchema#gYear" -> 1),
             "http://purl.org/dc/terms/title"      -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
             "http://purl.org/dc/terms/creator"    -> Map("blank" -> 4),
             "http://purl.org/dc/terms/references" -> Map("URI" -> 15),
@@ -181,12 +183,13 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2018, 11, 13)))
       assert(wrappedArticle.dois == Seq("10.3897/zookeys.209.3247"))
 
-      val summarizedTriples =
-        summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
+      val triples = PubMedTripleGenerator.generateTriples(wrappedArticle, None)
+      val summarizedTriples = summarizeTriples(triples)
       assert(
         summarizedTriples == Map(
           "https://www.ncbi.nlm.nih.gov/pubmed/22859891" -> Map(
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI" -> 1),
+            "http://purl.org/spar/fabio/hasPublicationYear" -> Map("http://www.w3.org/2001/XMLSchema#gYear" -> 1),
             "http://purl.org/dc/terms/title"          -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
             "http://purl.org/dc/terms/creator"        -> Map("blank" -> 5),
             "http://purl.org/dc/terms/issued"         -> Map("http://www.w3.org/2001/XMLSchema#gYear" -> 1),
@@ -230,6 +233,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         summarizedTriples == Map(
           "https://www.ncbi.nlm.nih.gov/pubmed/10542500" -> Map(
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI" -> 1),
+            "http://purl.org/spar/fabio/hasPublicationYear" -> Map("http://www.w3.org/2001/XMLSchema#gYear" -> 1),
             "http://purl.org/dc/terms/title"      -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
             "http://purl.org/dc/terms/creator"    -> Map("blank" -> 1),
             "http://purl.org/dc/terms/references" -> Map("URI"                                     -> 7),

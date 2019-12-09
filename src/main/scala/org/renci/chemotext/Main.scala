@@ -3,7 +3,7 @@ package org.renci.chemotext
 import java.io.{File, FileInputStream, FileOutputStream, StringReader}
 import java.time._
 import java.time.format.DateTimeFormatter
-import java.time.temporal.TemporalAccessor
+import java.time.temporal.{TemporalAccessor, ChronoField}
 import java.util.HashMap
 import java.util.zip.GZIPInputStream
 
@@ -129,6 +129,7 @@ class PubMedArticleWrapper(val article: Node) {
   val revisedDatesParseResults: Seq[Try[TemporalAccessor]] =
     revisedDatesAsNodes map PubMedArticleWrapper.parseDate
   val pubDates: Seq[TemporalAccessor]     = pubDatesParseResults.map(_.toOption).flatten
+  val pubDateYears: Seq[Int]              = pubDates.map(_.get(ChronoField.YEAR))
   val articleDates: Seq[TemporalAccessor] = articleDatesParseResults.map(_.toOption).flatten
   val revisedDates: Seq[TemporalAccessor] = revisedDatesParseResults.map(_.toOption).flatten
 
@@ -268,6 +269,13 @@ object PubMedTripleGenerator {
           RDF.`type`,
           ResourceFactory.createResource(s"$FaBiONamespace/Article")
         )
+      ) ++ (
+        // <pmidIRI> fabio:hasPublicationYear "2019"^xsd:gYear
+        pubMedArticleWrapped.pubDateYears.map(year => ResourceFactory.createStatement(
+          pmidIRI,
+          ResourceFactory.createProperty(s"$FaBiONamespace/hasPublicationYear"),
+          ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
+        ))
       )
 
     val authorStatements = pubMedArticleWrapped.authors.flatMap({ author =>
