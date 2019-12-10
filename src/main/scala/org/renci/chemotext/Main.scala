@@ -4,13 +4,21 @@ import java.io.{File, FileInputStream, FileOutputStream, StringReader}
 import java.time._
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
+import java.util.HashMap
 import java.util.zip.GZIPInputStream
 
 import akka.actor.ActorSystem
 import akka.stream._
 import akka.stream.scaladsl._
 import com.typesafe.scalalogging.LazyLogging
-import io.scigraph.annotation.{EntityAnnotation, EntityFormatConfiguration}
+import io.scigraph.annotation.{
+  EntityAnnotation,
+  EntityFormatConfiguration,
+  EntityProcessorImpl,
+  EntityRecognizer
+}
+import io.scigraph.neo4j.NodeTransformer
+import io.scigraph.vocabulary.{Vocabulary, VocabularyNeo4jImpl}
 import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.graph
 import org.apache.jena.rdf.model.{Property, ResourceFactory, Statement}
@@ -18,11 +26,14 @@ import org.apache.jena.riot.Lang
 import org.apache.jena.riot.system.{StreamOps, StreamRDFWriter}
 import org.apache.jena.vocabulary.DCTerms
 import org.apache.lucene.queryparser.classic.QueryParserBase
+import org.neo4j.graphdb.GraphDatabaseService
+import org.neo4j.graphdb.factory.GraphDatabaseFactory
+import org.prefixcommons.CurieUtil
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
-import scala.util.{Failure, Try, Success}
+import scala.util.{Failure, Success, Try}
 import scala.xml.{Elem, Node, NodeSeq}
 
 /** An object containing code for working with PubMed articles. */
@@ -97,9 +108,17 @@ class PubMedArticleWrapper(val article: Node) {
   val geneSymbols: String = (article \\ "GeneSymbol").map(_.text).mkString(" ")
   val (meshTermIDs, meshLabels) = (article \\ "MeshHeading").map { mh =>
     val (dMeshIds, dMeshLabels) =
-      (mh \ "DescriptorName").map({ mesh => ((mesh \ "@UI").text, mesh.text) }).unzip
+      (mh \ "DescriptorName")
+        .map({ mesh =>
+          ((mesh \ "@UI").text, mesh.text)
+        })
+        .unzip
     val (qMeshIds, qMeshLabels) =
-      (mh \ "QualifierName").map({ mesh => ((mesh \ "@UI").text, mesh.text) }).unzip
+      (mh \ "QualifierName")
+        .map({ mesh =>
+          ((mesh \ "@UI").text, mesh.text)
+        })
+        .unzip
     (dMeshIds ++ qMeshIds, (dMeshLabels ++ qMeshLabels).mkString(" "))
   }.unzip
   val (meshSubstanceIDs, meshSubstanceLabels) = (article \\ "NameOfSubstance")
@@ -122,41 +141,37 @@ class PubMedArticleWrapper(val article: Node) {
   }
 }
 
-object Main extends App with LazyLogging {
-  val scigraphLocation = args(0)
-  val dataDir          = new File(args(1))
-  val outDir           = args(2)
-  val parallelism      = args(3).toInt
+/** Methods for extracting annotations from text using SciGraph */
+class Annotator(neo4jLocation: String) {
+  private val curieUtil: CurieUtil         = new CurieUtil(new HashMap())
+  private val transformer: NodeTransformer = new NodeTransformer()
+  private val graphDB: GraphDatabaseService =
+    new GraphDatabaseFactory().newEmbeddedDatabase(new File(neo4jLocation))
+  private val vocabulary: Vocabulary =
+    new VocabularyNeo4jImpl(graphDB, neo4jLocation, curieUtil, transformer)
+  private val recognizer = new EntityRecognizer(vocabulary, curieUtil)
 
-  val annotator = new Annotator(scigraphLocation)
+  val processor = new EntityProcessorImpl(recognizer)
 
-  implicit val system: ActorSystem                  = ActorSystem("pubmed-actors")
-  implicit val dispatcher: ExecutionContextExecutor = system.dispatcher
-  implicit val materializer: ActorMaterializer      = ActorMaterializer()
+  def dispose(): Unit = graphDB.shutdown()
 
-  val dataFiles =
-    if (dataDir.isFile) List(dataDir)
-    else dataDir.listFiles().filter(_.getName.endsWith(".xml.gz")).toList
-
-  /** Read a GZipped XML file and returns the root element. */
-  def readXMLFromGZip(file: File): Elem = {
-    val stream = new GZIPInputStream(new FileInputStream(file))
-    val elem   = scala.xml.XML.load(stream)
-    stream.close()
-    elem
-  }
-
-  /** Extract annotations from a particular string using a particular Annotator. */
+  /** Extract annotations from a particular string using SciGraph. */
   def extractAnnotations(str: String): List[EntityAnnotation] = {
     val configBuilder =
       new EntityFormatConfiguration.Builder(new StringReader(QueryParserBase.escape(str)))
     configBuilder.longestOnly(true)
     configBuilder.minLength(3)
-    annotator.processor.annotateEntities(configBuilder.get).asScala.toList
+    processor.annotateEntities(configBuilder.get).asScala.toList
   }
+}
 
+/** Methods for generating an RDF description of a PubMedArticleWrapper. */
+object PubMedTripleGenerator {
   /** Generate the triples for a particular PubMed article. */
-  def generateTriples(pubMedArticleWrapped: PubMedArticleWrapper): Set[graph.Triple] = {
+  def generateTriples(
+    pubMedArticleWrapped: PubMedArticleWrapper,
+    optAnnotator: Option[Annotator]
+  ): Set[graph.Triple] = {
     // Generate an IRI for this PubMed article.
     val pmidIRI = ResourceFactory.createResource(pubMedArticleWrapped.iriAsString)
 
@@ -194,17 +209,45 @@ object Main extends App with LazyLogging {
       pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(DCTerms.modified)
 
     // Extract annotations using SciGraph and convert into RDF statements.
-    val annotationStatements = extractAnnotations(pubMedArticleWrapped.asString) map { annotation =>
-      ResourceFactory.createStatement(
-        pmidIRI,
-        DCTerms.references,
-        ResourceFactory.createResource(annotation.getToken.getId)
-      )
-    }
+    val annotationStatements = optAnnotator
+      .map(_.extractAnnotations(pubMedArticleWrapped.asString) map { annotation =>
+        ResourceFactory.createStatement(
+          pmidIRI,
+          DCTerms.references,
+          ResourceFactory.createResource(annotation.getToken.getId)
+        )
+      })
+      .getOrElse(Seq())
 
     // Combine all statements into a single set and export as triples.
     val allStatements = annotationStatements.toSet ++ meshStatements ++ issuedDateStatements ++ modifiedDateStatements
     allStatements.map(_.asTriple)
+  }
+}
+
+object Main extends App with LazyLogging {
+  val scigraphLocation = args(0)
+  val dataDir          = new File(args(1))
+  val outDir           = args(2)
+  val parallelism      = args(3).toInt
+
+  val optAnnotator: Option[Annotator] =
+    if (scigraphLocation == "none") None else Some(new Annotator(scigraphLocation))
+
+  implicit val system: ActorSystem                  = ActorSystem("pubmed-actors")
+  implicit val dispatcher: ExecutionContextExecutor = system.dispatcher
+  implicit val materializer: ActorMaterializer      = ActorMaterializer()
+
+  val dataFiles =
+    if (dataDir.isFile) List(dataDir)
+    else dataDir.listFiles().filter(_.getName.endsWith(".xml.gz")).toList
+
+  /** Read a GZipped XML file and returns the root element. */
+  def readXMLFromGZip(file: File): Elem = {
+    val stream = new GZIPInputStream(new FileInputStream(file))
+    val elem   = scala.xml.XML.load(stream)
+    stream.close()
+    elem
   }
 
   dataFiles.foreach { file =>
@@ -224,7 +267,7 @@ object Main extends App with LazyLogging {
     val done = Source(wrappedArticles)
       .mapAsyncUnordered(parallelism) { article: PubMedArticleWrapper =>
         Future {
-          generateTriples(article)
+          PubMedTripleGenerator.generateTriples(article, optAnnotator)
         }
       }
       .runForeach { triples =>
@@ -237,7 +280,7 @@ object Main extends App with LazyLogging {
         rdfStream.finish()
         outStream.close()
         system.terminate()
-        annotator.dispose()
+        optAnnotator.foreach(_.dispose)
         System.exit(1)
       case _ =>
         rdfStream.finish()
@@ -245,6 +288,6 @@ object Main extends App with LazyLogging {
     }
     logger.info(s"Done processing $file")
   }
-  annotator.dispose()
+  optAnnotator.foreach(_.dispose)
   system.terminate()
 }
