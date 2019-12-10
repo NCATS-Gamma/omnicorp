@@ -1,5 +1,16 @@
+# Scala setup.
 language: scala
 scala:
-  - "2.12.4"
+  - "2.12.8"
 jdk:
-  - oraclejdk8
+  - openjdk8
+
+# Cache Maven and SBT packages so we don't need to keep reinstalling them.
+cache:
+  directories:
+  - $HOME/.m2
+  - $HOME/.sbt
+
+# We need to install SciGraph to run Omnicorp for testing.
+before_script:
+  - MAVEN_OPTS=-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn make SciGraph
