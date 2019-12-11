@@ -22,7 +22,7 @@ SciGraph:
 	git clone https://github.com/balhoff/SciGraph.git &&\
 	cd SciGraph &&\
 	git checkout public-constructors &&\
-	mvn -DskipTests -DskipITs install
+	mvn -B -DskipTests -DskipITs install
 
 robot.jar:
 	curl -L -O https://github.com/ontodev/robot/releases/download/v1.4.0/robot.jar
