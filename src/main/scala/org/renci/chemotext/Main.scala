@@ -21,7 +21,7 @@ import io.scigraph.neo4j.NodeTransformer
 import io.scigraph.vocabulary.{Vocabulary, VocabularyNeo4jImpl}
 import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.graph
-import org.apache.jena.rdf.model.{Property, Resource, ResourceFactory, Statement}
+import org.apache.jena.rdf.model.{ModelFactory, Property, Resource, ResourceFactory, Statement}
 import org.apache.jena.riot.Lang
 import org.apache.jena.riot.system.{StreamOps, StreamRDFWriter}
 import org.apache.jena.vocabulary.{DCTerms, RDF}
@@ -40,16 +40,16 @@ import scala.xml.{Elem, Node, NodeSeq}
 /** Author name management. */
 class AuthorWrapper(node: Node) {
   val isSpellingCorrect = ((node \ "ValidYN").text == "Y")
-  val collectiveName = (node \ "CollectiveName").text
-  val lastName = (node \ "LastName").text
-  val foreName = (node \ "ForeName").text
-  val suffix = (node \ "Suffix").text
-  val initials = (node \ "Initials").text
+  val collectiveName    = (node \ "CollectiveName").text
+  val lastName          = (node \ "LastName").text
+  val foreName          = (node \ "ForeName").text
+  val suffix            = (node \ "Suffix").text
+  val initials          = (node \ "Initials").text
   // TODO: add support for <AffiliationInfo>
   // TODO: add support for <EqualContrib>
 
   // Support for identifiers.
-  val identifier = (node \ "Identifier").map(id => (id.attribute("Source") -> id.text))
+  val identifier          = (node \ "Identifier").map(id => (id.attribute("Source") -> id.text))
   val orcIds: Seq[String] = identifier.filter(_._1 == "ORCID").map(_._2)
 
   // FOAF uses foaf:givenName and foaf:familyName.
@@ -144,7 +144,7 @@ class PubMedArticleWrapper(val article: Node) {
   val dois: Seq[String] = articleIdInfo.getOrElse("doi", Seq())
   val authors: Seq[AuthorWrapper] = {
     val authorListNode = (article \\ "AuthorList").head
-    val authorList = authorListNode.nonEmptyChildren.map(new AuthorWrapper(_))
+    val authorList     = authorListNode.nonEmptyChildren.map(new AuthorWrapper(_))
     if (authorListNode.attribute("CompleteYN") == "Y")
       (authorList :+ AuthorWrapper.ET_AL)
     else authorList
@@ -214,10 +214,10 @@ class Annotator(neo4jLocation: String) {
 /** Methods for generating an RDF description of a PubMedArticleWrapper. */
 object PubMedTripleGenerator {
   // Some namespaces.
-  val MESHNamespace = "http://id.nlm.nih.gov/mesh"
+  val MESHNamespace       = "http://id.nlm.nih.gov/mesh"
   val PRISMBasicNamespace = "http://prismstandard.org/namespaces/basic/3.0"
-  val FOAFNamespace = "http://xmlns.com/foaf/0.1"
-  val FaBiONamespace = "http://purl.org/spar/fabio"
+  val FOAFNamespace       = "http://xmlns.com/foaf/0.1"
+  val FaBiONamespace      = "http://purl.org/spar/fabio"
 
   // Extract dates as RDF statements.
   def convertDatesToTriples(pmidIRI: Resource, property: Property)(
@@ -250,7 +250,7 @@ object PubMedTripleGenerator {
 
     // Add publication metadata.
     val publicationMetadata = Seq(
-      DCTerms.title -> Seq(pubMedArticleWrapped.title),
+      DCTerms.title                                               -> Seq(pubMedArticleWrapped.title),
       ResourceFactory.createProperty(s"$PRISMBasicNamespace/doi") -> pubMedArticleWrapped.dois
     )
     val publicationMetadataStatements = publicationMetadata
@@ -263,41 +263,40 @@ object PubMedTripleGenerator {
             ResourceFactory.createTypedLiteral(value.mkString(", "), XSDDatatype.XSDstring)
           )
       }) ++ Seq(
-        // <pmidIRI> a fabio:Article
-        ResourceFactory.createStatement(
-          pmidIRI,
-          RDF.`type`,
-          ResourceFactory.createResource(s"$FaBiONamespace/Article")
-        )
-      ) ++ (
-        // <pmidIRI> fabio:hasPublicationYear "2019"^xsd:gYear
-        pubMedArticleWrapped.pubDateYears.map(year => ResourceFactory.createStatement(
-          pmidIRI,
-          ResourceFactory.createProperty(s"$FaBiONamespace/hasPublicationYear"),
-          ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
-        ))
+      // <pmidIRI> a fabio:Article
+      ResourceFactory.createStatement(
+        pmidIRI,
+        RDF.`type`,
+        ResourceFactory.createResource(s"$FaBiONamespace/Article")
       )
+    ) ++ (
+      // <pmidIRI> fabio:hasPublicationYear "2019"^xsd:gYear
+      pubMedArticleWrapped.pubDateYears.map(
+        year =>
+          ResourceFactory.createStatement(
+            pmidIRI,
+            ResourceFactory.createProperty(s"$FaBiONamespace/hasPublicationYear"),
+            ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
+          )
+      )
+    )
 
-    val authorStatements = pubMedArticleWrapped.authors.flatMap({ author =>
-      val authorRes = ResourceFactory.createResource()
-      Seq(
-        ResourceFactory.createStatement(
-          pmidIRI,
-          DCTerms.creator,
-          authorRes
-        ),
-        ResourceFactory.createStatement(
-          authorRes,
+    val authorModel = ModelFactory.createDefaultModel
+    val authorResources = pubMedArticleWrapped.authors.map({ author =>
+      authorModel
+        .createResource(FOAF.Agent)
+        .addProperty(
           ResourceFactory.createProperty(s"$FOAFNamespace/familyName"),
           ResourceFactory.createTypedLiteral(author.familyName, XSDDatatype.XSDstring)
-        ),
-        ResourceFactory.createStatement(
-          authorRes,
+        )
+        .addProperty(
           ResourceFactory.createProperty(s"$FOAFNamespace/givenName"),
           ResourceFactory.createTypedLiteral(author.givenName, XSDDatatype.XSDstring)
         )
-      )
     })
+    val authorRDFList = authorModel.createList(authorResources.iterator.asJava)
+    val authorStatements = authorModel.listStatements.toList.asScala :+ ResourceFactory
+      .createStatement(pmidIRI, DCTerms.creator, authorRDFList)
 
     val metadataStatements = publicationMetadataStatements ++
       authorStatements ++
