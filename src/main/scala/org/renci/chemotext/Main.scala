@@ -147,7 +147,7 @@ class PubMedArticleWrapper(val article: Node) {
   val authors: Seq[AuthorWrapper] = {
     val authorListNode = (article \\ "AuthorList").head
     val authorList     = authorListNode.nonEmptyChildren.map(new AuthorWrapper(_))
-    if (authorListNode.attribute("CompleteYN") == "Y")
+    if (authorListNode.attribute("CompleteYN") == "N")
       (authorList :+ AuthorWrapper.ET_AL)
     else authorList
   }
