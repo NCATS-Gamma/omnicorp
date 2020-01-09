@@ -119,6 +119,12 @@ class PubMedArticleWrapper(val article: Node) {
   val pmid: String                 = (article \ "MedlineCitation" \ "PMID").text
   val title: String                = (article \\ "ArticleTitle").map(_.text).mkString(" ")
   val abstractText: String         = (article \\ "AbstractText").map(_.text).mkString(" ")
+  val journalNodes: NodeSeq        = (article \\ "Article" \ "Journal")
+  val journalVolume: String        = (journalNodes \ "JournalIssue" \ "Volume").map(_.text).mkString(", ")
+  val journalIssue: String         = (journalNodes \ "JournalIssue" \ "Issue").map(_.text).mkString(", ")
+  val journalTitle: String         = (journalNodes \ "Title").map(_.text).mkString(", ")
+  val journalAbbr: String          = (journalNodes \ "ISOAbbreviation").map(_.text).mkString(", ")
+  val journalISSNNodes: NodeSeq    = (journalNodes \ "ISSN")
   val pubDatesAsNodes: NodeSeq     = article \\ "PubDate"
   val articleDatesAsNodes: NodeSeq = article \\ "ArticleDate"
   val revisedDatesAsNodes: NodeSeq = article \\ "DateRevised"
@@ -220,6 +226,7 @@ object PubMedTripleGenerator {
   val PRISMBasicNamespace = "http://prismstandard.org/namespaces/basic/3.0"
   val FOAFNamespace       = "http://xmlns.com/foaf/0.1"
   val FaBiONamespace      = "http://purl.org/spar/fabio"
+  val FRBRNamespace       = "http://purl.org/vocab/frbr/core"
 
   // Extract dates as RDF statements.
   def convertDatesToTriples(pmidIRI: Resource, property: Property)(
@@ -311,6 +318,59 @@ object PubMedTripleGenerator {
         ResourceFactory.createProperty(s"$PRISMBasicNamespace/pageRange"),
         ResourceFactory.createStringLiteral(pubMedArticleWrapped.medlinePagination)
       )
+    }) ++ ({
+      // <pmidIRI> frbr:partOf {
+      //    a fabio:JournalIssue
+      //    prism:issueIdentifier "issue number"
+      //    frbr:partOf {
+      //      a fabio:JournalIssue
+      //      prism:volume "volume number"
+      //      frbr:partOf {
+      //        a fabio:Journal
+      //        fabio:hasNLMJournalTitleAbbreviation "Journal Abbreviation"
+      //        dcterms:title "Journal Title"
+      //        prism:issn "ISSN"
+      //        prism:eIssn "Electronic ISSN"
+      //      }
+      //    }
+      //  }
+      val journalModel = ModelFactory.createDefaultModel
+      val journalResource = journalModel.createResource(s"$FaBiONamespace/JournalIssue")
+        .addProperty(DCTerms.title, pubMedArticleWrapped.journalTitle)
+        .addProperty(
+          ResourceFactory.createProperty(s"$FaBiONamespace/hasNLMJournalTitleAbbreviation"),
+          pubMedArticleWrapped.journalAbbr
+        )
+        // TODO: Add ISSN and eISSN
+
+      val volumeResource = journalModel.createResource(s"$FaBiONamespace/JournalVolume")
+        .addProperty(
+          ResourceFactory.createProperty(s"$PRISMBasicNamespace/volume"),
+          pubMedArticleWrapped.journalVolume
+        )
+        .addProperty(
+          ResourceFactory.createProperty(s"$FRBRNamespace#partOf"),
+          journalResource
+        )
+
+      val issueResource = journalModel.createResource(s"$FaBiONamespace/JournalIssue")
+        .addProperty(
+          ResourceFactory.createProperty(s"$PRISMBasicNamespace/issueIdentifier"),
+          pubMedArticleWrapped.journalIssue
+        )
+        .addProperty(
+          ResourceFactory.createProperty(s"$FRBRNamespace#partOf"),
+          volumeResource
+        )
+
+      journalModel.add(ResourceFactory.createStatement(
+        pmidIRI,
+        ResourceFactory.createProperty(s"$FRBRNamespace#partOf"),
+        issueResource
+      ))
+
+      // Convert the Journal Model into a Scala sequence of RDF statements.
+      journalModel.listStatements.toList.asScala
     })
 
     val authorModel = ModelFactory.createDefaultModel
