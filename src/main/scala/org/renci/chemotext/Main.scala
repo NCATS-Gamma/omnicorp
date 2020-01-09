@@ -122,6 +122,8 @@ class PubMedArticleWrapper(val article: Node) {
   val pubDatesAsNodes: NodeSeq     = article \\ "PubDate"
   val articleDatesAsNodes: NodeSeq = article \\ "ArticleDate"
   val revisedDatesAsNodes: NodeSeq = article \\ "DateRevised"
+  val medlinePgnNodes: NodeSeq     = article \\ "Pagination" \ "MedlinePgn"
+  val medlinePagination: String    = medlinePgnNodes.map(_.text).mkString(", ")
   val pubDatesParseResults: Seq[Try[TemporalAccessor]] =
     pubDatesAsNodes map PubMedArticleWrapper.parseDate
   val articleDatesParseResults: Seq[Try[TemporalAccessor]] =
@@ -279,7 +281,37 @@ object PubMedTripleGenerator {
             ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
           )
       )
-    )
+    ) ++ ({
+      // <pmidIRI> prism:pageRange "(start page)-(end page), (start page)-(end page)"
+      // <pmidIRI> prism:startingPage "start page"^^xsd:string
+      // <pmidIRI> prism:startingPage "end page"^^xsd:string
+
+      // If there is exactly one page range, we'll try to split it into a
+      // start page and an end page.
+      val pageRangeRegex = raw"(.+?)\s*-\s*(.+)".r
+      val startEndPageStatements = pubMedArticleWrapped.medlinePgnNodes.map(_.text) match {
+        case Seq(pageRangeRegex(startPage, endPage)) => Seq(
+          ResourceFactory.createStatement(
+            pmidIRI,
+            ResourceFactory.createProperty(s"$PRISMBasicNamespace/startingPage"),
+            ResourceFactory.createStringLiteral(startPage)
+          ),
+          ResourceFactory.createStatement(
+            pmidIRI,
+            ResourceFactory.createProperty(s"$PRISMBasicNamespace/endingPage"),
+            ResourceFactory.createStringLiteral(endPage)
+          )
+        )
+        case _ => Seq()
+      }
+
+      // Add the overall page range as well.
+      startEndPageStatements :+ ResourceFactory.createStatement(
+        pmidIRI,
+        ResourceFactory.createProperty(s"$PRISMBasicNamespace/pageRange"),
+        ResourceFactory.createStringLiteral(pubMedArticleWrapped.medlinePagination)
+      )
+    })
 
     val authorModel = ModelFactory.createDefaultModel
     val authorResources = pubMedArticleWrapped.authors.map({ author =>

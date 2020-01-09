@@ -108,6 +108,15 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
             ),
             "http://prismstandard.org/namespaces/basic/3.0/doi" -> Map(
               "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://prismstandard.org/namespaces/basic/3.0/pageRange" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://prismstandard.org/namespaces/basic/3.0/startingPage" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://prismstandard.org/namespaces/basic/3.0/endingPage" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
             )
           )
         )
@@ -171,6 +180,15 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
             ),
             "http://prismstandard.org/namespaces/basic/3.0/doi" -> Map(
               "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://prismstandard.org/namespaces/basic/3.0/pageRange" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://prismstandard.org/namespaces/basic/3.0/startingPage" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://prismstandard.org/namespaces/basic/3.0/endingPage" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
             )
           )
         )
@@ -187,6 +205,9 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
 <https://www.ncbi.nlm.nih.gov/pubmed/17060194>
         a                         fabio:Article ;
         prism:doi                 "10.1080/10635150600969864" ;
+        prism:endingPage          "28" ;
+        prism:pageRange           "715-28" ;
+        prism:startingPage        "715" ;
         dct:creator               ( [ a                foaf:Agent ;
                                       foaf:familyName  "Meier" ;
                                       foaf:givenName   "Rudolf"
@@ -260,6 +281,15 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
             ),
             "http://prismstandard.org/namespaces/basic/3.0/doi" -> Map(
               "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://prismstandard.org/namespaces/basic/3.0/pageRange" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://prismstandard.org/namespaces/basic/3.0/startingPage" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://prismstandard.org/namespaces/basic/3.0/endingPage" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
             )
           )
         )
@@ -302,7 +332,16 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
             "http://purl.org/dc/terms/creator"    -> Map("blank"                                   -> 1),
             "http://purl.org/dc/terms/references" -> Map("URI"                                     -> 7),
             "http://purl.org/dc/terms/issued"     -> Map("http://www.w3.org/2001/XMLSchema#gYear"  -> 1),
-            "http://purl.org/dc/terms/modified"   -> Map("http://www.w3.org/2001/XMLSchema#date"   -> 1)
+            "http://purl.org/dc/terms/modified"   -> Map("http://www.w3.org/2001/XMLSchema#date"   -> 1),
+            "http://prismstandard.org/namespaces/basic/3.0/pageRange" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://prismstandard.org/namespaces/basic/3.0/startingPage" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://prismstandard.org/namespaces/basic/3.0/endingPage" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            )
           )
         )
       )
