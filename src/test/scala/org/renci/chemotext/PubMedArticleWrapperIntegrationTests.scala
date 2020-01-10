@@ -231,7 +231,18 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         dct:modified              "2008-11-21"^^xsd:date ;
         dct:references            <http://id.nlm.nih.gov/mesh/D017422> , <http://id.nlm.nih.gov/mesh/Q000235> , <http://id.nlm.nih.gov/mesh/D004175> , <http://id.nlm.nih.gov/mesh/D000818> , <http://id.nlm.nih.gov/mesh/Q000379> , <http://id.nlm.nih.gov/mesh/D014644> , <http://id.nlm.nih.gov/mesh/D013045> , <http://id.nlm.nih.gov/mesh/D010802> , <http://id.nlm.nih.gov/mesh/Q000737> , <http://id.nlm.nih.gov/mesh/D016384> , <http://id.nlm.nih.gov/mesh/D003576> , <http://id.nlm.nih.gov/mesh/D001483> , <http://id.nlm.nih.gov/mesh/D002965> , <http://id.nlm.nih.gov/mesh/D004272> , <http://id.nlm.nih.gov/mesh/Q000145> ;
         dct:title                 "DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success." ;
-        fabio:hasPublicationYear  "2006"^^xsd:gYear .
+        fabio:hasPublicationYear  "2006"^^xsd:gYear ;
+        frbr:partOf               [ a                      fabio:JournalIssue ;
+                                    prism:issueIdentifier  "5" ;
+                                    frbr:partOf            [ a             fabio:JournalVolume ;
+                                                             prism:volume  "55" ;
+                                                             frbr:partOf   [ a          fabio:JournalIssue ;
+                                                                             dct:title  "Systematic biology" ;
+                                                                             fabio:hasNLMJournalTitleAbbreviation
+                                                                                     "Syst. Biol."
+                                                                           ]
+                                                           ]
+                                  ] .
 """
 
       val foundGraph = graph.Factory.createDefaultGraph
