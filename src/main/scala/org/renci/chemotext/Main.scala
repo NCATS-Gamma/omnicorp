@@ -335,7 +335,9 @@ object PubMedTripleGenerator {
       //    }
       //  }
       val journalModel = ModelFactory.createDefaultModel
-      val journalResource = journalModel.createResource(s"$FaBiONamespace/JournalIssue")
+      val journalResource = journalModel.createResource(
+        ResourceFactory.createResource(s"$FaBiONamespace/JournalIssue")
+      )
         .addProperty(DCTerms.title, pubMedArticleWrapped.journalTitle)
         .addProperty(
           ResourceFactory.createProperty(s"$FaBiONamespace/hasNLMJournalTitleAbbreviation"),
@@ -343,7 +345,9 @@ object PubMedTripleGenerator {
         )
         // TODO: Add ISSN and eISSN
 
-      val volumeResource = journalModel.createResource(s"$FaBiONamespace/JournalVolume")
+      val volumeResource = journalModel.createResource(
+        ResourceFactory.createResource(s"$FaBiONamespace/JournalVolume")
+      )
         .addProperty(
           ResourceFactory.createProperty(s"$PRISMBasicNamespace/volume"),
           pubMedArticleWrapped.journalVolume
@@ -353,7 +357,9 @@ object PubMedTripleGenerator {
           journalResource
         )
 
-      val issueResource = journalModel.createResource(s"$FaBiONamespace/JournalIssue")
+      val issueResource = journalModel.createResource(
+        ResourceFactory.createResource(s"$FaBiONamespace/JournalIssue")
+      )
         .addProperty(
           ResourceFactory.createProperty(s"$PRISMBasicNamespace/issueIdentifier"),
           pubMedArticleWrapped.journalIssue
