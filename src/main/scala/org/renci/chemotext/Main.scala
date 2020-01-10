@@ -23,7 +23,7 @@ import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.graph
 import org.apache.jena.rdf.model.{ModelFactory, Property, Resource, ResourceFactory, Statement}
 import org.apache.jena.riot.Lang
-import org.apache.jena.riot.system.{StreamOps, StreamRDFWriter}
+import org.apache.jena.riot.system.{StreamRDFOps, StreamRDFWriter}
 import org.apache.jena.vocabulary.{DCTerms, RDF}
 import org.apache.jena.sparql.vocabulary.FOAF
 import org.apache.lucene.queryparser.classic.QueryParserBase
@@ -469,7 +469,7 @@ object Main extends App with LazyLogging {
         }
       }
       .runForeach { triples =>
-        StreamOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
+        StreamRDFOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
       }
 
     Await.ready(done, Duration.Inf).onComplete {
