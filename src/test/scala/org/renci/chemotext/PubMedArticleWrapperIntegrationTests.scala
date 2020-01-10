@@ -1,10 +1,11 @@
 package org.renci.chemotext
 
-import java.io.{StringReader, StringWriter}
+import java.io.{ByteArrayOutputStream, StringReader, StringWriter}
 import java.time.{LocalDate, Year, YearMonth}
 
 import org.apache.jena.graph
 import org.apache.jena.rdf.model.{Property, ResourceFactory, Statement, ModelFactory}
+import org.apache.jena.riot.{RDFWriter, RDFFormat}
 import utest._
 
 import collection.mutable
@@ -245,8 +246,17 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
           "prism" -> "http://prismstandard.org/namespaces/basic/3.0/"
         ).asJava
       )
-      model.write(stringWriter, "Turtle")
-      assert(stringWriter.toString == expectedTriplesAsTurtle)
+      val baos = new ByteArrayOutputStream()
+      RDFWriter.create.source(model).format(RDFFormat.TURTLE).output(baos);
+
+      val actual = baos.toString("UTF-8").split("\n")
+      val expected = expectedTriplesAsTurtle.split("\n")
+
+      (0 until max(expected.length, actual.length)).foreach(x => {
+        val actualLine = actual(x)
+        val expectLine = expected(x)
+        assert(actualLine == expectLine)
+      })
     }
 
     test("An example with year only") {
