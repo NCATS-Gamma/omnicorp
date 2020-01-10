@@ -11,6 +11,7 @@ import utest._
 import collection.mutable
 import collection.JavaConverters._
 import scala.xml.XML
+import scala.math.max
 
 /**
   * Integration tests of PubmedArticleWrapper.
