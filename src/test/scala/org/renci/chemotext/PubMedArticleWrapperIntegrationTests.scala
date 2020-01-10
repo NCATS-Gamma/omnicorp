@@ -119,6 +119,9 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
             ),
             "http://prismstandard.org/namespaces/basic/3.0/endingPage" -> Map(
               "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://purl.org/vocab/frbr/core#partOf" -> Map(
+              "blank" -> 1
             )
           )
         )
@@ -191,6 +194,9 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
             ),
             "http://prismstandard.org/namespaces/basic/3.0/endingPage" -> Map(
               "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://purl.org/vocab/frbr/core#partOf" -> Map(
+              "blank" -> 1
             )
           )
         )
@@ -201,6 +207,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         """@prefix dct:   <http://purl.org/dc/terms/> .
 @prefix fabio: <http://purl.org/spar/fabio/> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix frbr:  <http://purl.org/vocab/frbr/core#> .
 @prefix prism: <http://prismstandard.org/namespaces/basic/3.0/> .
 @prefix foaf:  <http://xmlns.com/foaf/0.1/> .
 
@@ -253,6 +260,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         Map(
           "dct"   -> "http://purl.org/dc/terms/",
           "fabio" -> "http://purl.org/spar/fabio/",
+          "frbr"  -> "http://purl.org/vocab/frbr/core#",
           "foaf"  -> "http://xmlns.com/foaf/0.1/",
           "xsd"   -> "http://www.w3.org/2001/XMLSchema#",
           "prism" -> "http://prismstandard.org/namespaces/basic/3.0/"
@@ -312,6 +320,9 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
             ),
             "http://prismstandard.org/namespaces/basic/3.0/endingPage" -> Map(
               "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://purl.org/vocab/frbr/core#partOf" -> Map(
+              "blank" -> 1
             )
           )
         )
@@ -363,6 +374,9 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
             ),
             "http://prismstandard.org/namespaces/basic/3.0/endingPage" -> Map(
               "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://purl.org/vocab/frbr/core#partOf" -> Map(
+              "blank" -> 1
             )
           )
         )
