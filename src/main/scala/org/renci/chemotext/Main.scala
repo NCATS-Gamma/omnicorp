@@ -343,7 +343,19 @@ object PubMedTripleGenerator {
           ResourceFactory.createProperty(s"$FaBiONamespace/hasNLMJournalTitleAbbreviation"),
           pubMedArticleWrapped.journalAbbr
         )
-        // TODO: Add ISSN and eISSN
+
+      pubMedArticleWrapped.journalISSNNodes.foreach(issnNode => {
+        val prismPropName = issnNode.attribute("IssnType").map(_.text) match {
+          case Some("Electronic") => "eIssn"
+          case Some("Print")      => "issn"
+          case _                       => "issn"
+        }
+
+        journalResource.addProperty(
+          ResourceFactory.createProperty(s"$PRISMBasicNamespace/$prismPropName"),
+          issnNode.text
+        )
+      })
 
       val volumeResource = journalModel.createResource(
         ResourceFactory.createResource(s"$FaBiONamespace/JournalVolume")

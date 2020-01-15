@@ -243,8 +243,9 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
                                     prism:issueIdentifier  "5" ;
                                     frbr:partOf            [ a             fabio:JournalVolume ;
                                                              prism:volume  "55" ;
-                                                                             dct:title  "Systematic biology" ;
                                                              frbr:partOf   [ a           fabio:Journal ;
+                                                                             prism:issn  "1063-5157" ;
+                                                                             dct:title   "Systematic biology" ;
                                                                              fabio:hasNLMJournalTitleAbbreviation
                                                                                      "Syst. Biol."
                                                                            ]
