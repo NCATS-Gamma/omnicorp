@@ -236,7 +236,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
                                   ) ;
         dct:issued                "2006-10"^^xsd:gYearMonth ;
         dct:modified              "2008-11-21"^^xsd:date ;
-        dct:references            <http://id.nlm.nih.gov/mesh/D017422> , <http://id.nlm.nih.gov/mesh/Q000235> , <http://id.nlm.nih.gov/mesh/D004175> , <http://id.nlm.nih.gov/mesh/D000818> , <http://id.nlm.nih.gov/mesh/Q000379> , <http://id.nlm.nih.gov/mesh/D014644> , <http://id.nlm.nih.gov/mesh/D013045> , <http://id.nlm.nih.gov/mesh/D010802> , <http://id.nlm.nih.gov/mesh/Q000737> , <http://id.nlm.nih.gov/mesh/D016384> , <http://id.nlm.nih.gov/mesh/D003576> , <http://id.nlm.nih.gov/mesh/D001483> , <http://id.nlm.nih.gov/mesh/D002965> , <http://id.nlm.nih.gov/mesh/D004272> , <http://id.nlm.nih.gov/mesh/Q000145> ;
+        dct:references            <http://id.nlm.nih.gov/mesh/D017422> , <http://id.nlm.nih.gov/mesh/D004175> , <http://id.nlm.nih.gov/mesh/Q000235> , <http://id.nlm.nih.gov/mesh/D000818> , <http://id.nlm.nih.gov/mesh/Q000379> , <http://id.nlm.nih.gov/mesh/D014644> , <http://id.nlm.nih.gov/mesh/D013045> , <http://id.nlm.nih.gov/mesh/D010802> , <http://id.nlm.nih.gov/mesh/Q000737> , <http://id.nlm.nih.gov/mesh/D016384> , <http://id.nlm.nih.gov/mesh/D003576> , <http://id.nlm.nih.gov/mesh/D001483> , <http://id.nlm.nih.gov/mesh/D002965> , <http://id.nlm.nih.gov/mesh/D004272> , <http://id.nlm.nih.gov/mesh/Q000145> ;
         dct:title                 "DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success." ;
         fabio:hasPublicationYear  "2006"^^xsd:gYear ;
         frbr:partOf               [ a                      fabio:JournalIssue ;
@@ -268,10 +268,12 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         ).asJava
       )
       val baos = new ByteArrayOutputStream()
-      RDFWriter.create.source(model).format(RDFFormat.TURTLE).output(baos);
+      RDFWriter.create.source(model).format(RDFFormat.TURTLE_PRETTY).output(baos);
 
       val actual = baos.toString("UTF-8").split("\n")
       val expected = expectedTriplesAsTurtle.split("\n")
+
+      // assert(baos.toString("UTF-8") == expectedTriplesAsTurtle)
 
       (0 until max(expected.length, actual.length)).foreach(x => {
         val actualLine = actual(x)
