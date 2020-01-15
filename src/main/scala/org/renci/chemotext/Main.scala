@@ -336,7 +336,7 @@ object PubMedTripleGenerator {
       //  }
       val journalModel = ModelFactory.createDefaultModel
       val journalResource = journalModel.createResource(
-        ResourceFactory.createResource(s"$FaBiONamespace/JournalIssue")
+        ResourceFactory.createResource(s"$FaBiONamespace/Journal")
       )
         .addProperty(DCTerms.title, pubMedArticleWrapped.journalTitle)
         .addProperty(
