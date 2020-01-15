@@ -411,13 +411,28 @@ object PubMedTripleGenerator {
     val authorStatements = authorModel.listStatements.toList.asScala :+ ResourceFactory
       .createStatement(pmidIRI, DCTerms.creator, authorRDFList)
 
+    // Build a string citation from the provided information.
+    val authorString = pubMedArticleWrapped.authors.map(_.name).mkString(", ")
+    val titleString = pubMedArticleWrapped.title
+    val journalTitle = pubMedArticleWrapped.journalTitle
+    val pubYear = pubMedArticleWrapped.pubDateYears.mkString(", ")
+    val journalVolume = pubMedArticleWrapped.journalVolume
+    val journalIssue = pubMedArticleWrapped.journalIssue
+    val journalPages = pubMedArticleWrapped.medlinePagination
+    val pmid = pubMedArticleWrapped.pmid
+    val citationString = s"$authorString. $titleString. $journalTitle ($pubYear);$journalVolume($journalIssue):$journalPages. PubMed PMID: $pmid"
+
     val metadataStatements = publicationMetadataStatements ++
       authorStatements ++
       (pubMedArticleWrapped.pubDatesParseResults map convertDatesToTriples(pmidIRI, DCTerms.issued)) ++
       (pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(
         pmidIRI,
         DCTerms.modified
-      ))
+      )) :+ ResourceFactory.createStatement(
+        pmidIRI,
+        DCTerms.bibliographicCitation,
+        ResourceFactory.createStringLiteral(citationString)
+      )
 
     // Extract meshIRIs as RDF statements.
     val meshIRIs = pubMedArticleWrapped.allMeshTermIDs map (
