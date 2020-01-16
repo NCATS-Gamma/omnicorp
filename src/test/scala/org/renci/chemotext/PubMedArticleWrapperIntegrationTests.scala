@@ -219,7 +219,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         prism:endingPage           "28" ;
         prism:pageRange            "715-28" ;
         prism:startingPage         "715" ;
-        dct:bibliographicCitation  "Rudolf Meier, Kwong Shiyang, Gaurav Vaidya, Peter K L Ng. DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success. Systematic biology (2006);55(5):715-28. PubMed PMID: 17060194" ;
+        dct:bibliographicCitation  "Meier R, Shiyang K, Vaidya G, Ng PK. DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success. Systematic biology (2006);55(5):715-28. PubMed PMID: 17060194" ;
         dct:creator                ( [ a                foaf:Agent ;
                                        foaf:familyName  "Meier" ;
                                        foaf:givenName   "Rudolf"

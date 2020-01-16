@@ -58,6 +58,7 @@ class AuthorWrapper(node: Node) {
     if (suffix.isEmpty) lastName else s"$lastName $suffix"
   }
   val name: String = if (!collectiveName.isEmpty) collectiveName else s"$givenName $familyName"
+  val shortName: String = if (initials.isEmpty) lastName else s"$lastName $initials"
 }
 
 object AuthorWrapper {
@@ -412,7 +413,7 @@ object PubMedTripleGenerator {
       .createStatement(pmidIRI, DCTerms.creator, authorRDFList)
 
     // Build a string citation from the provided information.
-    val authorString = pubMedArticleWrapped.authors.map(_.name).mkString(", ")
+    val authorString = pubMedArticleWrapped.authors.map(_.shortName).mkString(", ")
     val titleString = pubMedArticleWrapped.title + (if (pubMedArticleWrapped.title.endsWith(".")) "" else ".")
     val journalTitle = pubMedArticleWrapped.journalTitle
     val pubYear = pubMedArticleWrapped.pubDateYears.mkString(", ")
