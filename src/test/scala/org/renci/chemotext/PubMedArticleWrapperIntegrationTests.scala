@@ -268,8 +268,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       val foundGraph = graph.Factory.createDefaultGraph
       triples.foreach(foundGraph.add(_))
       val stringWriter = new StringWriter()
-      val model        = ModelFactory.createModelForGraph(foundGraph)
-      model.setNsPrefixes(
+      val model        = ModelFactory.createModelForGraph(foundGraph).setNsPrefixes(
         Map(
           "dct"   -> "http://purl.org/dc/terms/",
           "fabio" -> "http://purl.org/spar/fabio/",
