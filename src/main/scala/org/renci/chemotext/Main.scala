@@ -49,7 +49,8 @@ class AuthorWrapper(node: Node) {
   // TODO: add support for <EqualContrib>
 
   // Support for identifiers.
-  val identifier          = (node \ "Identifier").map(id => (id.attribute("Source").map(_.text).mkString(", ") -> id.text))
+  val identifier =
+    (node \ "Identifier").map(id => (id.attribute("Source").map(_.text).mkString(", ") -> id.text))
   val orcIds: Seq[String] = identifier.filter(_._1 == "ORCID").map(_._2)
 
   // FOAF uses foaf:givenName and foaf:familyName.
@@ -57,7 +58,7 @@ class AuthorWrapper(node: Node) {
   val familyName: String = {
     if (suffix.isEmpty) lastName else s"$lastName $suffix"
   }
-  val name: String = if (!collectiveName.isEmpty) collectiveName else s"$givenName $familyName"
+  val name: String      = if (!collectiveName.isEmpty) collectiveName else s"$givenName $familyName"
   val shortName: String = if (initials.isEmpty) lastName else s"$lastName $initials"
 }
 
@@ -151,12 +152,14 @@ class PubMedArticleWrapper(val article: Node) {
     )
     .mapValues(_.map(_.text))
   val dois: Seq[String] = articleIdInfo.getOrElse("doi", Seq())
-  val authors: Seq[AuthorWrapper] = (article \\ "AuthorList").headOption.map(authorListNode => {
-      val authorList      = authorListNode.nonEmptyChildren.map(new AuthorWrapper(_))
+  val authors: Seq[AuthorWrapper] = (article \\ "AuthorList").headOption
+    .map(authorListNode => {
+      val authorList = authorListNode.nonEmptyChildren.map(new AuthorWrapper(_))
       if (authorListNode.attribute("CompleteYN") == "N")
         (authorList :+ AuthorWrapper.ET_AL)
       else authorList
-  }).getOrElse(Seq())
+    })
+    .getOrElse(Seq())
 
   // Extract gene symbols and MeSH headings.
   val geneSymbols: String = (article \\ "GeneSymbol").map(_.text).mkString(" ")
@@ -213,8 +216,8 @@ class Annotator(neo4jLocation: String) {
   def extractAnnotations(str: String): List[EntityAnnotation] = {
     val configBuilder =
       new EntityFormatConfiguration.Builder(new StringReader(QueryParserBase.escape(str)))
-      .longestOnly(true)
-      .minLength(3)
+        .longestOnly(true)
+        .minLength(3)
     processor.annotateEntities(configBuilder.get).asScala.toList
   }
 }
@@ -298,18 +301,19 @@ object PubMedTripleGenerator {
       // start page and an end page.
       val pageRangeRegex = raw"(.+?)\s*-\s*(.+)".r
       val startEndPageStatements = pubMedArticleWrapped.medlinePgnNodes.map(_.text) match {
-        case Seq(pageRangeRegex(startPage, endPage)) => Seq(
-          ResourceFactory.createStatement(
-            pmidIRI,
-            ResourceFactory.createProperty(s"$PRISMBasicNamespace/startingPage"),
-            ResourceFactory.createStringLiteral(startPage)
-          ),
-          ResourceFactory.createStatement(
-            pmidIRI,
-            ResourceFactory.createProperty(s"$PRISMBasicNamespace/endingPage"),
-            ResourceFactory.createStringLiteral(endPage)
+        case Seq(pageRangeRegex(startPage, endPage)) =>
+          Seq(
+            ResourceFactory.createStatement(
+              pmidIRI,
+              ResourceFactory.createProperty(s"$PRISMBasicNamespace/startingPage"),
+              ResourceFactory.createStringLiteral(startPage)
+            ),
+            ResourceFactory.createStatement(
+              pmidIRI,
+              ResourceFactory.createProperty(s"$PRISMBasicNamespace/endingPage"),
+              ResourceFactory.createStringLiteral(endPage)
+            )
           )
-        )
         case _ => Seq()
       }
 
@@ -336,9 +340,8 @@ object PubMedTripleGenerator {
       //    }
       //  }
       val journalModel = ModelFactory.createDefaultModel
-      val journalResource = journalModel.createResource(
-        ResourceFactory.createResource(s"$FaBiONamespace/Journal")
-      )
+      val journalResource = journalModel
+        .createResource(ResourceFactory.createResource(s"$FaBiONamespace/Journal"))
         .addProperty(DCTerms.title, pubMedArticleWrapped.journalTitle)
         .addProperty(
           ResourceFactory.createProperty(s"$FaBiONamespace/hasNLMJournalTitleAbbreviation"),
@@ -349,7 +352,7 @@ object PubMedTripleGenerator {
         val prismPropName = issnNode.attribute("IssnType").map(_.text) match {
           case Some("Electronic") => "eIssn"
           case Some("Print")      => "issn"
-          case _                       => "issn"
+          case _                  => "issn"
         }
 
         journalResource.addProperty(
@@ -358,29 +361,24 @@ object PubMedTripleGenerator {
         )
       })
 
-      val volumeResource = journalModel.createResource(
-        ResourceFactory.createResource(s"$FaBiONamespace/JournalVolume")
-      )
+      val volumeResource = journalModel
+        .createResource(ResourceFactory.createResource(s"$FaBiONamespace/JournalVolume"))
         .addProperty(
           ResourceFactory.createProperty(s"$PRISMBasicNamespace/volume"),
           pubMedArticleWrapped.journalVolume
         )
-        .addProperty(
-          ResourceFactory.createProperty(s"$FRBRNamespace#partOf"),
-          journalResource
-        )
+        .addProperty(ResourceFactory.createProperty(s"$FRBRNamespace#partOf"), journalResource)
 
-      val issueResource = if(pubMedArticleWrapped.journalIssue.isEmpty) volumeResource else journalModel.createResource(
-        ResourceFactory.createResource(s"$FaBiONamespace/JournalIssue")
-      )
-        .addProperty(
-          ResourceFactory.createProperty(s"$PRISMBasicNamespace/issueIdentifier"),
-          pubMedArticleWrapped.journalIssue
-        )
-        .addProperty(
-          ResourceFactory.createProperty(s"$FRBRNamespace#partOf"),
-          volumeResource
-        )
+      val issueResource =
+        if (pubMedArticleWrapped.journalIssue.isEmpty) volumeResource
+        else
+          journalModel
+            .createResource(ResourceFactory.createResource(s"$FaBiONamespace/JournalIssue"))
+            .addProperty(
+              ResourceFactory.createProperty(s"$PRISMBasicNamespace/issueIdentifier"),
+              pubMedArticleWrapped.journalIssue
+            )
+            .addProperty(ResourceFactory.createProperty(s"$FRBRNamespace#partOf"), volumeResource)
 
       // Convert the Journal Model into a Scala sequence of RDF statements and add the journal issue.
       journalModel.listStatements.toList.asScala :+ ResourceFactory.createStatement(
@@ -395,9 +393,12 @@ object PubMedTripleGenerator {
       (
         // If we have an ORCID for this author, use that to create a URL for this author. Otherwise, leave it as a blank node.
         if (author.orcIds.isEmpty) authorModel.createResource(FOAF.Agent)
-        else authorModel.createResource(s"http://orcid.org/${author.orcIds.headOption.getOrElse("")}#person", FOAF.Agent)
-      )
-        .addProperty(
+        else
+          authorModel.createResource(
+            s"http://orcid.org/${author.orcIds.headOption.getOrElse("")}#person",
+            FOAF.Agent
+          )
+      ).addProperty(
           ResourceFactory.createProperty(s"$FOAFNamespace/familyName"),
           ResourceFactory.createTypedLiteral(author.familyName, XSDDatatype.XSDstring)
         )
@@ -412,14 +413,18 @@ object PubMedTripleGenerator {
 
     // Build a string citation from the provided information.
     val authorString = pubMedArticleWrapped.authors.map(_.shortName).mkString(", ")
-    val titleString = pubMedArticleWrapped.title + (if (pubMedArticleWrapped.title.endsWith(".")) "" else ".")
-    val journalTitle = pubMedArticleWrapped.journalTitle
-    val pubYear = pubMedArticleWrapped.pubDateYears.mkString(", ")
+    val titleString = pubMedArticleWrapped.title + (if (pubMedArticleWrapped.title.endsWith(".")) ""
+                                                    else ".")
+    val journalTitle  = pubMedArticleWrapped.journalTitle
+    val pubYear       = pubMedArticleWrapped.pubDateYears.mkString(", ")
     val journalVolume = pubMedArticleWrapped.journalVolume
-    val journalIssue = if (pubMedArticleWrapped.journalIssue.isEmpty) "" else s"(${pubMedArticleWrapped.journalIssue})"
+    val journalIssue =
+      if (pubMedArticleWrapped.journalIssue.isEmpty) ""
+      else s"(${pubMedArticleWrapped.journalIssue})"
     val journalPages = pubMedArticleWrapped.medlinePagination
-    val pmid = pubMedArticleWrapped.pmid
-    val citationString = s"$authorString. $titleString $journalTitle ($pubYear);$journalVolume$journalIssue:$journalPages. PubMed PMID: $pmid"
+    val pmid         = pubMedArticleWrapped.pmid
+    val citationString =
+      s"$authorString. $titleString $journalTitle ($pubYear);$journalVolume$journalIssue:$journalPages. PubMed PMID: $pmid"
 
     val metadataStatements = publicationMetadataStatements ++
       authorStatements ++
@@ -428,10 +433,10 @@ object PubMedTripleGenerator {
         pmidIRI,
         DCTerms.modified
       )) :+ ResourceFactory.createStatement(
-        pmidIRI,
-        DCTerms.bibliographicCitation,
-        ResourceFactory.createStringLiteral(citationString)
-      )
+      pmidIRI,
+      DCTerms.bibliographicCitation,
+      ResourceFactory.createStringLiteral(citationString)
+    )
 
     // Extract meshIRIs as RDF statements.
     val meshIRIs = pubMedArticleWrapped.allMeshTermIDs map (

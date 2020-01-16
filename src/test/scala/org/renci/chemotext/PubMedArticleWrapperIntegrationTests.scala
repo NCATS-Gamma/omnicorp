@@ -121,10 +121,10 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
             "http://prismstandard.org/namespaces/basic/3.0/endingPage" -> Map(
               "http://www.w3.org/2001/XMLSchema#string" -> 1
             ),
-            "http://purl.org/vocab/frbr/core#partOf" -> Map(
-              "blank" -> 1
-            ),
-            "http://purl.org/dc/terms/bibliographicCitation" -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1)
+            "http://purl.org/vocab/frbr/core#partOf" -> Map("blank" -> 1),
+            "http://purl.org/dc/terms/bibliographicCitation" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            )
           )
         )
       )
@@ -174,8 +174,12 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         summarizedTriples == Map(
           "http://orcid.org/0000000305870454#person" -> Map(
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI" -> 1),
-            "http://xmlns.com/foaf/0.1/familyName" -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
-            "http://xmlns.com/foaf/0.1/givenName" -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1)
+            "http://xmlns.com/foaf/0.1/familyName" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://xmlns.com/foaf/0.1/givenName" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            )
           ),
           "https://www.ncbi.nlm.nih.gov/pubmed/17060194" -> Map(
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI" -> 1),
@@ -203,10 +207,10 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
             "http://prismstandard.org/namespaces/basic/3.0/endingPage" -> Map(
               "http://www.w3.org/2001/XMLSchema#string" -> 1
             ),
-            "http://purl.org/vocab/frbr/core#partOf" -> Map(
-              "blank" -> 1
-            ),
-            "http://purl.org/dc/terms/bibliographicCitation" -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1)
+            "http://purl.org/vocab/frbr/core#partOf" -> Map("blank" -> 1),
+            "http://purl.org/dc/terms/bibliographicCitation" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            )
           )
         )
       )
@@ -268,20 +272,22 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       val foundGraph = graph.Factory.createDefaultGraph
       triples.foreach(foundGraph.add(_))
       val stringWriter = new StringWriter()
-      val model        = ModelFactory.createModelForGraph(foundGraph).setNsPrefixes(
-        Map(
-          "dct"   -> "http://purl.org/dc/terms/",
-          "fabio" -> "http://purl.org/spar/fabio/",
-          "frbr"  -> "http://purl.org/vocab/frbr/core#",
-          "foaf"  -> "http://xmlns.com/foaf/0.1/",
-          "xsd"   -> "http://www.w3.org/2001/XMLSchema#",
-          "prism" -> "http://prismstandard.org/namespaces/basic/3.0/"
-        ).asJava
-      )
+      val model = ModelFactory
+        .createModelForGraph(foundGraph)
+        .setNsPrefixes(
+          Map(
+            "dct"   -> "http://purl.org/dc/terms/",
+            "fabio" -> "http://purl.org/spar/fabio/",
+            "frbr"  -> "http://purl.org/vocab/frbr/core#",
+            "foaf"  -> "http://xmlns.com/foaf/0.1/",
+            "xsd"   -> "http://www.w3.org/2001/XMLSchema#",
+            "prism" -> "http://prismstandard.org/namespaces/basic/3.0/"
+          ).asJava
+        )
       val baos = new ByteArrayOutputStream()
       RDFWriter.create.source(model).format(RDFFormat.TURTLE_PRETTY).output(baos);
 
-      val actual = baos.toString("UTF-8").split("\n")
+      val actual   = baos.toString("UTF-8").split("\n")
       val expected = expectedTriplesAsTurtle.split("\n")
 
       // assert(baos.toString("UTF-8") == expectedTriplesAsTurtle)
@@ -335,10 +341,10 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
             "http://prismstandard.org/namespaces/basic/3.0/endingPage" -> Map(
               "http://www.w3.org/2001/XMLSchema#string" -> 1
             ),
-            "http://purl.org/vocab/frbr/core#partOf" -> Map(
-              "blank" -> 1
-            ),
-            "http://purl.org/dc/terms/bibliographicCitation" -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1)
+            "http://purl.org/vocab/frbr/core#partOf" -> Map("blank" -> 1),
+            "http://purl.org/dc/terms/bibliographicCitation" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            )
           )
         )
       )
@@ -380,7 +386,9 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
             "http://purl.org/dc/terms/creator"    -> Map("blank"                                   -> 1),
             "http://purl.org/dc/terms/references" -> Map("URI"                                     -> 7),
             "http://purl.org/dc/terms/issued"     -> Map("http://www.w3.org/2001/XMLSchema#gYear"  -> 1),
-            "http://purl.org/dc/terms/modified"   -> Map("http://www.w3.org/2001/XMLSchema#date"   -> 1),
+            "http://purl.org/dc/terms/modified" -> Map(
+              "http://www.w3.org/2001/XMLSchema#date" -> 1
+            ),
             "http://prismstandard.org/namespaces/basic/3.0/pageRange" -> Map(
               "http://www.w3.org/2001/XMLSchema#string" -> 1
             ),
@@ -390,10 +398,10 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
             "http://prismstandard.org/namespaces/basic/3.0/endingPage" -> Map(
               "http://www.w3.org/2001/XMLSchema#string" -> 1
             ),
-            "http://purl.org/vocab/frbr/core#partOf" -> Map(
-              "blank" -> 1
-            ),
-            "http://purl.org/dc/terms/bibliographicCitation" -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1)
+            "http://purl.org/vocab/frbr/core#partOf" -> Map("blank" -> 1),
+            "http://purl.org/dc/terms/bibliographicCitation" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            )
           )
         )
       )
