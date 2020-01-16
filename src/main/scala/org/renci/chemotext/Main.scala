@@ -151,16 +151,12 @@ class PubMedArticleWrapper(val article: Node) {
     )
     .mapValues(_.map(_.text))
   val dois: Seq[String] = articleIdInfo.getOrElse("doi", Seq())
-  val authors: Seq[AuthorWrapper] = {
-    val authorListNodes = (article \\ "AuthorList")
-    if (authorListNodes.isEmpty) Seq() else {
-      val authorListNode  = authorListNodes.head
+  val authors: Seq[AuthorWrapper] = (article \\ "AuthorList").headOption.map(authorListNode => {
       val authorList      = authorListNode.nonEmptyChildren.map(new AuthorWrapper(_))
       if (authorListNode.attribute("CompleteYN") == "N")
         (authorList :+ AuthorWrapper.ET_AL)
       else authorList
-    }
-  }
+  }).getOrElse(Seq())
 
   // Extract gene symbols and MeSH headings.
   val geneSymbols: String = (article \\ "GeneSymbol").map(_.text).mkString(" ")
