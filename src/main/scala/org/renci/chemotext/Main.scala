@@ -49,7 +49,7 @@ class AuthorWrapper(node: Node) {
   // TODO: add support for <EqualContrib>
 
   // Support for identifiers.
-  val identifier          = (node \ "Identifier").map(id => (id.attribute("Source") -> id.text))
+  val identifier          = (node \ "Identifier").map(id => (id.attribute("Source").map(_.text).mkString(", ") -> id.text))
   val orcIds: Seq[String] = identifier.filter(_._1 == "ORCID").map(_._2)
 
   // FOAF uses foaf:givenName and foaf:familyName.
