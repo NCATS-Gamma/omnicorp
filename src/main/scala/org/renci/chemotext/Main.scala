@@ -217,8 +217,8 @@ class Annotator(neo4jLocation: String) {
   def extractAnnotations(str: String): List[EntityAnnotation] = {
     val configBuilder =
       new EntityFormatConfiguration.Builder(new StringReader(QueryParserBase.escape(str)))
-    configBuilder.longestOnly(true)
-    configBuilder.minLength(3)
+      .longestOnly(true)
+      .minLength(3)
     processor.annotateEntities(configBuilder.get).asScala.toList
   }
 }
@@ -233,6 +233,7 @@ object PubMedTripleGenerator {
   val FRBRNamespace       = "http://purl.org/vocab/frbr/core"
 
   // Extract dates as RDF statements.
+  @SuppressWarnings(Array("org.wartremover.warts.Throw"))
   def convertDatesToTriples(pmidIRI: Resource, property: Property)(
     date: Try[TemporalAccessor]
   ): Statement = {
@@ -373,7 +374,7 @@ object PubMedTripleGenerator {
           journalResource
         )
 
-      val issueResource = journalModel.createResource(
+      val issueResource = if(pubMedArticleWrapped.journalIssue.isEmpty) volumeResource else journalModel.createResource(
         ResourceFactory.createResource(s"$FaBiONamespace/JournalIssue")
       )
         .addProperty(
@@ -385,14 +386,12 @@ object PubMedTripleGenerator {
           volumeResource
         )
 
-      journalModel.add(ResourceFactory.createStatement(
+      // Convert the Journal Model into a Scala sequence of RDF statements and add the journal issue.
+      journalModel.listStatements.toList.asScala :+ ResourceFactory.createStatement(
         pmidIRI,
         ResourceFactory.createProperty(s"$FRBRNamespace#partOf"),
         issueResource
-      ))
-
-      // Convert the Journal Model into a Scala sequence of RDF statements.
-      journalModel.listStatements.toList.asScala
+      )
     })
 
     val authorModel = ModelFactory.createDefaultModel
@@ -514,7 +513,7 @@ object Main extends App with LazyLogging {
         e.printStackTrace()
         rdfStream.finish()
         outStream.close()
-        system.terminate()
+        val terminateFuture = system.terminate()
         optAnnotator.foreach(_.dispose)
         System.exit(1)
       case _ =>
@@ -524,5 +523,4 @@ object Main extends App with LazyLogging {
     logger.info(s"Done processing $file")
   }
   optAnnotator.foreach(_.dispose)
-  system.terminate()
 }
