@@ -392,8 +392,11 @@ object PubMedTripleGenerator {
 
     val authorModel = ModelFactory.createDefaultModel
     val authorResources = pubMedArticleWrapped.authors.map({ author =>
-      authorModel
-        .createResource(FOAF.Agent)
+      (
+        // If we have an ORCID for this author, use that to create a URL for this author. Otherwise, leave it as a blank node.
+        if (author.orcIds.isEmpty) authorModel.createResource(FOAF.Agent)
+        else authorModel.createResource(s"http://orcid.org/${author.orcIds.headOption.getOrElse("")}#person", FOAF.Agent)
+      )
         .addProperty(
           ResourceFactory.createProperty(s"$FOAFNamespace/familyName"),
           ResourceFactory.createTypedLiteral(author.familyName, XSDDatatype.XSDstring)

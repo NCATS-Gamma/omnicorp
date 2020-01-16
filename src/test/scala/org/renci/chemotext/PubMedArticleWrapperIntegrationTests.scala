@@ -94,6 +94,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
 
       val summarizedTriples =
         summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
+
       assert(
         summarizedTriples == Map(
           "https://www.ncbi.nlm.nih.gov/pubmed/11237011" -> Map(
@@ -168,8 +169,14 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
 
       val triples           = PubMedTripleGenerator.generateTriples(wrappedArticle, None)
       val summarizedTriples = summarizeTriples(triples)
+
       assert(
         summarizedTriples == Map(
+          "http://orcid.org/0000000305870454#person" -> Map(
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI" -> 1),
+            "http://xmlns.com/foaf/0.1/familyName" -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
+            "http://xmlns.com/foaf/0.1/givenName" -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1)
+          ),
           "https://www.ncbi.nlm.nih.gov/pubmed/17060194" -> Map(
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI" -> 1),
             "http://purl.org/spar/fabio/hasPublicationYear" -> Map(
@@ -213,6 +220,11 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
 @prefix prism: <http://prismstandard.org/namespaces/basic/3.0/> .
 @prefix foaf:  <http://xmlns.com/foaf/0.1/> .
 
+<http://orcid.org/0000000305870454#person>
+        a                foaf:Agent ;
+        foaf:familyName  "Vaidya" ;
+        foaf:givenName   "Gaurav" .
+
 <https://www.ncbi.nlm.nih.gov/pubmed/17060194>
         a                          fabio:Article ;
         prism:doi                  "10.1080/10635150600969864" ;
@@ -228,10 +240,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
                                        foaf:familyName  "Shiyang" ;
                                        foaf:givenName   "Kwong"
                                      ]
-                                     [ a                foaf:Agent ;
-                                       foaf:familyName  "Vaidya" ;
-                                       foaf:givenName   "Gaurav"
-                                     ]
+                                     <http://orcid.org/0000000305870454#person>
                                      [ a                foaf:Agent ;
                                        foaf:familyName  "Ng" ;
                                        foaf:givenName   "Peter K L"

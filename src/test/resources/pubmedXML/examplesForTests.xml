@@ -1556,6 +1556,7 @@
                       <LastName>Vaidya</LastName>
                       <ForeName>Gaurav</ForeName>
                       <Initials>G</Initials>
+                      <Identifier Source="ORCID">0000000305870454</Identifier>
                   </Author>
                   <Author ValidYN="Y">
                       <LastName>Ng</LastName>
