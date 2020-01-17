@@ -138,7 +138,15 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         wrappedArticle.title == "DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success."
       )
       val authorNames = wrappedArticle.authors.map(_.name)
-      assert(authorNames == Seq("Rudolf Meier", "Kwong Shiyang", "Gaurav Vaidya Jr", "Peter K L Ng", "et al"))
+      assert(
+        authorNames == Seq(
+          "Rudolf Meier",
+          "Kwong Shiyang",
+          "Gaurav Vaidya Jr",
+          "Peter K L Ng",
+          "et al"
+        )
+      )
       assert(
         wrappedArticle.asString == "DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success. DNA barcoding and DNA taxonomy have recently been proposed as solutions to the crisis of taxonomy and received significant attention from scientific journals, grant agencies, natural history museums, and mainstream media. Here, we test two key claims of molecular taxonomy using 1333 mitochondrial COI sequences for 449 species of Diptera. We investigate whether sequences can be used for species identification (\"DNA barcoding\") and find a relatively low success rate (< 70%) based on tree-based and newly proposed species identification criteria. Misidentifications are due to wide overlap between intra- and interspecific genetic variability, which causes 6.5% of all query sequences to have allospecific or a mixture of allo- and conspecific (3.6%) best-matching barcodes. Even when two COI sequences are identical, there is a 6% chance that they belong to different species. We also find that 21% of all species lack unique barcodes when consensus sequences of all conspecific sequences are used. Lastly, we test whether DNA sequences yield an unambiguous species-level taxonomy when sequence profiles are assembled based on pairwise distance thresholds. We find many sequence triplets for which two of the three pairwise distances remain below the threshold, whereas the third exceeds it; i.e., it is impossible to consistently delimit species based on pairwise distances. Furthermore, for species profiles based on a 3% threshold, only 47% of all profiles are consistent with currently accepted species limits, 20% contain more than one species, and 33% only some sequences from one species; i.e., adopting such a DNA taxonomy would require the redescription of a large proportion of the known species, thus worsening the taxonomic impediment. We conclude with an outlook on the prospects of obtaining complete barcode databases and the future use of DNA sequences in a modern integrative taxonomy. Electron Transport Complex IV DNA, Mitochondrial Sequence Analysis, DNA DNA, Mitochondrial chemistry Animals Electron Transport Complex IV chemistry genetics Base Sequence Genetic Variation Classification methods Diptera classification genetics Phylogeny Consensus Sequence Species Specificity "
       )
@@ -171,10 +179,8 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       assert(
         summarizedTriples == Map(
           "http://orcid.org/0000000305870454#person" -> Map(
-            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI" -> 1),
-            "http://xmlns.com/foaf/0.1/name" -> Map(
-              "http://www.w3.org/2001/XMLSchema#string" -> 1
-            ),
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI"                                     -> 1),
+            "http://xmlns.com/foaf/0.1/name"                  -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
             "http://xmlns.com/foaf/0.1/familyName" -> Map(
               "http://www.w3.org/2001/XMLSchema#string" -> 1
             ),
