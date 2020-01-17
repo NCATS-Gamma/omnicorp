@@ -2,8 +2,7 @@ package org.renci.chemotext
 
 import java.io.{File, FileInputStream, FileOutputStream, StringReader}
 import java.time._
-import java.time.format.DateTimeFormatter
-import java.time.temporal.{TemporalAccessor, ChronoField}
+import java.time.temporal.TemporalAccessor
 import java.util.HashMap
 import java.util.zip.GZIPInputStream
 
@@ -35,7 +34,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success, Try}
-import scala.xml.{Elem, Node, NodeSeq}
+import scala.xml.Elem
 
 /** Methods for extracting annotations from text using SciGraph */
 class Annotator(neo4jLocation: String) {
@@ -316,10 +315,10 @@ object PubMedTripleGenerator {
 }
 
 object Main extends App with LazyLogging {
-  val scigraphLocation = args(0)
+  val scigraphLocation: String = args(0)
   val dataDir          = new File(args(1))
-  val outDir           = args(2)
-  val parallelism      = args(3).toInt
+  val outDir: String           = args(2)
+  val parallelism: Int      = args(3).toInt
 
   val optAnnotator: Option[Annotator] =
     if (scigraphLocation == "none") None else Some(new Annotator(scigraphLocation))
@@ -328,7 +327,7 @@ object Main extends App with LazyLogging {
   implicit val dispatcher: ExecutionContextExecutor = system.dispatcher
   implicit val materializer: ActorMaterializer      = ActorMaterializer()
 
-  val dataFiles =
+  val dataFiles: List[File] =
     if (dataDir.isFile) List(dataDir)
     else dataDir.listFiles().filter(_.getName.endsWith(".xml.gz")).toList
 
