@@ -316,9 +316,9 @@ object PubMedTripleGenerator {
 
 object Main extends App with LazyLogging {
   val scigraphLocation: String = args(0)
-  val dataDir          = new File(args(1))
+  val dataDir                  = new File(args(1))
   val outDir: String           = args(2)
-  val parallelism: Int      = args(3).toInt
+  val parallelism: Int         = args(3).toInt
 
   val optAnnotator: Option[Annotator] =
     if (scigraphLocation == "none") None else Some(new Annotator(scigraphLocation))

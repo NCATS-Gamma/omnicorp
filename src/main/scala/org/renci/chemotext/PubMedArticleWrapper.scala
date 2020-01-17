@@ -4,7 +4,6 @@ import java.time._
 import java.time.format.DateTimeFormatter
 import java.time.temporal.{TemporalAccessor, ChronoField}
 
-
 import scala.util.{Failure, Success, Try}
 import scala.xml.{Node, NodeSeq}
 

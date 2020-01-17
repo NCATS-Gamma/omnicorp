@@ -1,18 +1,16 @@
 package org.renci.chemotext
 
-
-
 import scala.xml.Node
 import scala.collection.immutable
 
 /** Author name management. */
 class AuthorWrapper(node: Node) {
-  val isSpellingCorrect = ((node \ "ValidYN").text == "Y")
-  val collectiveName: String    = (node \ "CollectiveName").text
-  val lastName: String          = (node \ "LastName").text
-  val foreName: String          = (node \ "ForeName").text
-  val suffix: String            = (node \ "Suffix").text
-  val initials: String          = (node \ "Initials").text
+  val isSpellingCorrect      = ((node \ "ValidYN").text == "Y")
+  val collectiveName: String = (node \ "CollectiveName").text
+  val lastName: String       = (node \ "LastName").text
+  val foreName: String       = (node \ "ForeName").text
+  val suffix: String         = (node \ "Suffix").text
+  val initials: String       = (node \ "Initials").text
   // TODO: add support for <AffiliationInfo>
   // TODO: add support for <EqualContrib>
 
