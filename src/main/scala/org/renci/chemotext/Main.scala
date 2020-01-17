@@ -405,17 +405,17 @@ object PubMedTripleGenerator {
 
       if (author.collectiveName.isEmpty) {
         authorResource.addProperty(
-          ResourceFactory.createProperty(s"$FOAFNamespace/name"),
-          ResourceFactory.createTypedLiteral(author.name, XSDDatatype.XSDstring)
-        )
-        authorResource.addProperty(
-          ResourceFactory.createProperty(s"$FOAFNamespace/familyName"),
-          ResourceFactory.createTypedLiteral(author.familyName, XSDDatatype.XSDstring)
-        )
-        .addProperty(
-          ResourceFactory.createProperty(s"$FOAFNamespace/givenName"),
-          ResourceFactory.createTypedLiteral(author.givenName, XSDDatatype.XSDstring)
-        )
+            ResourceFactory.createProperty(s"$FOAFNamespace/name"),
+            ResourceFactory.createTypedLiteral(author.name, XSDDatatype.XSDstring)
+          )
+          .addProperty(
+            ResourceFactory.createProperty(s"$FOAFNamespace/familyName"),
+            ResourceFactory.createTypedLiteral(author.familyName, XSDDatatype.XSDstring)
+          )
+          .addProperty(
+            ResourceFactory.createProperty(s"$FOAFNamespace/givenName"),
+            ResourceFactory.createTypedLiteral(author.givenName, XSDDatatype.XSDstring)
+          )
       } else {
         authorResource.addProperty(
           ResourceFactory.createProperty(s"$FOAFNamespace/name"),
