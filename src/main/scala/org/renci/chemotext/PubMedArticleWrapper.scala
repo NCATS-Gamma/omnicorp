@@ -14,19 +14,6 @@ object PubMedArticleWrapper {
     // Extract the Year/Month/Day fields. Note that the month requires additional
     // processing, since it may be a month name ("Apr") or a number ("4").
 
-    def parseMedlineDate(node: Node): Try[TemporalAccessor] = {
-      // No year? That's probably because we have a MedlineDate instead.
-      // MedlineDates have different forms (e.g. "1989 Dec-1999 Jan", "2000 Spring", "2000 Dec 23-30").
-      // For now, we check to see if it starts with four digits, suggesting an year.
-      // See https://www.nlm.nih.gov/bsd/licensee/elements_descriptions.html#medlinedate for more details.
-      val medlineDateYearMatcher = """^.*?\b(\d{4})\b.*$""".r
-      val medlineDate            = (date \\ "MedlineDate").text
-      medlineDate match {
-        case medlineDateYearMatcher(year) => Success(Year.of(year.toInt))
-        case _                            => Failure(new IllegalArgumentException(s"Could not parse XML node as date: $date"))
-      }
-    }
-
     // Parse the year and day-of-year, if possible.
     val maybeYear: Try[Int]       = Try((date \\ "Year").text.toInt)
     val maybeDayOfMonth: Try[Int] = Try((date \\ "Day").text.toInt)
@@ -52,7 +39,18 @@ object PubMedArticleWrapper {
           Failure(new RuntimeException(s"Could not extract month from node: $date"))
         else Success(Year.of(year))
       })
-    } getOrElse (parseMedlineDate(date))
+    } getOrElse {
+      // No year? That's probably because we have a MedlineDate instead.
+      // MedlineDates have different forms (e.g. "1989 Dec-1999 Jan", "2000 Spring", "2000 Dec 23-30").
+      // For now, we check to see if it starts with four digits, suggesting an year.
+      // See https://www.nlm.nih.gov/bsd/licensee/elements_descriptions.html#medlinedate for more details.
+      val medlineDateYearMatcher = """^.*?\b(\d{4})\b.*$""".r
+      val medlineDate            = (date \\ "MedlineDate").text
+      medlineDate match {
+        case medlineDateYearMatcher(year) => Success(Year.of(year.toInt))
+        case _                            => Failure(new IllegalArgumentException(s"Could not parse XML node as date: $date"))
+      }
+    }
   }
 }
 
