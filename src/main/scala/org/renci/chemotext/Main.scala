@@ -339,6 +339,13 @@ object Main extends App with LazyLogging {
     elem
   }
 
+  // Helper method for terminating Akka.
+  @SuppressWarnings(Array("org.wartremover.warts.NonUnitStatements"))
+  def terminateAkka(): Unit = {
+    system.terminate()
+    optAnnotator.foreach(_.dispose)
+  }
+
   dataFiles.foreach { file =>
     // Load all articles and wrap them with PubMedArticleWrappers.
     val rootElement     = readXMLFromGZip(file)
@@ -368,8 +375,7 @@ object Main extends App with LazyLogging {
         e.printStackTrace()
         rdfStream.finish()
         outStream.close()
-        val terminateFuture = system.terminate()
-        optAnnotator.foreach(_.dispose)
+        terminateAkka()
         System.exit(1)
       case _ =>
         rdfStream.finish()
@@ -377,5 +383,5 @@ object Main extends App with LazyLogging {
     }
     logger.info(s"Done processing $file")
   }
-  optAnnotator.foreach(_.dispose)
+  terminateAkka()
 }
