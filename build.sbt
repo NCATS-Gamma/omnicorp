@@ -45,7 +45,7 @@ libraryDependencies ++= {
     "com.typesafe.scala-logging"  %% "scala-logging"          % "3.7.1",
     "ch.qos.logback"              %  "logback-classic"        % "1.2.3",
     "org.codehaus.groovy"         %  "groovy-all"             % "2.4.6",
-    "org.apache.jena"             %  "apache-jena-libs"       % "3.2.0", //pomOnly()
+    "org.apache.jena"             %  "apache-jena-libs"       % "3.13.1",
     "com.lihaoyi"                 %% "utest"                  % "0.7.1" % "test"
   )
 }

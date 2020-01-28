@@ -3,7 +3,7 @@ package org.renci.chemotext
 import java.io.{File, FileInputStream, FileOutputStream, StringReader}
 import java.time._
 import java.time.format.DateTimeFormatter
-import java.time.temporal.TemporalAccessor
+import java.time.temporal.{TemporalAccessor, ChronoField}
 import java.util.HashMap
 import java.util.zip.GZIPInputStream
 
@@ -21,10 +21,11 @@ import io.scigraph.neo4j.NodeTransformer
 import io.scigraph.vocabulary.{Vocabulary, VocabularyNeo4jImpl}
 import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.graph
-import org.apache.jena.rdf.model.{Property, ResourceFactory, Statement}
+import org.apache.jena.rdf.model.{ModelFactory, Property, Resource, ResourceFactory, Statement}
 import org.apache.jena.riot.Lang
-import org.apache.jena.riot.system.{StreamOps, StreamRDFWriter}
-import org.apache.jena.vocabulary.DCTerms
+import org.apache.jena.riot.system.{StreamRDFOps, StreamRDFWriter}
+import org.apache.jena.vocabulary.{DCTerms, RDF}
+import org.apache.jena.sparql.vocabulary.FOAF
 import org.apache.lucene.queryparser.classic.QueryParserBase
 import org.neo4j.graphdb.GraphDatabaseService
 import org.neo4j.graphdb.factory.GraphDatabaseFactory
@@ -35,6 +36,35 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success, Try}
 import scala.xml.{Elem, Node, NodeSeq}
+
+/** Author name management. */
+class AuthorWrapper(node: Node) {
+  val isSpellingCorrect = ((node \ "ValidYN").text == "Y")
+  val collectiveName    = (node \ "CollectiveName").text
+  val lastName          = (node \ "LastName").text
+  val foreName          = (node \ "ForeName").text
+  val suffix            = (node \ "Suffix").text
+  val initials          = (node \ "Initials").text
+  // TODO: add support for <AffiliationInfo>
+  // TODO: add support for <EqualContrib>
+
+  // Support for identifiers.
+  val identifier =
+    (node \ "Identifier").map(id => (id.attribute("Source").map(_.text).mkString(", ") -> id.text))
+  val orcIds: Seq[String] = identifier.filter(_._1 == "ORCID").map(_._2)
+
+  // FOAF uses foaf:givenName and foaf:familyName.
+  val givenName: String = foreName
+  val familyName: String = {
+    if (suffix.isEmpty) lastName else s"$lastName $suffix"
+  }
+  val name: String      = if (!collectiveName.isEmpty) collectiveName else s"$givenName $familyName"
+  val shortName: String = if (initials.isEmpty) lastName else s"$lastName $initials"
+}
+
+object AuthorWrapper {
+  val ET_AL: AuthorWrapper = new AuthorWrapper(<Author><LastName>et al.</LastName></Author>)
+}
 
 /** An object containing code for working with PubMed articles. */
 object PubMedArticleWrapper {
@@ -91,9 +121,17 @@ class PubMedArticleWrapper(val article: Node) {
   val pmid: String                 = (article \ "MedlineCitation" \ "PMID").text
   val title: String                = (article \\ "ArticleTitle").map(_.text).mkString(" ")
   val abstractText: String         = (article \\ "AbstractText").map(_.text).mkString(" ")
+  val journalNodes: NodeSeq        = (article \\ "Article" \ "Journal")
+  val journalVolume: String        = (journalNodes \ "JournalIssue" \ "Volume").map(_.text).mkString(", ")
+  val journalIssue: String         = (journalNodes \ "JournalIssue" \ "Issue").map(_.text).mkString(", ")
+  val journalTitle: String         = (journalNodes \ "Title").map(_.text).mkString(", ")
+  val journalAbbr: String          = (journalNodes \ "ISOAbbreviation").map(_.text).mkString(", ")
+  val journalISSNNodes: NodeSeq    = (journalNodes \ "ISSN")
   val pubDatesAsNodes: NodeSeq     = article \\ "PubDate"
   val articleDatesAsNodes: NodeSeq = article \\ "ArticleDate"
   val revisedDatesAsNodes: NodeSeq = article \\ "DateRevised"
+  val medlinePgnNodes: NodeSeq     = article \\ "Pagination" \ "MedlinePgn"
+  val medlinePagination: String    = medlinePgnNodes.map(_.text).mkString(", ")
   val pubDatesParseResults: Seq[Try[TemporalAccessor]] =
     pubDatesAsNodes map PubMedArticleWrapper.parseDate
   val articleDatesParseResults: Seq[Try[TemporalAccessor]] =
@@ -101,8 +139,27 @@ class PubMedArticleWrapper(val article: Node) {
   val revisedDatesParseResults: Seq[Try[TemporalAccessor]] =
     revisedDatesAsNodes map PubMedArticleWrapper.parseDate
   val pubDates: Seq[TemporalAccessor]     = pubDatesParseResults.map(_.toOption).flatten
+  val pubDateYears: Seq[Int]              = pubDates.map(_.get(ChronoField.YEAR))
   val articleDates: Seq[TemporalAccessor] = articleDatesParseResults.map(_.toOption).flatten
   val revisedDates: Seq[TemporalAccessor] = revisedDatesParseResults.map(_.toOption).flatten
+
+  // Extract journal metadata.
+  val articleIdInfo: Map[String, Seq[String]] = (article \\ "ArticleIdList" \ "ArticleId")
+    .groupBy(                      // Group on the basis of attribute name, by
+      _.attribute("IdType")        // getting all values for attributes named "IdType";
+        .getOrElse(Seq("unknown")) // if none are present, default to "unknown", but
+        .mkString(" & ")           // if there are multiple, combine them with ' & '.
+    )
+    .mapValues(_.map(_.text))
+  val dois: Seq[String] = articleIdInfo.getOrElse("doi", Seq())
+  val authors: Seq[AuthorWrapper] = (article \\ "AuthorList").headOption
+    .map(authorListNode => {
+      val authorList = authorListNode.nonEmptyChildren.map(new AuthorWrapper(_))
+      if (authorListNode.attribute("CompleteYN").map(_.text).mkString(", ") == "N")
+        (authorList :+ AuthorWrapper.ET_AL)
+      else authorList
+    })
+    .getOrElse(Seq())
 
   // Extract gene symbols and MeSH headings.
   val geneSymbols: String = (article \\ "GeneSymbol").map(_.text).mkString(" ")
@@ -159,14 +216,43 @@ class Annotator(neo4jLocation: String) {
   def extractAnnotations(str: String): List[EntityAnnotation] = {
     val configBuilder =
       new EntityFormatConfiguration.Builder(new StringReader(QueryParserBase.escape(str)))
-    configBuilder.longestOnly(true)
-    configBuilder.minLength(3)
+        .longestOnly(true)
+        .minLength(3)
     processor.annotateEntities(configBuilder.get).asScala.toList
   }
 }
 
 /** Methods for generating an RDF description of a PubMedArticleWrapper. */
 object PubMedTripleGenerator {
+  // Some namespaces.
+  val MESHNamespace       = "http://id.nlm.nih.gov/mesh"
+  val PRISMBasicNamespace = "http://prismstandard.org/namespaces/basic/3.0"
+  val FOAFNamespace       = "http://xmlns.com/foaf/0.1"
+  val FaBiONamespace      = "http://purl.org/spar/fabio"
+  val FRBRNamespace       = "http://purl.org/vocab/frbr/core"
+
+  // Extract dates as RDF statements.
+  @SuppressWarnings(Array("org.wartremover.warts.Throw"))
+  def convertDatesToTriples(pmidIRI: Resource, property: Property)(
+    date: Try[TemporalAccessor]
+  ): Statement = {
+    ResourceFactory.createStatement(
+      pmidIRI,
+      property,
+      date match {
+        case Success(localDate: LocalDate) =>
+          ResourceFactory.createTypedLiteral(localDate.toString, XSDDatatype.XSDdate)
+        case Success(yearMonth: YearMonth) =>
+          ResourceFactory.createTypedLiteral(yearMonth.toString, XSDDatatype.XSDgYearMonth)
+        case Success(year: Year) =>
+          ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
+        case Success(ta: TemporalAccessor) =>
+          throw new RuntimeException(s"Unexpected temporal accessor found by parsing date: $ta")
+        case Failure(error: Throwable) => throw error
+      }
+    )
+  }
+
   /** Generate the triples for a particular PubMed article. */
   def generateTriples(
     pubMedArticleWrapped: PubMedArticleWrapper,
@@ -175,38 +261,190 @@ object PubMedTripleGenerator {
     // Generate an IRI for this PubMed article.
     val pmidIRI = ResourceFactory.createResource(pubMedArticleWrapped.iriAsString)
 
+    // Add publication metadata.
+    val publicationMetadata = Seq(
+      DCTerms.title                                               -> Seq(pubMedArticleWrapped.title),
+      ResourceFactory.createProperty(s"$PRISMBasicNamespace/doi") -> pubMedArticleWrapped.dois
+    )
+    val publicationMetadataStatements = publicationMetadata
+      .filter(!_._2.isEmpty)
+      .map({
+        case (prop, value) =>
+          ResourceFactory.createStatement(
+            pmidIRI,
+            prop,
+            ResourceFactory.createTypedLiteral(value.mkString(", "), XSDDatatype.XSDstring)
+          )
+      }) ++ Seq(
+      // <pmidIRI> a fabio:Article
+      ResourceFactory.createStatement(
+        pmidIRI,
+        RDF.`type`,
+        ResourceFactory.createResource(s"$FaBiONamespace/Article")
+      )
+    ) ++ (
+      // <pmidIRI> fabio:hasPublicationYear "2019"^xsd:gYear
+      pubMedArticleWrapped.pubDateYears.map(
+        year =>
+          ResourceFactory.createStatement(
+            pmidIRI,
+            ResourceFactory.createProperty(s"$FaBiONamespace/hasPublicationYear"),
+            ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
+          )
+      )
+    ) ++ ({
+      // <pmidIRI> prism:pageRange "(start page)-(end page), (start page)-(end page)"
+      // <pmidIRI> prism:startingPage "start page"^^xsd:string
+      // <pmidIRI> prism:startingPage "end page"^^xsd:string
+
+      // If there is exactly one page range, we'll try to split it into a
+      // start page and an end page.
+      val pageRangeRegex = raw"(.+?)\s*-\s*(.+)".r
+      val startEndPageStatements = pubMedArticleWrapped.medlinePgnNodes.map(_.text) match {
+        case Seq(pageRangeRegex(startPage, endPage)) =>
+          Seq(
+            ResourceFactory.createStatement(
+              pmidIRI,
+              ResourceFactory.createProperty(s"$PRISMBasicNamespace/startingPage"),
+              ResourceFactory.createStringLiteral(startPage)
+            ),
+            ResourceFactory.createStatement(
+              pmidIRI,
+              ResourceFactory.createProperty(s"$PRISMBasicNamespace/endingPage"),
+              ResourceFactory.createStringLiteral(endPage)
+            )
+          )
+        case _ => Seq()
+      }
+
+      // Add the overall page range as well.
+      startEndPageStatements :+ ResourceFactory.createStatement(
+        pmidIRI,
+        ResourceFactory.createProperty(s"$PRISMBasicNamespace/pageRange"),
+        ResourceFactory.createStringLiteral(pubMedArticleWrapped.medlinePagination)
+      )
+    }) ++ ({
+      // <pmidIRI> frbr:partOf {
+      //    a fabio:JournalIssue
+      //    prism:issueIdentifier "issue number"
+      //    frbr:partOf {
+      //      a fabio:JournalIssue
+      //      prism:volume "volume number"
+      //      frbr:partOf {
+      //        a fabio:Journal
+      //        fabio:hasNLMJournalTitleAbbreviation "Journal Abbreviation"
+      //        dcterms:title "Journal Title"
+      //        prism:issn "ISSN"
+      //        prism:eIssn "Electronic ISSN"
+      //      }
+      //    }
+      //  }
+      val journalModel = ModelFactory.createDefaultModel
+      val journalResource = journalModel
+        .createResource(ResourceFactory.createResource(s"$FaBiONamespace/Journal"))
+        .addProperty(DCTerms.title, pubMedArticleWrapped.journalTitle)
+        .addProperty(
+          ResourceFactory.createProperty(s"$FaBiONamespace/hasNLMJournalTitleAbbreviation"),
+          pubMedArticleWrapped.journalAbbr
+        )
+
+      pubMedArticleWrapped.journalISSNNodes.foreach(issnNode => {
+        val prismPropName = issnNode.attribute("IssnType").map(_.text) match {
+          case Some("Electronic") => "eIssn"
+          case Some("Print")      => "issn"
+          case _                  => "issn"
+        }
+
+        journalResource.addProperty(
+          ResourceFactory.createProperty(s"$PRISMBasicNamespace/$prismPropName"),
+          issnNode.text
+        )
+      })
+
+      val volumeResource = journalModel
+        .createResource(ResourceFactory.createResource(s"$FaBiONamespace/JournalVolume"))
+        .addProperty(
+          ResourceFactory.createProperty(s"$PRISMBasicNamespace/volume"),
+          pubMedArticleWrapped.journalVolume
+        )
+        .addProperty(ResourceFactory.createProperty(s"$FRBRNamespace#partOf"), journalResource)
+
+      val issueResource =
+        if (pubMedArticleWrapped.journalIssue.isEmpty) volumeResource
+        else
+          journalModel
+            .createResource(ResourceFactory.createResource(s"$FaBiONamespace/JournalIssue"))
+            .addProperty(
+              ResourceFactory.createProperty(s"$PRISMBasicNamespace/issueIdentifier"),
+              pubMedArticleWrapped.journalIssue
+            )
+            .addProperty(ResourceFactory.createProperty(s"$FRBRNamespace#partOf"), volumeResource)
+
+      // Convert the Journal Model into a Scala sequence of RDF statements and add the journal issue.
+      journalModel.listStatements.toList.asScala :+ ResourceFactory.createStatement(
+        pmidIRI,
+        ResourceFactory.createProperty(s"$FRBRNamespace#partOf"),
+        issueResource
+      )
+    })
+
+    val authorModel = ModelFactory.createDefaultModel
+    val authorResources = pubMedArticleWrapped.authors.map({ author =>
+      (
+        // If we have an ORCID for this author, use that to create a URL for this author. Otherwise, leave it as a blank node.
+        if (author.orcIds.isEmpty) authorModel.createResource(FOAF.Agent)
+        else
+          authorModel.createResource(
+            s"http://orcid.org/${author.orcIds.headOption.getOrElse("")}#person",
+            FOAF.Agent
+          )
+      ).addProperty(
+          ResourceFactory.createProperty(s"$FOAFNamespace/familyName"),
+          ResourceFactory.createTypedLiteral(author.familyName, XSDDatatype.XSDstring)
+        )
+        .addProperty(
+          ResourceFactory.createProperty(s"$FOAFNamespace/givenName"),
+          ResourceFactory.createTypedLiteral(author.givenName, XSDDatatype.XSDstring)
+        )
+    })
+    val authorRDFList = authorModel.createList(authorResources.iterator.asJava)
+    val authorStatements = authorModel.listStatements.toList.asScala :+ ResourceFactory
+      .createStatement(pmidIRI, DCTerms.creator, authorRDFList)
+
+    // Build a string citation from the provided information.
+    val authorString = pubMedArticleWrapped.authors.map(_.shortName).mkString(", ")
+    val titleString = pubMedArticleWrapped.title + (if (pubMedArticleWrapped.title.endsWith(".")) ""
+                                                    else ".")
+    val journalTitle  = pubMedArticleWrapped.journalTitle
+    val pubYear       = pubMedArticleWrapped.pubDateYears.mkString(", ")
+    val journalVolume = pubMedArticleWrapped.journalVolume
+    val journalIssue =
+      if (pubMedArticleWrapped.journalIssue.isEmpty) ""
+      else s"(${pubMedArticleWrapped.journalIssue})"
+    val journalPages = pubMedArticleWrapped.medlinePagination
+    val pmid         = pubMedArticleWrapped.pmid
+    val citationString =
+      s"$authorString. $titleString $journalTitle ($pubYear);$journalVolume$journalIssue:$journalPages. PubMed PMID: $pmid"
+
+    val metadataStatements = publicationMetadataStatements ++
+      authorStatements ++
+      (pubMedArticleWrapped.pubDatesParseResults map convertDatesToTriples(pmidIRI, DCTerms.issued)) ++
+      (pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(
+        pmidIRI,
+        DCTerms.modified
+      )) :+ ResourceFactory.createStatement(
+      pmidIRI,
+      DCTerms.bibliographicCitation,
+      ResourceFactory.createStringLiteral(citationString)
+    )
+
     // Extract meshIRIs as RDF statements.
-    val MESHNamespace = "http://id.nlm.nih.gov/mesh"
     val meshIRIs = pubMedArticleWrapped.allMeshTermIDs map (
       id => ResourceFactory.createResource(s"$MESHNamespace/$id")
     )
     val meshStatements = meshIRIs.map { meshIRI =>
       ResourceFactory.createStatement(pmidIRI, DCTerms.references, meshIRI)
     }
-
-    // Extract dates as RDF statements.
-    def convertDatesToTriples(property: Property)(date: Try[TemporalAccessor]): Statement = {
-      ResourceFactory.createStatement(
-        pmidIRI,
-        property,
-        date match {
-          case Success(localDate: LocalDate) =>
-            ResourceFactory.createTypedLiteral(localDate.toString, XSDDatatype.XSDdate)
-          case Success(yearMonth: YearMonth) =>
-            ResourceFactory.createTypedLiteral(yearMonth.toString, XSDDatatype.XSDgYearMonth)
-          case Success(year: Year) =>
-            ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
-          case Success(ta: TemporalAccessor) =>
-            throw new RuntimeException(s"Unexpected temporal accessor found by parsing date: $ta")
-          case Failure(error: Throwable) => throw error
-        }
-      )
-    }
-
-    val issuedDateStatements =
-      pubMedArticleWrapped.pubDatesParseResults map convertDatesToTriples(DCTerms.issued)
-    val modifiedDateStatements =
-      pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(DCTerms.modified)
 
     // Extract annotations using SciGraph and convert into RDF statements.
     val annotationStatements = optAnnotator
@@ -220,7 +458,7 @@ object PubMedTripleGenerator {
       .getOrElse(Seq())
 
     // Combine all statements into a single set and export as triples.
-    val allStatements = annotationStatements.toSet ++ meshStatements ++ issuedDateStatements ++ modifiedDateStatements
+    val allStatements = metadataStatements.toSet ++ annotationStatements.toSet ++ meshStatements ++ annotationStatements
     allStatements.map(_.asTriple)
   }
 }
@@ -271,7 +509,7 @@ object Main extends App with LazyLogging {
         }
       }
       .runForeach { triples =>
-        StreamOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
+        StreamRDFOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
       }
 
     Await.ready(done, Duration.Inf).onComplete {
@@ -279,7 +517,7 @@ object Main extends App with LazyLogging {
         e.printStackTrace()
         rdfStream.finish()
         outStream.close()
-        system.terminate()
+        val terminateFuture = system.terminate()
         optAnnotator.foreach(_.dispose)
         System.exit(1)
       case _ =>
@@ -289,5 +527,4 @@ object Main extends App with LazyLogging {
     logger.info(s"Done processing $file")
   }
   optAnnotator.foreach(_.dispose)
-  system.terminate()
 }
