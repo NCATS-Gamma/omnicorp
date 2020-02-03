@@ -382,10 +382,7 @@ object Main extends App with LazyLogging {
           graph.Triple.create(
             graph.NodeFactory.createURI(file.toURI.toString),
             graph.NodeFactory.createURI("http://example.org/pubMedArticleCount"),
-            graph.NodeFactory.createLiteral(
-              wrappedArticles.size.toString,
-              XSDDatatype.XSDinteger
-            )
+            graph.NodeFactory.createLiteral(wrappedArticles.size.toString, XSDDatatype.XSDinteger)
           )
         )
         rdfStream.finish()
