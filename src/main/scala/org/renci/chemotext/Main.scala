@@ -383,6 +383,8 @@ object Main extends App with LazyLogging {
     rdfStream.start()
 
     // Generate triples for all wrapped PubMed articles.
+    @SuppressWarnings(Array("org.wartremover.warts.Var"))
+    var tripleCount = 0
     val done = Source(wrappedArticles)
       .mapAsyncUnordered(parallelism) { article: PubMedArticleWrapper =>
         Future {
@@ -390,7 +392,9 @@ object Main extends App with LazyLogging {
         }
       }
       .runForeach { triples =>
+        tripleCount += triples.size
         StreamRDFOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
+        if (tripleCount % 100 == 0) logger.info(s"Approximately %,d triples have been added to the output stream.".format(tripleCount))
       }
 
     Await.ready(done, scala.concurrent.duration.Duration.Inf).onComplete {
@@ -407,6 +411,14 @@ object Main extends App with LazyLogging {
             graph.NodeFactory.createURI(file.toURI.toString),
             graph.NodeFactory.createURI("http://example.org/pubMedArticleCount"),
             graph.NodeFactory.createLiteral(wrappedArticles.size.toString, XSDDatatype.XSDinteger)
+          )
+        )
+        // Write out the number of triples generated.
+        rdfStream.triple(
+          graph.Triple.create(
+            graph.NodeFactory.createURI(file.toURI.toString),
+            graph.NodeFactory.createURI("http://example.org/triplesGenerated"),
+            graph.NodeFactory.createLiteral(tripleCount.toString, XSDDatatype.XSDinteger)
           )
         )
         // Write out the time taken for processing.
