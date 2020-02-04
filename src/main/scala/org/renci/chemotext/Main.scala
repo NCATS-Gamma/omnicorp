@@ -31,7 +31,6 @@ import org.neo4j.graphdb.factory.GraphDatabaseFactory
 import org.prefixcommons.CurieUtil
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success, Try}
 import scala.xml.Elem
@@ -373,7 +372,7 @@ object Main extends App with LazyLogging {
         StreamRDFOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
       }
 
-    Await.ready(done, Duration.Inf).onComplete {
+    Await.ready(done, scala.concurrent.duration.Duration.Inf).onComplete {
       case Failure(e) =>
         e.printStackTrace()
         rdfStream.finish()
@@ -390,19 +389,12 @@ object Main extends App with LazyLogging {
           )
         )
         // Write out the time taken for processing.
-        val timeTakenSeconds = ((System.nanoTime - startTime) / 1e9d).toInt
-        val timeTakenMinutes = (timeTakenSeconds/60).toInt
-        val timeTakenHours = (timeTakenSeconds/60/60).toInt
-
+        val duration = Duration.ofNanos(System.nanoTime - startTime)
         rdfStream.triple(
           graph.Triple.create(
             graph.NodeFactory.createURI(file.toURI.toString),
             graph.NodeFactory.createURI("http://example.org/timeTakenToProcess"),
-            graph.NodeFactory.createLiteral("P%dH%dM%dS".format(
-              timeTakenHours,
-              timeTakenMinutes,
-              timeTakenSeconds - (timeTakenHours * 60 * 60) - (timeTakenMinutes * 60)
-            ), XSDDatatype.XSDduration)
+            graph.NodeFactory.createLiteral(duration.toString, XSDDatatype.XSDduration)
           )
         )
 
@@ -411,16 +403,8 @@ object Main extends App with LazyLogging {
     }
 
     // Write out the time taken for processing.
-    val timeTakenSeconds = ((System.nanoTime - startTime) / 1e9d).toInt
-    val timeTakenMinutes = (timeTakenSeconds/60).toInt
-    val timeTakenHours = (timeTakenSeconds/60/60).toInt
-
-    logger.info(s"Done processing %s in %2d:%02d:%02d".format(
-      file,
-      timeTakenHours,
-      timeTakenMinutes,
-      timeTakenSeconds - (timeTakenHours * 60 * 60) - (timeTakenMinutes * 60)
-    ))
+    val duration = Duration.ofNanos(System.nanoTime - startTime)
+    logger.info(s"Done processing $file in $duration")
   }
   terminateAkka()
 }
