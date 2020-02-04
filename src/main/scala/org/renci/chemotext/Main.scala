@@ -347,6 +347,9 @@ object Main extends App with LazyLogging {
   }
 
   dataFiles.foreach { file =>
+    // Start counting time.
+    val startTime = System.nanoTime
+
     // Load all articles and wrap them with PubMedArticleWrappers.
     val rootElement     = readXMLFromGZip(file)
     val wrappedArticles = (rootElement \ "PubmedArticle").map(new PubMedArticleWrapper(_))
@@ -378,6 +381,7 @@ object Main extends App with LazyLogging {
         terminateAkka()
         System.exit(1)
       case _ =>
+        // Write out the number of articles processed.
         rdfStream.triple(
           graph.Triple.create(
             graph.NodeFactory.createURI(file.toURI.toString),
@@ -385,10 +389,38 @@ object Main extends App with LazyLogging {
             graph.NodeFactory.createLiteral(wrappedArticles.size.toString, XSDDatatype.XSDinteger)
           )
         )
+        // Write out the time taken for processing.
+        val timeTakenSeconds = ((System.nanoTime - startTime) / 1e9d).toInt
+        val timeTakenMinutes = (timeTakenSeconds/60).toInt
+        val timeTakenHours = (timeTakenSeconds/60/60).toInt
+
+        rdfStream.triple(
+          graph.Triple.create(
+            graph.NodeFactory.createURI(file.toURI.toString),
+            graph.NodeFactory.createURI("http://example.org/timeTakenToProcess"),
+            graph.NodeFactory.createLiteral("P%dH%dM%dS".format(
+              timeTakenHours,
+              timeTakenMinutes,
+              timeTakenSeconds - (timeTakenHours * 60 * 60) - (timeTakenMinutes * 60)
+            ), XSDDatatype.XSDduration)
+          )
+        )
+
         rdfStream.finish()
         outStream.close()
     }
-    logger.info(s"Done processing $file")
+
+    // Write out the time taken for processing.
+    val timeTakenSeconds = ((System.nanoTime - startTime) / 1e9d).toInt
+    val timeTakenMinutes = (timeTakenSeconds/60).toInt
+    val timeTakenHours = (timeTakenSeconds/60/60).toInt
+
+    logger.info(s"Done processing %s in %2d:%02d:%02d".format(
+      file,
+      timeTakenHours,
+      timeTakenMinutes,
+      timeTakenSeconds - (timeTakenHours * 60 * 60) - (timeTakenMinutes * 60)
+    ))
   }
   terminateAkka()
 }
