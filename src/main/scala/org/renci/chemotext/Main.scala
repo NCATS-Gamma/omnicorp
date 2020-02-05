@@ -437,7 +437,13 @@ object Main extends App with LazyLogging {
 
     // Write out the time taken for processing.
     val duration = Duration.ofNanos(System.nanoTime - startTime)
-    logger.info(s"Done processing $file in $duration")
+    logger.info("Took %d seconds (%s) to create approx %,d triples from %,d articles in %s".format(
+      duration.getSeconds,
+      duration.toString,
+      tripleCount,
+      wrappedArticles.size,
+      file
+    ))
   }
   terminateAkka()
 }
