@@ -10,10 +10,12 @@ import scala.xml.XML
 /**
   * Unit tests for the PubMedArticleWrapper class.
   */
-@SuppressWarnings(Array(
-  "org.wartremover.warts.TryPartial",         // We use Try.get() in a
-  "org.wartremover.warts.NonUnitStatements"   // non-unit statements to test whether parsing fails correctly.
-))
+@SuppressWarnings(
+  Array(
+    "org.wartremover.warts.TryPartial",       // We use Try.get() in a
+    "org.wartremover.warts.NonUnitStatements" // non-unit statements to test whether parsing fails correctly.
+  )
+)
 object PubMedArticleWrapperUnitTests extends TestSuite {
   val tests = Tests {
     test("#parseDate") {
