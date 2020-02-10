@@ -342,7 +342,7 @@ object Main extends App with LazyLogging {
 
   /** Read a GZipped XML file and returns the root element. */
   def readXMLFromGZip(file: File): Elem = {
-    val stream = new GZIPInputStream(new FileInputStream(file))
+    val stream = if (file.getName.endsWith(".gz")) new GZIPInputStream(new FileInputStream(file)) else new FileInputStream(file)
     val elem   = scala.xml.XML.load(stream)
     stream.close()
     elem
