@@ -4,8 +4,7 @@ import java.time.{LocalDate, Year, YearMonth}
 
 import utest._
 
-import scala.util.{Success, Failure}
-import scala.xml.XML
+import scala.util.Success
 
 /**
   * Unit tests for the PubMedArticleWrapper class.

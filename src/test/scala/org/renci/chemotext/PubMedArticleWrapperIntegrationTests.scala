@@ -1,27 +1,27 @@
 package org.renci.chemotext
 
-import java.io.{ByteArrayOutputStream, StringReader, StringWriter}
+import java.io.{ByteArrayOutputStream, StringWriter}
 import java.time.{LocalDate, Year, YearMonth}
 
 import org.apache.jena.graph
-import org.apache.jena.rdf.model.{Property, ResourceFactory, Statement, ModelFactory}
+import org.apache.jena.rdf.model.ModelFactory
 import org.apache.jena.riot.{RDFWriter, RDFFormat}
 import utest._
 
-import collection.mutable
 import collection.JavaConverters._
 import scala.xml.XML
 import scala.math.max
+import scala.xml.{ Elem, NodeSeq }
 
 /**
   * Integration tests of PubmedArticleWrapper.
   */
 object PubMedArticleWrapperIntegrationTests extends TestSuite {
-  val examplesForTests =
+  val examplesForTests: Elem =
     XML.loadFile(getClass.getResource("/pubmedXML/examplesForTests.xml").getPath)
-  val pubmedArticles = examplesForTests \ "PubmedArticle"
+  val pubmedArticles: NodeSeq = examplesForTests \ "PubmedArticle"
 
-  def summarizeTriples(triples: Set[graph.Triple]) = {
+  def summarizeTriples(triples: Set[graph.Triple]): Map[String,Map[String,Map[String,Int]]] = {
     // We summarize triples into a HashMap in this shape:
     // Map(
     //   "subject1" -> Map(
@@ -47,7 +47,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       }))
   }
 
-  val tests = Tests {
+  val tests: Tests = Tests {
     test("An example with day, month and year") {
       val wrappedArticle = new PubMedArticleWrapper(pubmedArticles(0))
 
@@ -285,7 +285,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
 
       val foundGraph = graph.Factory.createDefaultGraph
       triples.foreach(foundGraph.add(_))
-      val stringWriter = new StringWriter()
+      new StringWriter()
       val model = ModelFactory
         .createModelForGraph(foundGraph)
         .setNsPrefixes(
