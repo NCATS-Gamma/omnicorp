@@ -11,7 +11,7 @@ import utest._
 import collection.JavaConverters._
 import scala.xml.XML
 import scala.math.max
-import scala.xml.{ Elem, NodeSeq }
+import scala.xml.{Elem, NodeSeq}
 
 /**
   * Integration tests of PubmedArticleWrapper.
@@ -21,7 +21,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
     XML.loadFile(getClass.getResource("/pubmedXML/examplesForTests.xml").getPath)
   val pubmedArticles: NodeSeq = examplesForTests \ "PubmedArticle"
 
-  def summarizeTriples(triples: Set[graph.Triple]): Map[String,Map[String,Map[String,Int]]] = {
+  def summarizeTriples(triples: Set[graph.Triple]): Map[String, Map[String, Map[String, Int]]] = {
     // We summarize triples into a HashMap in this shape:
     // Map(
     //   "subject1" -> Map(
