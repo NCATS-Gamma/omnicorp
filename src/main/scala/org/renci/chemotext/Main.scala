@@ -315,6 +315,15 @@ object PubMedTripleGenerator {
 }
 
 object Main extends App with LazyLogging {
+  if (args.length != 4) {
+    println("Omnicorp requires four arguments:")
+    println("\t - 1. The path to a Scigraph installation")
+    println("\t - 2. The path to either a single PubMed XML export or to a directory containing PubMed XML export files")
+    println("\t - 3. The output directory where resulting files should be written")
+    println("\t - 4. The number of parallel processes to run")
+    System.exit(2) // According to https://stackoverflow.com/a/40484670/27310, this is the correct error code for a command line usage error.
+  }
+
   val scigraphLocation: String = args(0)
   val dataDir                  = new File(args(1))
   val outDir: String           = args(2)
