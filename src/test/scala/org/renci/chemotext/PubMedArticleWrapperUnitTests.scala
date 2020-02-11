@@ -10,6 +10,12 @@ import scala.xml.XML
 /**
   * Unit tests for the PubMedArticleWrapper class.
   */
+@SuppressWarnings(
+  Array(
+    "org.wartremover.warts.TryPartial",       // We use Try.get() in a
+    "org.wartremover.warts.NonUnitStatements" // non-unit statements to test whether parsing fails correctly.
+  )
+)
 object PubMedArticleWrapperUnitTests extends TestSuite {
   val tests = Tests {
     test("#parseDate") {
@@ -25,7 +31,8 @@ object PubMedArticleWrapperUnitTests extends TestSuite {
           (
             LocalDate.of(2006, 10, 21),
             <PubDate><Year>2006</Year><Day>21</Day><Month>10</Month></PubDate>
-          )
+          ),
+          (Year.of(2016), <PubDate><MedlineDate>Summer 2016</MedlineDate></PubDate>)
         )
 
         datesTested.foreach({

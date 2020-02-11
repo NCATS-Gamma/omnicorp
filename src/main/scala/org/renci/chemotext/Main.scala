@@ -88,7 +88,7 @@ object PubMedArticleWrapper {
       // MedlineDates have different forms (e.g. "1989 Dec-1999 Jan", "2000 Spring", "2000 Dec 23-30").
       // For now, we check to see if it starts with four digits, suggesting an year.
       // See https://www.nlm.nih.gov/bsd/licensee/elements_descriptions.html#medlinedate for more details.
-      val medlineDateYearMatcher = """^\s*(\d{4})\b.*$""".r
+      val medlineDateYearMatcher = """^.*?\b(\d{4})\b.*$""".r
       val medlineDate            = (date \\ "MedlineDate").text
       medlineDate match {
         case medlineDateYearMatcher(year) => Success(Year.of(year.toInt))
