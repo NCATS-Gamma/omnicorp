@@ -5,7 +5,6 @@ import java.nio.file.Files
 
 import utest._
 
-
 import sys.process._
 
 /**
@@ -36,13 +35,10 @@ object OmnicorpTests extends TestSuite {
 
     test("On input file examplesForTests.xml") {
       val examplesForTests = getClass.getResource("/pubmedXML/examplesForTests.xml").getPath
-      val tmpFolder = Files.createTempDirectory("omnicorp-testing").toFile
+      val tmpFolder        = Files.createTempDirectory("omnicorp-testing").toFile
 
       test("Make sure we can execute Omnicorp on the example file") {
-        val cmdline = Seq(
-          "sbt",
-          s"""run none "$examplesForTests" "$tmpFolder" 1"""
-        )
+        val cmdline                  = Seq("sbt", s"""run none "$examplesForTests" "$tmpFolder" 1""")
         val (status, stdout, stderr) = exec(cmdline)
 
         // Clean up temporary folder.
@@ -61,13 +57,10 @@ object OmnicorpTests extends TestSuite {
 
     test("On incorrect input file failedExamples1.xml") {
       val failedExamples1 = getClass.getResource("/pubmedXML/failedExamples1.xml").getPath
-      val tmpFolder = Files.createTempDirectory("omnicorp-testing").toFile
+      val tmpFolder       = Files.createTempDirectory("omnicorp-testing").toFile
 
       test("Make sure we get an error message on executing Omnicorp on this example file") {
-        val cmdline = Seq(
-          "sbt",
-          s"""run none "$failedExamples1" "$tmpFolder" 1"""
-        )
+        val cmdline                  = Seq("sbt", s"""run none "$failedExamples1" "$tmpFolder" 1""")
         val (status, stdout, stderr) = exec(cmdline)
 
         // Clean up temporary folder.
