@@ -58,12 +58,22 @@ class AuthorWrapper(node: Node) {
   val familyName: String = {
     if (suffix.isEmpty) lastName else s"$lastName $suffix"
   }
-  val name: String      = if (!collectiveName.isEmpty) collectiveName else s"$givenName $familyName"
-  val shortName: String = if (initials.isEmpty) lastName else s"$lastName $initials"
+  val name: String = if (!collectiveName.isEmpty) collectiveName else s"$givenName $familyName"
+  val shortName: String =
+    if (!collectiveName.isEmpty) collectiveName
+    else {
+      if (suffix.isEmpty) {
+        if (initials.isEmpty) lastName else s"$lastName $initials"
+      } else {
+        if (initials.isEmpty) s"$lastName $suffix" else s"$lastName $initials $suffix"
+      }
+    }
 }
 
 object AuthorWrapper {
-  val ET_AL: AuthorWrapper = new AuthorWrapper(<Author><LastName>et al.</LastName></Author>)
+  val ET_AL: AuthorWrapper = new AuthorWrapper(
+    <Author><CollectiveName>et al</CollectiveName></Author>
+  )
 }
 
 /** An object containing code for working with PubMed articles. */
@@ -390,22 +400,35 @@ object PubMedTripleGenerator {
 
     val authorModel = ModelFactory.createDefaultModel
     val authorResources = pubMedArticleWrapped.authors.map({ author =>
-      (
-        // If we have an ORCID for this author, use that to create a URL for this author. Otherwise, leave it as a blank node.
+      // If we have an ORCID for this author, use that to create a URL for this author. Otherwise, leave it as a blank node.
+      val authorResource =
         if (author.orcIds.isEmpty) authorModel.createResource(FOAF.Agent)
         else
           authorModel.createResource(
             s"http://orcid.org/${author.orcIds.headOption.getOrElse("")}#person",
             FOAF.Agent
           )
-      ).addProperty(
-          ResourceFactory.createProperty(s"$FOAFNamespace/familyName"),
-          ResourceFactory.createTypedLiteral(author.familyName, XSDDatatype.XSDstring)
+
+      if (author.collectiveName.isEmpty) {
+        authorResource
+          .addProperty(
+            ResourceFactory.createProperty(s"$FOAFNamespace/name"),
+            ResourceFactory.createTypedLiteral(author.name, XSDDatatype.XSDstring)
+          )
+          .addProperty(
+            ResourceFactory.createProperty(s"$FOAFNamespace/familyName"),
+            ResourceFactory.createTypedLiteral(author.familyName, XSDDatatype.XSDstring)
+          )
+          .addProperty(
+            ResourceFactory.createProperty(s"$FOAFNamespace/givenName"),
+            ResourceFactory.createTypedLiteral(author.givenName, XSDDatatype.XSDstring)
+          )
+      } else {
+        authorResource.addProperty(
+          ResourceFactory.createProperty(s"$FOAFNamespace/name"),
+          ResourceFactory.createTypedLiteral(author.collectiveName, XSDDatatype.XSDstring)
         )
-        .addProperty(
-          ResourceFactory.createProperty(s"$FOAFNamespace/givenName"),
-          ResourceFactory.createTypedLiteral(author.givenName, XSDDatatype.XSDstring)
-        )
+      }
     })
     val authorRDFList = authorModel.createList(authorResources.iterator.asJava)
     val authorStatements = authorModel.listStatements.toList.asScala :+ ResourceFactory
