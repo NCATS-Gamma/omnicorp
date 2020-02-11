@@ -1,6 +1,6 @@
 package org.renci.chemotext
 
-import java.io.{ByteArrayOutputStream, StringWriter}
+import java.io.{ByteArrayOutputStream, StringWriter, StringReader}
 import java.time.{LocalDate, Year, YearMonth}
 
 import org.apache.jena.graph
@@ -222,7 +222,28 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         )
       )
 
-      // Since this example is relatively small, we'll actually test all the triples.
+      // Create a model based on the triples generated
+      val foundGraph = graph.Factory.createDefaultGraph
+      triples.foreach(foundGraph.add(_))
+      val foundModel = ModelFactory
+        .createModelForGraph(foundGraph)
+        .setNsPrefixes(
+          Map(
+            "dct"   -> "http://purl.org/dc/terms/",
+            "fabio" -> "http://purl.org/spar/fabio/",
+            "frbr"  -> "http://purl.org/vocab/frbr/core#",
+            "foaf"  -> "http://xmlns.com/foaf/0.1/",
+            "xsd"   -> "http://www.w3.org/2001/XMLSchema#",
+            "prism" -> "http://prismstandard.org/namespaces/basic/3.0/"
+          ).asJava
+        )
+
+      // Convert back into Turtle for debugging.
+      val boas = new ByteArrayOutputStream
+      foundModel.write(boas, "TURTLE")
+      val foundModelAsTurtle = boas.toString("UTF-8")
+
+      // Create a model based on the expected JSON-LD representation of this object.
       val expectedTriplesAsTurtle =
         """@prefix dct:   <http://purl.org/dc/terms/> .
 @prefix fabio: <http://purl.org/spar/fabio/> .
@@ -283,34 +304,14 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
                                    ] .
 """
 
-      val foundGraph = graph.Factory.createDefaultGraph
-      triples.foreach(foundGraph.add(_))
-      new StringWriter()
-      val model = ModelFactory
-        .createModelForGraph(foundGraph)
-        .setNsPrefixes(
-          Map(
-            "dct"   -> "http://purl.org/dc/terms/",
-            "fabio" -> "http://purl.org/spar/fabio/",
-            "frbr"  -> "http://purl.org/vocab/frbr/core#",
-            "foaf"  -> "http://xmlns.com/foaf/0.1/",
-            "xsd"   -> "http://www.w3.org/2001/XMLSchema#",
-            "prism" -> "http://prismstandard.org/namespaces/basic/3.0/"
-          ).asJava
-        )
-      val baos = new ByteArrayOutputStream()
-      RDFWriter.create.source(model).format(RDFFormat.TURTLE_PRETTY).output(baos);
+      // Convert expected triples from Turtle to model.
+      val expectedModel = ModelFactory.createDefaultModel
+      expectedModel.read(new StringReader(expectedTriplesAsTurtle), null, "TURTLE")
 
-      val actual   = baos.toString("UTF-8").split("\n")
-      val expected = expectedTriplesAsTurtle.split("\n")
-
-      // assert(baos.toString("UTF-8") == expectedTriplesAsTurtle)
-
-      (0 until max(expected.length, actual.length)).foreach(x => {
-        val actualLine = actual(x)
-        val expectLine = expected(x)
-        assert(actualLine == expectLine)
-      })
+      Predef.assert(
+        expectedModel.isIsomorphicWith(foundModel),
+        "Expected triples not generated!\nGenerated model:\n" + foundModelAsTurtle + "\nModel ends."
+      )
     }
 
     test("An example with year only") {
