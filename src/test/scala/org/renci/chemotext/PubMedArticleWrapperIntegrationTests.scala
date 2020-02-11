@@ -242,7 +242,8 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       val foundModelAsTurtle = boas.toString("UTF-8")
 
       // Create a model based on the expected JSON-LD representation of this object.
-      val expectedTriplesAsTurtle = """
+      val expectedTriplesAsTurtle =
+        """
         @prefix dct:   <http://purl.org/dc/terms/> .
         @prefix fabio: <http://purl.org/spar/fabio/> .
         @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
