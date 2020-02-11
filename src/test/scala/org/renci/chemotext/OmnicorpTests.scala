@@ -18,6 +18,11 @@ import sys.process._
 /**
   * Tests for the entire Omnicorp application.
   */
+@SuppressWarnings(
+  Array(
+    "org.wartremover.warts.NonUnitStatements" // We use non-unit statements to delete files.
+  )
+)
 object OmnicorpTests extends TestSuite {
   def exec(args: Seq[String]): (Int, String, String) = {
     val stdout = new StringBuilder
@@ -47,12 +52,15 @@ object OmnicorpTests extends TestSuite {
         )
         val (status, stdout, stderr) = exec(cmdline)
 
+        // Clean up temporary folder.
         new File(tmpFolder, "examplesForTests.xml.ttl").delete()
         tmpFolder.delete()
 
+        // Test output and errors.
         assert(status == 0)
         assert(stdout contains "Total time:")
         assert(stdout contains "completed")
+
         assert(stderr contains "Begin processing")
         assert(stderr contains "Done processing")
       }
@@ -68,13 +76,17 @@ object OmnicorpTests extends TestSuite {
           s"""run none "$failedExamples1" "$tmpFolder" 1"""
         )
         val (status, stdout, stderr) = exec(cmdline)
+
+        // Clean up temporary folder.
+        new File(tmpFolder, "failedExamples1.xml.ttl").delete()
+        tmpFolder.delete()
+
+        // Test output and errors.
         assert(status == 1)
         assert(stdout contains "Total time:")
         assert(stdout contains "completed")
+        assert(stdout contains "Nonzero exit code: 1")
 
-        new File(tmpFolder, "failedExamples1.xml.ttl").delete()
-        tmpFolder.delete()
-        
         assert(stderr contains "Begin processing")
         assert(stderr contains "Done processing")
       }
