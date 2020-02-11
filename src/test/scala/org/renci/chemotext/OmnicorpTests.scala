@@ -1,17 +1,10 @@
 package org.renci.chemotext
 
-import java.io.{ByteArrayOutputStream, StringReader, StringWriter, File}
+import java.io.File
 import java.nio.file.Files
-import java.time.{LocalDate, Year, YearMonth}
 
-import org.apache.jena.graph
-import org.apache.jena.rdf.model.{Property, ResourceFactory, Statement, ModelFactory}
-import org.apache.jena.riot.{RDFWriter, RDFFormat}
 import utest._
 
-import collection.mutable
-import collection.JavaConverters._
-import scala.xml.XML
 
 import sys.process._
 
@@ -32,7 +25,7 @@ object OmnicorpTests extends TestSuite {
     (status, stdout.toString, stderr.toString)
   }
 
-  val tests = Tests {
+  val tests: Tests = Tests {
     test("Make sure we can run Omnicorp and see runtime information") {
       val (status, stdout, stderr) = exec(Seq("sbt", "run"))
       assert(status == 1)
