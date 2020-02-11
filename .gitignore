@@ -15,6 +15,7 @@ ontologies-merged.ttl
 # Ignore input and output directories.
 /pubmed-annual-baseline
 /output
+/results
 
 # Ignore robot.
 /robot
