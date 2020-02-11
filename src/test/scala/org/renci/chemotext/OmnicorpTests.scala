@@ -30,7 +30,7 @@ object OmnicorpTests extends TestSuite {
       assert(status == 1)
       assert(stdout contains "Omnicorp requires four arguments:")
       assert(stdout contains "Nonzero exit code: 2")
-      assert(stderr contains "sbt/TrapExitSecurityException")
+      assert(stderr contains "TrapExitSecurityException")
     }
 
     test("On input file examplesForTests.xml") {
