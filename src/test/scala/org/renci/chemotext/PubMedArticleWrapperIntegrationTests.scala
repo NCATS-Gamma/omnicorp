@@ -244,64 +244,61 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       val foundModelAsTurtle = boas.toString("UTF-8")
 
       // Create a model based on the expected JSON-LD representation of this object.
-      val expectedTriplesAsTurtle =
-        """@prefix dct:   <http://purl.org/dc/terms/> .
-@prefix fabio: <http://purl.org/spar/fabio/> .
-@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
-@prefix frbr:  <http://purl.org/vocab/frbr/core#> .
-@prefix prism: <http://prismstandard.org/namespaces/basic/3.0/> .
-@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+      val expectedTriplesAsTurtle = """
+        @prefix dct:   <http://purl.org/dc/terms/> .
+        @prefix fabio: <http://purl.org/spar/fabio/> .
+        @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+        @prefix frbr:  <http://purl.org/vocab/frbr/core#> .
+        @prefix prism: <http://prismstandard.org/namespaces/basic/3.0/> .
+        @prefix foaf:  <http://xmlns.com/foaf/0.1/> .
 
-<http://orcid.org/0000000305870454#person>
-        a                foaf:Agent ;
-        foaf:familyName  "Vaidya Jr" ;
-        foaf:givenName   "Gaurav" ;
-        foaf:name        "Gaurav Vaidya Jr" .
+        <http://orcid.org/0000000305870454#person> a foaf:Agent ;
+          foaf:familyName  "Vaidya Jr" ;
+          foaf:givenName   "Gaurav" ;
+          foaf:name        "Gaurav Vaidya Jr" .
 
-<https://www.ncbi.nlm.nih.gov/pubmed/17060194>
-        a                          fabio:Article ;
-        prism:doi                  "10.1080/10635150600969864" ;
-        prism:endingPage           "28" ;
-        prism:pageRange            "715-28" ;
-        prism:startingPage         "715" ;
-        dct:bibliographicCitation  "Meier R, Shiyang K, Vaidya G Jr, Ng PK, et al. DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success. Systematic biology (2006);55(5):715-28. PubMed PMID: 17060194" ;
-        dct:creator                ( [ a                foaf:Agent ;
-                                       foaf:familyName  "Meier" ;
-                                       foaf:givenName   "Rudolf" ;
-                                       foaf:name        "Rudolf Meier"
-                                     ]
-                                     [ a                foaf:Agent ;
-                                       foaf:familyName  "Shiyang" ;
-                                       foaf:givenName   "Kwong" ;
-                                       foaf:name        "Kwong Shiyang"
-                                     ]
-                                     <http://orcid.org/0000000305870454#person>
-                                     [ a                foaf:Agent ;
-                                       foaf:familyName  "Ng" ;
-                                       foaf:givenName   "Peter K L" ;
-                                       foaf:name        "Peter K L Ng"
-                                     ]
-                                     [ a          foaf:Agent ;
-                                       foaf:name  "et al"
-                                     ]
-                                   ) ;
-        dct:issued                 "2006-10"^^xsd:gYearMonth ;
-        dct:modified               "2008-11-21"^^xsd:date ;
-        dct:references             <http://id.nlm.nih.gov/mesh/D017422> , <http://id.nlm.nih.gov/mesh/D004175> , <http://id.nlm.nih.gov/mesh/Q000235> , <http://id.nlm.nih.gov/mesh/D000818> , <http://id.nlm.nih.gov/mesh/Q000379> , <http://id.nlm.nih.gov/mesh/D014644> , <http://id.nlm.nih.gov/mesh/D013045> , <http://id.nlm.nih.gov/mesh/D010802> , <http://id.nlm.nih.gov/mesh/Q000737> , <http://id.nlm.nih.gov/mesh/D016384> , <http://id.nlm.nih.gov/mesh/D003576> , <http://id.nlm.nih.gov/mesh/D001483> , <http://id.nlm.nih.gov/mesh/D002965> , <http://id.nlm.nih.gov/mesh/D004272> , <http://id.nlm.nih.gov/mesh/Q000145> ;
-        dct:title                  "DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success." ;
-        fabio:hasPublicationYear   "2006"^^xsd:gYear ;
-        frbr:partOf                [ a                      fabio:JournalIssue ;
-                                     prism:issueIdentifier  "5" ;
-                                     frbr:partOf            [ a             fabio:JournalVolume ;
-                                                              prism:volume  "55" ;
-                                                              frbr:partOf   [ a           fabio:Journal ;
-                                                                              prism:issn  "1063-5157" ;
-                                                                              dct:title   "Systematic biology" ;
-                                                                              fabio:hasNLMJournalTitleAbbreviation
-                                                                                      "Syst. Biol."
-                                                                            ]
-                                                            ]
-                                   ] .
+        <https://www.ncbi.nlm.nih.gov/pubmed/17060194> a fabio:Article ;
+          prism:doi                        "10.1080/10635150600969864" ;
+          prism:endingPage                 "28" ;
+          prism:pageRange                  "715-28" ;
+          prism:startingPage               "715" ;
+          dct:bibliographicCitation        "Meier R, Shiyang K, Vaidya G Jr, Ng PK, et al. DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success. Systematic biology (2006);55(5):715-28. PubMed PMID: 17060194" ;
+          dct:creator                      ( [ a foaf:Agent ;
+                                               foaf:familyName  "Meier" ;
+                                               foaf:givenName   "Rudolf" ;
+                                               foaf:name        "Rudolf Meier"
+                                             ]
+                                             [ a foaf:Agent ;
+                                               foaf:familyName  "Shiyang" ;
+                                               foaf:givenName   "Kwong" ;
+                                               foaf:name        "Kwong Shiyang"
+                                             ]
+                                             <http://orcid.org/0000000305870454#person>
+                                             [ a foaf:Agent ;
+                                               foaf:familyName  "Ng" ;
+                                               foaf:givenName   "Peter K L" ;
+                                               foaf:name        "Peter K L Ng"
+                                             ]
+                                             [ a foaf:Agent ;
+                                               foaf:name  "et al"
+                                             ]
+                                           ) ;
+                dct:issued                 "2006-10"^^xsd:gYearMonth ;
+                dct:modified               "2008-11-21"^^xsd:date ;
+                dct:references             <http://id.nlm.nih.gov/mesh/D017422> , <http://id.nlm.nih.gov/mesh/D004175> , <http://id.nlm.nih.gov/mesh/Q000235> , <http://id.nlm.nih.gov/mesh/D000818> , <http://id.nlm.nih.gov/mesh/Q000379> , <http://id.nlm.nih.gov/mesh/D014644> , <http://id.nlm.nih.gov/mesh/D013045> , <http://id.nlm.nih.gov/mesh/D010802> , <http://id.nlm.nih.gov/mesh/Q000737> , <http://id.nlm.nih.gov/mesh/D016384> , <http://id.nlm.nih.gov/mesh/D003576> , <http://id.nlm.nih.gov/mesh/D001483> , <http://id.nlm.nih.gov/mesh/D002965> , <http://id.nlm.nih.gov/mesh/D004272> , <http://id.nlm.nih.gov/mesh/Q000145> ;
+                dct:title                  "DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success." ;
+                fabio:hasPublicationYear   "2006"^^xsd:gYear ;
+                frbr:partOf                [ a fabio:JournalIssue ;
+                                             prism:issueIdentifier  "5" ;
+                                             frbr:partOf [ a fabio:JournalVolume ;
+                                                           prism:volume  "55" ;
+                                                           frbr:partOf [ a fabio:Journal ;
+                                                                         prism:issn  "1063-5157" ;
+                                                                         dct:title   "Systematic biology" ;
+                                                                         fabio:hasNLMJournalTitleAbbreviation "Syst. Biol."
+                                                                       ]
+                                                           ]
+                                           ] .
 """
 
       // Convert expected triples from Turtle to model.
