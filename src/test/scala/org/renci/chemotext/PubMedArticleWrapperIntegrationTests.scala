@@ -1,16 +1,14 @@
 package org.renci.chemotext
 
-import java.io.{ByteArrayOutputStream, StringWriter}
+import java.io.{ByteArrayOutputStream, StringReader}
 import java.time.{LocalDate, Year, YearMonth}
 
 import org.apache.jena.graph
 import org.apache.jena.rdf.model.ModelFactory
-import org.apache.jena.riot.{RDFWriter, RDFFormat}
 import utest._
 
 import collection.JavaConverters._
 import scala.xml.XML
-import scala.math.max
 import scala.xml.{Elem, NodeSeq}
 
 /**
@@ -222,71 +220,10 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         )
       )
 
-      // Since this example is relatively small, we'll actually test all the triples.
-      val expectedTriplesAsTurtle =
-        """@prefix dct:   <http://purl.org/dc/terms/> .
-@prefix fabio: <http://purl.org/spar/fabio/> .
-@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
-@prefix frbr:  <http://purl.org/vocab/frbr/core#> .
-@prefix prism: <http://prismstandard.org/namespaces/basic/3.0/> .
-@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
-
-<http://orcid.org/0000000305870454#person>
-        a                foaf:Agent ;
-        foaf:familyName  "Vaidya Jr" ;
-        foaf:givenName   "Gaurav" ;
-        foaf:name        "Gaurav Vaidya Jr" .
-
-<https://www.ncbi.nlm.nih.gov/pubmed/17060194>
-        a                          fabio:Article ;
-        prism:doi                  "10.1080/10635150600969864" ;
-        prism:endingPage           "28" ;
-        prism:pageRange            "715-28" ;
-        prism:startingPage         "715" ;
-        dct:bibliographicCitation  "Meier R, Shiyang K, Vaidya G Jr, Ng PK, et al. DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success. Systematic biology (2006);55(5):715-28. PubMed PMID: 17060194" ;
-        dct:creator                ( [ a                foaf:Agent ;
-                                       foaf:familyName  "Meier" ;
-                                       foaf:givenName   "Rudolf" ;
-                                       foaf:name        "Rudolf Meier"
-                                     ]
-                                     [ a                foaf:Agent ;
-                                       foaf:familyName  "Shiyang" ;
-                                       foaf:givenName   "Kwong" ;
-                                       foaf:name        "Kwong Shiyang"
-                                     ]
-                                     <http://orcid.org/0000000305870454#person>
-                                     [ a                foaf:Agent ;
-                                       foaf:familyName  "Ng" ;
-                                       foaf:givenName   "Peter K L" ;
-                                       foaf:name        "Peter K L Ng"
-                                     ]
-                                     [ a          foaf:Agent ;
-                                       foaf:name  "et al"
-                                     ]
-                                   ) ;
-        dct:issued                 "2006-10"^^xsd:gYearMonth ;
-        dct:modified               "2008-11-21"^^xsd:date ;
-        dct:references             <http://id.nlm.nih.gov/mesh/D017422> , <http://id.nlm.nih.gov/mesh/D004175> , <http://id.nlm.nih.gov/mesh/Q000235> , <http://id.nlm.nih.gov/mesh/D000818> , <http://id.nlm.nih.gov/mesh/Q000379> , <http://id.nlm.nih.gov/mesh/D014644> , <http://id.nlm.nih.gov/mesh/D013045> , <http://id.nlm.nih.gov/mesh/D010802> , <http://id.nlm.nih.gov/mesh/Q000737> , <http://id.nlm.nih.gov/mesh/D016384> , <http://id.nlm.nih.gov/mesh/D003576> , <http://id.nlm.nih.gov/mesh/D001483> , <http://id.nlm.nih.gov/mesh/D002965> , <http://id.nlm.nih.gov/mesh/D004272> , <http://id.nlm.nih.gov/mesh/Q000145> ;
-        dct:title                  "DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success." ;
-        fabio:hasPublicationYear   "2006"^^xsd:gYear ;
-        frbr:partOf                [ a                      fabio:JournalIssue ;
-                                     prism:issueIdentifier  "5" ;
-                                     frbr:partOf            [ a             fabio:JournalVolume ;
-                                                              prism:volume  "55" ;
-                                                              frbr:partOf   [ a           fabio:Journal ;
-                                                                              prism:issn  "1063-5157" ;
-                                                                              dct:title   "Systematic biology" ;
-                                                                              fabio:hasNLMJournalTitleAbbreviation
-                                                                                      "Syst. Biol."
-                                                                            ]
-                                                            ]
-                                   ] .
-"""
-
+      // Create a model based on the triples generated
       val foundGraph = graph.Factory.createDefaultGraph
       triples.foreach(foundGraph.add(_))
-      new StringWriter()
-      val model = ModelFactory
+      val foundModel = ModelFactory
         .createModelForGraph(foundGraph)
         .setNsPrefixes(
           Map(
@@ -298,19 +235,79 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
             "prism" -> "http://prismstandard.org/namespaces/basic/3.0/"
           ).asJava
         )
-      val baos = new ByteArrayOutputStream()
-      RDFWriter.create.source(model).format(RDFFormat.TURTLE_PRETTY).output(baos);
 
-      val actual   = baos.toString("UTF-8").split("\n")
-      val expected = expectedTriplesAsTurtle.split("\n")
+      // Convert back into Turtle for debugging.
+      val boas = new ByteArrayOutputStream
+      foundModel.write(boas, "TURTLE")
+      val foundModelAsTurtle = boas.toString("UTF-8")
 
-      // assert(baos.toString("UTF-8") == expectedTriplesAsTurtle)
+      // Create a model based on the expected JSON-LD representation of this object.
+      val expectedTriplesAsTurtle =
+        """
+        @prefix dct:   <http://purl.org/dc/terms/> .
+        @prefix fabio: <http://purl.org/spar/fabio/> .
+        @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+        @prefix frbr:  <http://purl.org/vocab/frbr/core#> .
+        @prefix prism: <http://prismstandard.org/namespaces/basic/3.0/> .
+        @prefix foaf:  <http://xmlns.com/foaf/0.1/> .
 
-      (0 until max(expected.length, actual.length)).foreach(x => {
-        val actualLine = actual(x)
-        val expectLine = expected(x)
-        assert(actualLine == expectLine)
-      })
+        <http://orcid.org/0000000305870454#person> a foaf:Agent ;
+          foaf:familyName  "Vaidya Jr" ;
+          foaf:givenName   "Gaurav" ;
+          foaf:name        "Gaurav Vaidya Jr" .
+
+        <https://www.ncbi.nlm.nih.gov/pubmed/17060194> a fabio:Article ;
+          prism:doi                        "10.1080/10635150600969864" ;
+          prism:endingPage                 "28" ;
+          prism:pageRange                  "715-28" ;
+          prism:startingPage               "715" ;
+          dct:bibliographicCitation        "Meier R, Shiyang K, Vaidya G Jr, Ng PK, et al. DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success. Systematic biology (2006);55(5):715-28. PubMed PMID: 17060194" ;
+          dct:creator                      ( [ a foaf:Agent ;
+                                               foaf:familyName  "Meier" ;
+                                               foaf:givenName   "Rudolf" ;
+                                               foaf:name        "Rudolf Meier"
+                                             ]
+                                             [ a foaf:Agent ;
+                                               foaf:familyName  "Shiyang" ;
+                                               foaf:givenName   "Kwong" ;
+                                               foaf:name        "Kwong Shiyang"
+                                             ]
+                                             <http://orcid.org/0000000305870454#person>
+                                             [ a foaf:Agent ;
+                                               foaf:familyName  "Ng" ;
+                                               foaf:givenName   "Peter K L" ;
+                                               foaf:name        "Peter K L Ng"
+                                             ]
+                                             [ a foaf:Agent ;
+                                               foaf:name  "et al"
+                                             ]
+                                           ) ;
+                dct:issued                 "2006-10"^^xsd:gYearMonth ;
+                dct:modified               "2008-11-21"^^xsd:date ;
+                dct:references             <http://id.nlm.nih.gov/mesh/D017422> , <http://id.nlm.nih.gov/mesh/D004175> , <http://id.nlm.nih.gov/mesh/Q000235> , <http://id.nlm.nih.gov/mesh/D000818> , <http://id.nlm.nih.gov/mesh/Q000379> , <http://id.nlm.nih.gov/mesh/D014644> , <http://id.nlm.nih.gov/mesh/D013045> , <http://id.nlm.nih.gov/mesh/D010802> , <http://id.nlm.nih.gov/mesh/Q000737> , <http://id.nlm.nih.gov/mesh/D016384> , <http://id.nlm.nih.gov/mesh/D003576> , <http://id.nlm.nih.gov/mesh/D001483> , <http://id.nlm.nih.gov/mesh/D002965> , <http://id.nlm.nih.gov/mesh/D004272> , <http://id.nlm.nih.gov/mesh/Q000145> ;
+                dct:title                  "DNA barcoding and taxonomy in Diptera: a tale of high intraspecific variability and low identification success." ;
+                fabio:hasPublicationYear   "2006"^^xsd:gYear ;
+                frbr:partOf                [ a fabio:JournalIssue ;
+                                             prism:issueIdentifier  "5" ;
+                                             frbr:partOf [ a fabio:JournalVolume ;
+                                                           prism:volume  "55" ;
+                                                           frbr:partOf [ a fabio:Journal ;
+                                                                         prism:issn  "1063-5157" ;
+                                                                         dct:title   "Systematic biology" ;
+                                                                         fabio:hasNLMJournalTitleAbbreviation "Syst. Biol."
+                                                                       ]
+                                                           ]
+                                           ] .
+"""
+
+      // Convert expected triples from Turtle to model.
+      val expectedModel = ModelFactory.createDefaultModel
+      expectedModel.read(new StringReader(expectedTriplesAsTurtle), null, "TURTLE")
+
+      Predef.assert(
+        expectedModel.isIsomorphicWith(foundModel),
+        "Expected triples not generated!\nGenerated model:\n" + foundModelAsTurtle + "\nModel ends."
+      )
     }
 
     test("An example with year only") {
