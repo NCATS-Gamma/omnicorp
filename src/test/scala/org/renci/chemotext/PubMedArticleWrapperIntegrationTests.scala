@@ -1,16 +1,14 @@
 package org.renci.chemotext
 
-import java.io.{ByteArrayOutputStream, StringWriter, StringReader}
+import java.io.{ByteArrayOutputStream, StringReader}
 import java.time.{LocalDate, Year, YearMonth}
 
 import org.apache.jena.graph
 import org.apache.jena.rdf.model.ModelFactory
-import org.apache.jena.riot.{RDFWriter, RDFFormat}
 import utest._
 
 import collection.JavaConverters._
 import scala.xml.XML
-import scala.math.max
 import scala.xml.{Elem, NodeSeq}
 
 /**
