@@ -31,7 +31,6 @@ import org.neo4j.graphdb.factory.GraphDatabaseFactory
 import org.prefixcommons.CurieUtil
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success, Try}
 import scala.xml.Elem
@@ -347,6 +346,9 @@ object Main extends App with LazyLogging {
   }
 
   dataFiles.foreach { file =>
+    // Start counting time.
+    val startTime = System.nanoTime
+
     // Load all articles and wrap them with PubMedArticleWrappers.
     val rootElement     = readXMLFromGZip(file)
     val wrappedArticles = (rootElement \ "PubmedArticle").map(new PubMedArticleWrapper(_))
@@ -370,7 +372,7 @@ object Main extends App with LazyLogging {
         StreamRDFOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
       }
 
-    Await.ready(done, Duration.Inf).onComplete {
+    Await.ready(done, scala.concurrent.duration.Duration.Inf).onComplete {
       case Failure(e) =>
         e.printStackTrace()
         rdfStream.finish()
@@ -378,10 +380,31 @@ object Main extends App with LazyLogging {
         terminateAkka()
         System.exit(1)
       case _ =>
+        // Write out the number of articles processed.
+        rdfStream.triple(
+          graph.Triple.create(
+            graph.NodeFactory.createURI(file.toURI.toString),
+            graph.NodeFactory.createURI("http://example.org/pubMedArticleCount"),
+            graph.NodeFactory.createLiteral(wrappedArticles.size.toString, XSDDatatype.XSDinteger)
+          )
+        )
+        // Write out the time taken for processing.
+        val duration = Duration.ofNanos(System.nanoTime - startTime)
+        rdfStream.triple(
+          graph.Triple.create(
+            graph.NodeFactory.createURI(file.toURI.toString),
+            graph.NodeFactory.createURI("http://example.org/timeTakenToProcess"),
+            graph.NodeFactory.createLiteral(duration.toString, XSDDatatype.XSDduration)
+          )
+        )
+
         rdfStream.finish()
         outStream.close()
     }
-    logger.info(s"Done processing $file")
+
+    // Write out the time taken for processing.
+    val duration = Duration.ofNanos(System.nanoTime - startTime)
+    logger.info(s"Done processing $file in $duration")
   }
   terminateAkka()
 }
