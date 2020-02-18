@@ -9,48 +9,63 @@ import scala.xml.{Node, NodeSeq}
 
 /** An object containing code for working with PubMed articles. */
 object PubMedArticleWrapper {
-  /** Convert dates in PubMed articles into TemporalAccessors wrapping those dates. */
-  def parseDate(date: Node): Try[TemporalAccessor] = {
-    // Extract the Year/Month/Day fields. Note that the month requires additional
-    // processing, since it may be a month name ("Apr") or a number ("4").
-
+  /** Convert year-month-day formatted date into a Java temporal accessor. */
+  def parseDateAsYMD(ymdDate: Node): Try[TemporalAccessor] = {
     // Parse the year and day-of-year, if possible.
-    val maybeYear: Try[Int]       = Try((date \\ "Year").text.toInt)
-    val maybeDayOfMonth: Try[Int] = Try((date \\ "Day").text.toInt)
+    val maybeYear: Try[Int]       = Try((ymdDate \\ "Year").text.toInt)
+    val maybeDayOfMonth: Try[Int] = Try((ymdDate \\ "Day").text.toInt)
 
-    maybeYear map { year =>
-      // We can't parse a month-only date: to parse it, we need to include the year as well.
-      val monthStr = (date \\ "Month").text
-      val maybeMonth: Try[Int] = Try(monthStr.toInt) orElse (Try(
+    if (maybeYear.isFailure) Failure(new IllegalArgumentException(s"Could not extract year from node: $ymdDate"))
+    else {
+      val year = maybeYear.get
+
+      // Note that the month requires additional processing, since it may be a
+      // month name ("Apr") or a number ("4").
+      val monthStr = (ymdDate \\ "Month").text
+      val maybeMonth: Try[Int] = Try(monthStr.toInt) orElse Try(
         YearMonth
           .parse(s"$year-$monthStr", DateTimeFormatter.ofPattern("uuuu-MMM"))
           .getMonth
           .getValue
-      ))
+      )
 
-      maybeMonth map { month =>
-        maybeDayOfMonth map { day =>
-          Success(LocalDate.of(year, month, day))
-        } getOrElse (Success(YearMonth.of(year, month)))
-      } getOrElse ({
-        // What if we have a maybeYear and a maybeDayOfMonth, but no maybeMonth?
-        // That suggests that we didn't read the month correctly!
-        if (maybeYear.isSuccess && maybeDayOfMonth.isSuccess && maybeMonth.isFailure)
-          Failure(new RuntimeException(s"Could not extract month from node: $date"))
-        else Success(Year.of(year))
-      })
-    } getOrElse {
-      // No year? That's probably because we have a MedlineDate instead.
-      // MedlineDates have different forms (e.g. "1989 Dec-1999 Jan", "2000 Spring", "2000 Dec 23-30").
-      // For now, we check to see if it starts with four digits, suggesting an year.
-      // See https://www.nlm.nih.gov/bsd/licensee/elements_descriptions.html#medlinedate for more details.
-      val medlineDateYearMatcher = """^.*?\b(\d{4})\b.*$""".r
-      val medlineDate            = (date \\ "MedlineDate").text
-      medlineDate match {
-        case medlineDateYearMatcher(year) => Success(Year.of(year.toInt))
-        case _                            => Failure(new IllegalArgumentException(s"Could not parse XML node as date: $date"))
+      // What if we have a maybeYear and a maybeDayOfMonth, but no maybeMonth?
+      // That suggests that we didn't read the month correctly!
+      if (maybeYear.isSuccess && maybeDayOfMonth.isSuccess && maybeMonth.isFailure)
+        Failure(new RuntimeException(s"Could not extract month from node: $ymdDate"))
+      else {
+        maybeMonth flatMap { month =>
+          maybeDayOfMonth flatMap { day =>
+            Success(LocalDate.of(year, month, day))
+          } orElse {
+            Success(YearMonth.of(year, month))
+          }
+        } orElse {
+          Success(Year.of(year))
+        }
       }
     }
+  }
+
+  def parseMedlineDate(medlineDate: Node): Try[TemporalAccessor] = {
+    // Do we have a MedlineDate?
+    // MedlineDates have different forms (e.g. "1989 Dec-1999 Jan", "2000 Spring", "2000 Dec 23-30").
+    // For now, we check to see if it starts with four digits, suggesting an year.
+    // See https://www.nlm.nih.gov/bsd/licensee/elements_descriptions.html#medlinedate for more details.
+    val medlineDateYearMatcher = """^.*?\b(\d{4})\b.*$""".r
+    val medlineDateText        = medlineDate.text
+
+    medlineDateText match {
+      case medlineDateYearMatcher(year) => Success(Year.of(year.toInt))
+      case _                            => Failure(new IllegalArgumentException(s"Could not parse MedlineDate: $medlineDate"))
+    }
+  }
+
+  /** Convert dates in PubMed articles into TemporalAccessors wrapping those dates. */
+  def parseDate(date: Node): Try[TemporalAccessor] = {
+    val medlineResult = (date \ "MedlineDate").map(parseMedlineDate)
+    if(!medlineResult.isEmpty) medlineResult.head
+    else parseDateAsYMD(date)
   }
 }
 
