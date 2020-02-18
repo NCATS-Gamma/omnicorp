@@ -40,20 +40,33 @@ object PubMedArticleWrapperUnitTests extends TestSuite {
         })
       }
       test("Test processing of invalid dates") {
-        assert(
-          (intercept[IllegalArgumentException] {
-            PubMedArticleWrapper
-              .parseDate(<PubDate><MedlineDate>199 Dec-199 Jan</MedlineDate></PubDate>)
-              .get
-          }).getMessage == "Could not parse XML node as date: <PubDate><MedlineDate>199 Dec-199 Jan</MedlineDate></PubDate>"
+        // Trying to parse a date and get a result should fail.
+        val inter1 = (intercept[IllegalArgumentException] {
+          PubMedArticleWrapper.parseDate(<PubDate><MedlineDate>199 Dec-199 Jan</MedlineDate></PubDate>).get
+        })
+        assert(inter1.getMessage == "Could not parse MedlineDate: <MedlineDate>199 Dec-199 Jan</MedlineDate>"
         )
-        assert((intercept[IllegalArgumentException] {
+
+        // Empty dates should not work.
+        val inter2 = (intercept[IllegalArgumentException] {
           PubMedArticleWrapper.parseDate(<PubDate></PubDate>).get
-        }).getMessage == "Could not parse XML node as date: <PubDate></PubDate>")
+        })
+        assert(inter2.getMessage == "Could not extract year from node: <PubDate></PubDate>")
+
+        // Dates without a month should fail.
+        val inter3 = (intercept[RuntimeException] {
+          PubMedArticleWrapper.parseDate(<PubDate><Year>2019</Year><Day>12</Day></PubDate>).get
+        })
         assert(
-          (intercept[RuntimeException] {
-            PubMedArticleWrapper.parseDate(<PubDate><Year>2019</Year><Day>12</Day></PubDate>).get
-          }).getMessage == "Could not extract month from node: <PubDate><Year>2019</Year><Day>12</Day></PubDate>"
+          inter3.getMessage == "Could not extract month from node: <PubDate><Year>2019</Year><Day>12</Day></PubDate>"
+        )
+
+        // Flattening a list of parsed dates should not cause an error.
+        assert(
+          Seq(PubMedArticleWrapper.parseDate(<PubDate><MedlineDate>199 Dec-199 Jan</MedlineDate></PubDate>))
+            .map(_.toOption)
+            .flatten
+          == Seq()
         )
       }
     }
