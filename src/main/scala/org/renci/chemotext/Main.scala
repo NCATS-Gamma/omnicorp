@@ -69,6 +69,7 @@ object PubMedTripleGenerator extends LazyLogging {
   val FRBRNamespace       = "http://purl.org/vocab/frbr/core"
 
   // Extract dates as RDF statements.
+  @SuppressWarnings(Array("org.wartremover.warts.Throw"))
   def convertDatesToTriples(pmidIRI: Resource, property: Property)(
     date: Try[TemporalAccessor]
   ): Option[Statement] = {
