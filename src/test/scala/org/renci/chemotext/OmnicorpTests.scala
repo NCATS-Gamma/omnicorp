@@ -1,6 +1,5 @@
 package org.renci.chemotext
 
-import scala.io.Source
 import java.io.File
 import java.nio.file.Files
 
@@ -44,14 +43,8 @@ object OmnicorpTests extends TestSuite {
       test("Make sure we can execute Omnicorp on the example file") {
         val (status, stdout, stderr) = exec(Seq("sbt", s"""run none "$examplesForTests" "$tmpFolder" 1"""))
 
-        // Make sure that the output file has triples indicating completion.
-        val outputFile = new File(tmpFolder, "examplesForTests.xml.ttl")
-        val outputBuffer = Source.fromFile(outputFile)
-        val output = outputBuffer.getLines().mkString("\n")
-        assert(output contains "")
-        outputBuffer.close()
-
         // Clean up temporary folder.
+        val outputFile = new File(tmpFolder, "examplesForTests.xml.ttl")
         outputFile.delete()
         tmpFolder.delete()
 
