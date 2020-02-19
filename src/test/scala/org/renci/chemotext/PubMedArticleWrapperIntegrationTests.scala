@@ -45,6 +45,12 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       }))
   }
 
+  @SuppressWarnings(
+    Array(
+      "org.wartremover.warts.NonUnitStatements", // We need them to write to strings in memory.
+      "org.wartremover.warts.Null"               // We need them to use StringReader.
+    )
+  )
   val tests: Tests = Tests {
     test("An example with day, month and year") {
       val wrappedArticle = new PubMedArticleWrapper(pubmedArticles(0))
