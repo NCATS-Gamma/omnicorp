@@ -78,10 +78,8 @@ object PubMedTripleGenerator extends LazyLogging {
         logger.warn(s"Unable to parse date $property on $pmidIRI: ${err.getMessage}")
         None
       }
-      case Success(ta: TemporalAccessor) => Some(ResourceFactory.createStatement(
-        pmidIRI,
-        property,
-        ta match {
+      case Success(ta: TemporalAccessor) =>
+        Some(ResourceFactory.createStatement(pmidIRI, property, ta match {
           case localDate: LocalDate =>
             ResourceFactory.createTypedLiteral(localDate.toString, XSDDatatype.XSDdate)
           case yearMonth: YearMonth =>
@@ -90,8 +88,7 @@ object PubMedTripleGenerator extends LazyLogging {
             ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
           case _ =>
             throw new RuntimeException(s"Unexpected temporal accessor found by parsing date: $ta")
-        }
-      ))
+        }))
     }
   }
 
@@ -283,19 +280,19 @@ object PubMedTripleGenerator extends LazyLogging {
 
     val dateStatements: Seq[Statement] = (
       (pubMedArticleWrapped.pubDatesParseResults map convertDatesToTriples(pmidIRI, DCTerms.issued)) ++
-      (pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(
-        pmidIRI,
-        DCTerms.modified
-      ))
+        (pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(
+          pmidIRI,
+          DCTerms.modified
+        ))
     ).flatten
 
     val metadataStatements = publicationMetadataStatements ++
       authorStatements ++
       dateStatements :+ ResourceFactory.createStatement(
-        pmidIRI,
-        DCTerms.bibliographicCitation,
-        ResourceFactory.createStringLiteral(citationString)
-      )
+      pmidIRI,
+      DCTerms.bibliographicCitation,
+      ResourceFactory.createStringLiteral(citationString)
+    )
 
     // Extract meshIRIs as RDF statements.
     val meshIRIs = pubMedArticleWrapped.allMeshTermIDs map (
@@ -395,7 +392,10 @@ object Main extends App with LazyLogging {
       .runForeach { triples =>
         tripleCount += triples.size
         StreamRDFOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
-        if (tripleCount % 100 == 0) logger.info(s"Approximately %,d triples have been added to the output stream.".format(tripleCount))
+        if (tripleCount % 100 == 0)
+          logger.info(
+            s"Approximately %,d triples have been added to the output stream.".format(tripleCount)
+          )
       }
 
     Await.ready(done, scala.concurrent.duration.Duration.Inf).onComplete {
@@ -438,13 +438,10 @@ object Main extends App with LazyLogging {
 
     // Write out the time taken for processing.
     val duration = Duration.ofNanos(System.nanoTime - startTime)
-    logger.info("Took %d seconds (%s) to create approx %,d triples from %,d articles in %s".format(
-      duration.getSeconds,
-      duration.toString,
-      tripleCount,
-      wrappedArticles.size,
-      file
-    ))
+    logger.info(
+      "Took %d seconds (%s) to create approx %,d triples from %,d articles in %s"
+        .format(duration.getSeconds, duration.toString, tripleCount, wrappedArticles.size, file)
+    )
   }
   terminateAkka()
 }

@@ -6,6 +6,7 @@ import java.nio.file.Files
 import utest._
 
 import sys.process._
+import scala.util.matching.Regex
 
 /**
   * Tests for the entire Omnicorp application.
@@ -25,7 +26,8 @@ object OmnicorpTests extends TestSuite {
   }
 
   // Regex for matching the final result line in STDERR.
-  val finalResultRegex = "Took \\d+ seconds (.*) to create approx [\\d,]+ triples from [\\d,]+ articles in .*".r
+  val finalResultRegex: Regex =
+    "Took \\d+ seconds (.*) to create approx [\\d,]+ triples from [\\d,]+ articles in .*".r
 
   val tests: Tests = Tests {
     test("Make sure we can run Omnicorp and see runtime information") {
@@ -41,7 +43,8 @@ object OmnicorpTests extends TestSuite {
       val tmpFolder        = Files.createTempDirectory("omnicorp-testing").toFile
 
       test("Make sure we can execute Omnicorp on the example file") {
-        val (status, stdout, stderr) = exec(Seq("sbt", s"""run none "$examplesForTests" "$tmpFolder" 1"""))
+        val (status, stdout, stderr) =
+          exec(Seq("sbt", s"""run none "$examplesForTests" "$tmpFolder" 1"""))
 
         // Clean up temporary folder.
         val outputFile = new File(tmpFolder, "examplesForTests.xml.ttl")
@@ -63,7 +66,8 @@ object OmnicorpTests extends TestSuite {
       val tmpFolder       = Files.createTempDirectory("omnicorp-testing").toFile
 
       test("Make sure we get a warning message on executing Omnicorp on this example file") {
-        val (status, stdout, stderr) = exec(Seq("sbt", s"""run none "$failedExamples1" "$tmpFolder" 1"""))
+        val (status, stdout, stderr) =
+          exec(Seq("sbt", s"""run none "$failedExamples1" "$tmpFolder" 1"""))
 
         // Clean up temporary folder.
         val outputFile = new File(tmpFolder, "failedExamples1.xml.ttl")
@@ -77,7 +81,9 @@ object OmnicorpTests extends TestSuite {
 
         assert(stderr contains "Begin processing")
         assert(stderr contains "WARN org.renci.chemotext.PubMedTripleGenerator")
-        assert(stderr contains "Unable to parse date http://purl.org/dc/terms/issued on https://www.ncbi.nlm.nih.gov/pubmed/10542500: Could not parse XML node as date: <PubDate><MedlineDate>Dec-Jan</MedlineDate></PubDate>")
+        assert(
+          stderr contains "Unable to parse date http://purl.org/dc/terms/issued on https://www.ncbi.nlm.nih.gov/pubmed/10542500: Could not parse XML node as date: <PubDate><MedlineDate>Dec-Jan</MedlineDate></PubDate>"
+        )
         assert(!finalResultRegex.findFirstIn(stderr).isEmpty)
       }
     }
