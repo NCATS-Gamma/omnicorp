@@ -383,6 +383,8 @@ object Main extends App with LazyLogging {
     // Generate triples for all wrapped PubMed articles.
     @SuppressWarnings(Array("org.wartremover.warts.Var"))
     var tripleCount = 0
+    @SuppressWarnings(Array("org.wartremover.warts.Var"))
+    var articleCount = 0
     val done = Source(wrappedArticles)
       .mapAsyncUnordered(parallelism) { article: PubMedArticleWrapper =>
         Future {
@@ -390,11 +392,12 @@ object Main extends App with LazyLogging {
         }
       }
       .runForeach { triples =>
+        articleCount += 1
         tripleCount += triples.size
         StreamRDFOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
         if (tripleCount % 100 == 0)
           logger.info(
-            s"Approximately %,d triples have been added to the output stream.".format(tripleCount)
+            s"Approximately %,d triples added from %,d articles in %s.".format(tripleCount, articleCount, file)
           )
       }
 
