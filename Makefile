@@ -43,3 +43,6 @@ $(OMNICORP): SciGraph
 output: $(OMNICORP) pubmed-annual-baseline omnicorp-scigraph
 	rm -rf $@ && mkdir -p $@ &&\
 	JAVA_OPTS="-Xmx$(MEMORY)" $(OMNICORP) omnicorp-scigraph pubmed-annual-baseline $@ $(PARALLEL)
+
+test: output
+	JAVA_OPTS="-Xmx$(MEMORY)" coursier launch com.ggvaidya:shacli_2.12:0.1-SNAPSHOT -- validate shacl/omnicorp-shapes.ttl output/*.ttl
