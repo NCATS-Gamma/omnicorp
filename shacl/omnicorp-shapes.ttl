@@ -1,0 +1,204 @@
+@prefix :      <http://example.org/> .
+@prefix shacl: <http://www.w3.org/ns/shacl#> .
+@prefix dash:  <http://datashapes.org/dash#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix fabio: <http://purl.org/spar/fabio/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix frbr:  <http://purl.org/vocab/frbr/core#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix prism: <http://prismstandard.org/namespaces/basic/3.0/> .
+@prefix dc:    <http://purl.org/dc/terms/> .
+
+# Articles are the primary unit of data in Omnicorp.
+:ArticleShape  a           shacl:NodeShape ;
+        shacl:targetClass  fabio:Article ;
+        shacl:property     [ shacl:path         dc:bibliographicCitation ;
+                             shacl:datatype     xsd:string ;
+                             shacl:description  "The bibliographic citation contains a full citation to this article." ;
+                             shacl:maxCount     1 ;
+                             shacl:minCount     1 ;
+                             shacl:nodeKind     shacl:Literal
+                           ] ;
+        shacl:property     [ shacl:path         dc:modified ;
+                             shacl:datatype     xsd:date ;
+                             shacl:description  "The date on which this entry was last modified in PubMed." ;
+                             shacl:maxCount     1 ;
+                             shacl:minCount     1 ;
+                             shacl:nodeKind     shacl:Literal
+                           ] ;
+        shacl:property     [ shacl:path         dc:title ;
+                             shacl:datatype     xsd:string ;
+                             shacl:description  "The article title" ;
+                             shacl:maxCount     1 ;
+                             shacl:minCount     1 ;
+                             shacl:nodeKind     shacl:Literal
+                           ] ;
+        shacl:property     [ shacl:path         dc:creator ;
+                             shacl:description  "Enter description here" ;
+                             shacl:node         dash:ListShape ;
+                             shacl:property [
+                                shacl:path (
+                                  [ shacl:zeroOrMorePath rdf:rest ]
+                                  rdf:first
+                                ) ;
+                                shacl:nodeKind     shacl:BlankNodeOrIRI ;
+                                shacl:node      :AgentShape
+                             ]
+                           ] ;
+        shacl:property     [ shacl:path         fabio:hasPublicationYear ;
+                             shacl:datatype     xsd:gYear ;
+                             shacl:description  "The year in which this article was published" ;
+                             shacl:maxCount     1 ;
+                             shacl:minCount     1 ;
+                             shacl:nodeKind     shacl:Literal
+                           ] ;
+        shacl:property     [ shacl:path         dc:issued ;
+                             shacl:or (
+                                [shacl:datatype xsd:date]
+                                [shacl:datatype xsd:gYear]
+                                [shacl:datatype xsd:gYearMonth]
+                             ) ;
+                             shacl:description  "The date on which this PubMed entry was published, not necessarily related to the date of its creation or last modification" ;
+                             shacl:maxCount     1 ;
+                             shacl:minCount     1 ;
+                             shacl:nodeKind     shacl:Literal
+                           ] ;
+        shacl:property     [ shacl:path         prism:doi ;
+                             shacl:datatype     xsd:string ;
+                             shacl:description  "The DOI of this publication" ;
+                             shacl:minCount     0 ;
+                             shacl:maxCount     1 ;
+                             shacl:nodeKind     shacl:Literal ;
+                           ] ;
+        shacl:property     [ shacl:path         prism:startingPage ;
+                             shacl:datatype     xsd:string ;
+                             shacl:description  "The starting page number of this article in its source journal." ;
+                             shacl:minCount     0 ;
+                             shacl:maxCount     1 ;
+                             shacl:nodeKind     shacl:Literal
+                           ] ;
+        shacl:property     [
+                             shacl:path         prism:endingPage ;
+                             shacl:datatype     xsd:string ;
+                             shacl:description  "The ending page number of this article in its source journal" ;
+                             shacl:minCount     0 ;
+                             shacl:maxCount     1 ;
+                             shacl:nodeKind     shacl:Literal
+                           ] ;
+       shacl:property      [ shacl:path         prism:pageRange ;
+                             shacl:datatype     xsd:string ;
+                             shacl:description  "The page range of this article in its source journal" ;
+                             shacl:minCount     1 ;
+                             shacl:maxCount     1 ;
+                             shacl:nodeKind     shacl:Literal
+                           ] ;
+        shacl:property     [ shacl:path         dc:references ;
+                             shacl:description  "The number of concepts referenced by this publication, based on terms in its abstract and (possibly) full-text" ;
+                             shacl:minCount     1 ;
+                             shacl:nodeKind     shacl:IRI
+                           ] ;
+        shacl:property     [ shacl:path         frbr:partOf ;
+                             shacl:description  "The journal issue, volume or journal this article is a part of" ;
+                             shacl:maxCount     1 ;
+                             shacl:minCount     1 ;
+                             shacl:nodeKind     shacl:BlankNodeOrIRI ;
+                             shacl:or (
+                               [ shacl:node     :JournalIssueShape ]
+                               [ shacl:node     :JournalVolumeShape ]
+                               [ shacl:node     :JournalShape ]
+                             )
+                           ]
+        .
+
+:AgentShape  a             shacl:NodeShape ;
+        shacl:targetClass  foaf:Agent ;
+        shacl:property     [
+                             shacl:path         foaf:name ;
+                             shacl:datatype     xsd:string ;
+                             shacl:description  "The name of this agent. May be further broken down into foaf:givenName and foaf:familyName. Note that single we identify agents by ORCID where available, we might end up with the same agent having multiple names (e.g. 'G Vaidya' vs 'Gaurav Vaidya')" ;
+                             shacl:minCount     1 ;
+                             shacl:nodeKind     shacl:Literal
+                           ] ;
+        shacl:property     [ shacl:path         foaf:familyName ;
+                             shacl:datatype     xsd:string ;
+                             shacl:description  "The family name (or last name) of the agent" ;
+                             shacl:minCount     0 ;
+                             shacl:nodeKind     shacl:Literal
+                           ] ;
+        shacl:property     [
+                             shacl:path         foaf:givenName ;
+                             shacl:datatype     xsd:string ;
+                             shacl:description  "The given name (or first name) of the agent" ;
+                             shacl:minCount     0 ;
+                             shacl:nodeKind     shacl:Literal
+                           ]
+         .
+
+:JournalIssueShape  a    shacl:NodeShape ;
+      shacl:targetClass  fabio:JournalIssue ;
+      shacl:property     [ shacl:path         prism:issueIdentifier ;
+                           shacl:datatype     xsd:string ;
+                           shacl:description  "The issue number or identifier of this journal issue" ;
+                           shacl:maxCount     1 ;
+                           shacl:minCount     1 ;
+                           shacl:nodeKind     shacl:Literal
+                         ] ;
+      shacl:property     [ shacl:path         frbr:partOf ;
+                           shacl:description  "The journal volume this issue is a part of" ;
+                           shacl:maxCount     1 ;
+                           shacl:minCount     1 ;
+                           shacl:node         :JournalVolumeShape ;
+                           shacl:nodeKind     shacl:BlankNodeOrIRI
+                         ]
+      .
+
+:JournalVolumeShape  a   shacl:NodeShape ;
+      shacl:targetClass  fabio:JournalVolume ;
+      shacl:property     [ shacl:path         prism:volume ;
+                           shacl:datatype     xsd:string ;
+                           shacl:description  "The volume number or ID of the journal" ;
+                           shacl:maxCount     1 ;
+                           shacl:minCount     1 ;
+                           shacl:nodeKind     shacl:Literal
+                         ] ;
+      shacl:property     [ shacl:path         frbr:partOf ;
+                           shacl:description  "The journal this volume is a part of" ;
+                           shacl:maxCount     1 ;
+                           shacl:minCount     1 ;
+                           shacl:node         :JournalShape ;
+                           shacl:nodeKind     shacl:BlankNodeOrIRI
+                         ]
+      .
+
+:JournalShape  a         shacl:NodeShape ;
+      shacl:targetClass  fabio:Journal ;
+      shacl:property     [ shacl:path         dc:title ;
+                           shacl:datatype     xsd:string ;
+                           shacl:description  "The title of this journal" ;
+                           shacl:maxCount     1 ;
+                           shacl:minCount     1 ;
+                           shacl:nodeKind     shacl:Literal
+                         ] ;
+      shacl:property     [ shacl:path         fabio:hasNLMJournalTitleAbbreviation ;
+                           shacl:datatype     xsd:string ;
+                           shacl:description  "The NLM abbreviation for this journal title" ;
+                           shacl:minCount     0 ;
+                           shacl:maxCount     1 ;
+                           shacl:nodeKind     shacl:Literal
+                         ] ;
+      shacl:property     [ shacl:path         prism:issn ;
+                           shacl:datatype     xsd:string ;
+                           shacl:description  "The ISSN of this journal" ;
+                           shacl:minCount     0 ;
+                           shacl:maxCount     1 ;
+                           shacl:nodeKind     shacl:Literal
+                         ] ;
+      shacl:property     [ shacl:path         prism:eIssn ;
+                           shacl:datatype     xsd:string ;
+                           shacl:description  "The eISSN of this journal" ;
+                           shacl:minCount     0 ;
+                           shacl:maxCount     1 ;
+                           shacl:nodeKind     shacl:Literal
+                         ]
+      .
