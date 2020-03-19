@@ -233,9 +233,15 @@ object PubMedTripleGenerator extends LazyLogging {
       val authorResource =
         if (author.orcIds.isEmpty) authorModel.createResource(FOAF.Agent)
         else {
-          var orcid = author.orcIds.headOption.getOrElse("0000-0002-1825-0097")
+          var orcid = author.orcIds.headOption
             // We shouldn't need the getOrElse part of this, but just in case,
             // that's the ORCID testing URI: https://orcid.org/0000-0002-1825-0097
+            .getOrElse("0000-0002-1825-0097")
+            // We also have a buggy ORCID in the system that includes an internal
+            // space. This breaks our output, since for some reason this isn't
+            // escaped properly when writing it out in Turtle.
+            .replace("\\s", "")
+
           if (
             !orcid.startsWith("http://") &&
             !orcid.startsWith("https://")
