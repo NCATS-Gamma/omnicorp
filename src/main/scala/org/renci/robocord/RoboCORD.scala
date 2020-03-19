@@ -11,6 +11,7 @@ import org.rogach.scallop.exceptions._
 import zamblauskas.csv.parser.Parser
 import zamblauskas.csv.parser._
 
+import scala.collection.parallel.immutable.ParSeq
 import scala.io.Source
 
 object RoboCORD extends App with LazyLogging {
@@ -36,7 +37,7 @@ object RoboCORD extends App with LazyLogging {
     )
     val output: ScallopOption[File] = opt[File](
       descr = "Directory where report should be written",
-      default = Some(new File("robocord-results"))
+      default = Some(new File("robocord-output"))
     )
     val neo4jLocation: ScallopOption[File] = opt[File](
       descr = "Location of the Neo4J database that SciGraph should use.",
@@ -90,7 +91,7 @@ object RoboCORD extends App with LazyLogging {
 
   // Summarize all files into the output directory.
   // .par(conf.parallel())
-  val results = wrappedData.par.map(wrappedArticle => {
+  val results: ParSeq[String] = wrappedData.par.flatMap(wrappedArticle => {
     // Step 1. Find the metadata for this article.
     val metadataEntry = metadataMap.get(wrappedArticle.sha1).head.head
 
