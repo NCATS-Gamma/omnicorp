@@ -7,6 +7,8 @@ import io.circe._
 import io.circe.parser._
 import io.circe.generic.auto._
 import io.circe.syntax._
+import io.scigraph.annotation.EntityAnnotation
+import org.renci.robocord.annotator.Annotator
 
 import scala.io.Source
 
@@ -86,23 +88,36 @@ case class Article(
   back_matter: Seq[ArticleBodyText]
 )
 
-object CORDJsonReader {
-  def processFile(file: File, logger: Logger): Unit = {
-    if (file.isDirectory) file.listFiles.foreach(processFile(_, logger))
-    else if (file.getName.toLowerCase.endsWith(".json")) {
-      logger.info("Started processing file " + file)
+class CORDArticleWrapper(article: Article) {
+  val sha1 = article.paper_id
+  val titleText = article.metadata.title
+  val abstractText = article.`abstract`.map(_.text).mkString("\n")
+  val bodyText = article.body_text.map(_.text).mkString("\n")
 
+  def getSciGraphAnnotations(ann: Annotator): Seq[EntityAnnotation] =
+    ann.extractAnnotations(
+      s"$titleText\n$abstractText\n$bodyText"
+    )
+}
+
+object CORDJsonReader {
+  def wrapFileOrDir(file: File, logger: Logger): Seq[CORDArticleWrapper] = {
+    if (file.isDirectory) file.listFiles.flatMap(wrapFileOrDir(_, logger))
+    else if (file.getName.toLowerCase.endsWith(".json")) {
       val source = Source.fromFile(file)
       val content = source.mkString
+      source.close
       decode[Article](content) match {
         case Right(article) => {
-          logger.info("Parsed article successfully!")
+          Seq(new CORDArticleWrapper(article))
         }
         case Left(ex) => {
           logger.error(s"COULD NOT PARSE $file: $ex")
+          Seq.empty[CORDArticleWrapper]
         }
       }
-      source.close
+    } else {
+      Seq.empty[CORDArticleWrapper]
     }
   }
 }
