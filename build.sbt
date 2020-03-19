@@ -47,6 +47,14 @@ libraryDependencies ++= {
     "ch.qos.logback"              %  "logback-classic"        % "1.2.3",
     "org.codehaus.groovy"         %  "groovy-all"             % "2.4.6",
     "org.apache.jena"             %  "apache-jena-libs"       % "3.13.1",
-    "com.lihaoyi"                 %% "utest"                  % "0.7.1" % "test"
+    "com.lihaoyi"                 %% "utest"                  % "0.7.1" % "test",
+
+    // Command line argument parsing.
+    "org.rogach"                  %% "scallop"                % "3.3.2",
+
+    // JSON parsing.
+    "io.circe"                    %% "circe-core"             % "0.13.0",
+    "io.circe"                    %% "circe-generic"          % "0.13.0",
+    "io.circe"                    %% "circe-parser"           % "0.13.0"
   )
 }
