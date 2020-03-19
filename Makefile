@@ -59,7 +59,9 @@ test: coursier output
 
 
 # RoboCORD
+.PHONY: robocord-download
 robocord-download:
+	# rm -rf robocord-data
 	# wget "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/comm_use_subset.tar.gz" -P robocord-data
 	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/noncomm_use_subset.tar.gz" -P robocord-data
 	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/pmc_custom_license.tar.gz" -P robocord-data
@@ -69,6 +71,7 @@ robocord-download:
 
 robocord-data: robocord-download
 	cd robocord-data; for f in *.tar.gz; do echo Uncompressing "$$f"; tar zxvf $$f; done; cd -
+	touch robocord-data
 
 robocord-output: robocord-data SciGraph
-	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD robocord-data"
+	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/all_sources_metadata_${ROBOCORD_DATE}.csv robocord-data"
