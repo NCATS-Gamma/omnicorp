@@ -7,12 +7,15 @@ MEMORY = 16G
 # Number of parallel jobs to start.
 PARALLEL = 4
 
+# The date of CORD-19 data to download.
+ROBOCORD_DATE="2020-03-13"
+
 .PHONY: all
 all: output
 
 clean:
 	sbt clean
-	rm -rf output SciGraph omnicorp-scigraph pubmed-annual-baseline robot robot.jar
+	rm -rf output SciGraph omnicorp-scigraph pubmed-annual-baseline robot robot.jar robocord-data
 
 pubmed-annual-baseline:
 	mkdir -p $@ && cd $@ &&\
@@ -53,3 +56,19 @@ coursier:
 
 test: coursier output
 	JAVA_OPTS="-Xmx$(MEMORY)" ./coursier launch com.ggvaidya:shacli_2.12:0.1-SNAPSHOT -- validate shacl/omnicorp-shapes.ttl output/*.ttl
+
+
+# RoboCORD
+robocord-download:
+	# wget "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/comm_use_subset.tar.gz" -P robocord-data
+	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/noncomm_use_subset.tar.gz" -P robocord-data
+	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/pmc_custom_license.tar.gz" -P robocord-data
+	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/biorxiv_medrxiv.tar.gz" -P robocord-data
+	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/all_sources_metadata_${ROBOCORD_DATE}.csv" -P robocord-data
+	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/all_sources_metadata_${ROBOCORD_DATE}.readme" -P robocord-data
+
+robocord-data: robocord-download
+	cd robocord-data; for f in *.tar.gz; do echo Uncompressing "$$f"; tar zxvf $$f; done; cd -
+
+robocord-output: robocord-data SciGraph
+	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD robocord-data"
