@@ -59,6 +59,6 @@ libraryDependencies ++= {
     "io.circe"                    %% "circe-parser"           % "0.13.0",
 
     // CSV parsing.
-    "zamblauskas"                 %% "scala-csv-parser"       % "0.11.4"
+    "com.github.tototoshi"        %% "scala-csv"              % "1.3.6"
   )
 }

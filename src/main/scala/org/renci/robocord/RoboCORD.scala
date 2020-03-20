@@ -8,8 +8,7 @@ import org.renci.robocord.annotator.Annotator
 import org.renci.robocord.json.{CORDArticleWrapper, CORDJsonReader}
 import org.rogach.scallop._
 import org.rogach.scallop.exceptions._
-import zamblauskas.csv.parser.Parser
-import zamblauskas.csv.parser._
+import com.github.tototoshi.csv._
 
 import scala.collection.parallel.ParSeq
 import scala.io.Source
@@ -74,15 +73,10 @@ object RoboCORD extends App with LazyLogging {
   val annotator: Annotator = new Annotator(conf.neo4jLocation())
 
   // Load the metadata file.
-  val metadataSource = Source.fromFile(conf.metadata())
-  val csvText = metadataSource.mkString
-  val metadata: Seq[MetadataEntry] = Parser.parse[MetadataEntry](csvText) match {
-    case Left(Parser.Failure(lineNum, line, message)) => throw new RuntimeException(s"Could not parse CSV metadata file ${conf.metadata()} on line $lineNum: $message\n\tLine: $line")
-    case Right(entries: Seq[MetadataEntry]) => entries
-  }
-  metadataSource.close()
-  val metadataMap = metadata.groupBy(_.sha)
-  logger.info(s"${metadata.size} metadata entries loaded from ${conf.metadata()}.")
+  val csvReader = CSVReader.open(conf.metadata())
+  val metadata: List[Map[String, String]] = csvReader.allWithHeaders()
+  val metadataMap = metadata.groupBy(_.getOrElse("sha", ""))
+  logger.info(s"${metadata.size} metadata entries for ${metadataMap.keySet.size} unique SHA ids loaded from ${conf.metadata()}, of which ${metadataMap.getOrElse("", Seq.empty).size} have missing SHAs.")
 
   // Which files do we need to process?
   val wrappedData: Seq[CORDArticleWrapper] = conf.data().flatMap(CORDJsonReader.wrapFileOrDir(_, logger))
@@ -100,10 +94,12 @@ object RoboCORD extends App with LazyLogging {
         logger.error(s"Could not find metadata for ${wrappedArticle.sha1}")
         Seq()
       }
-      case Some(Seq(metadataEntry: MetadataEntry)) => {
+      case Some(List(metadata: Map[String, String])) => {
         // Step 2. Find the ID of this article.
-        val id = if (metadataEntry.pmcid.nonEmpty) s"PMCID:${metadataEntry.pmcid}"
-        else if(metadataEntry.doi.nonEmpty) s"DOI:${metadataEntry.doi}"
+        val pmcid = metadata.getOrElse("pmcid", "")
+        val doi = metadata.getOrElse("doi", "")
+        val id = if(pmcid != "") s"PMCID:$pmcid"
+        else if(doi != "") s"DOI:$doi"
         else s"sha1:${wrappedArticle.sha1}"
 
         // Step 3. Find the annotations for this article.
@@ -113,8 +109,8 @@ object RoboCORD extends App with LazyLogging {
         logger.info(s"Identified ${annotations.size} annotations for article $id")
         annotations.map(annotation => s"$id\t${annotation.getToken.getId}\t${annotation.toString}")
       }
-      case Some(seq: Seq[MetadataEntry]) => {
-        logger.error(s"Found multiple entries of metadata for ${wrappedArticle.sha1}: ${seq}")
+      case Some(list: List[Map[String, String]]) => {
+        logger.error(s"Found multiple entries of metadata for ${wrappedArticle.sha1}: ${list}")
         Seq()
       }
     }
