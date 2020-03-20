@@ -89,6 +89,8 @@ object RoboCORD extends App with LazyLogging {
 
   logger.info(s"${wrappedData.size} articles loaded from ${conf.data()}.")
 
+  logger.info(s"Starting SciGraph in parallel on ${Runtime.getRuntime.availableProcessors} processors.")
+
   // Summarize all files into the output directory.
   // .par(conf.parallel())
   val results: ParSeq[String] = wrappedData.par.flatMap(wrappedArticle => {
