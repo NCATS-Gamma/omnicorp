@@ -93,19 +93,29 @@ object RoboCORD extends App with LazyLogging {
   // .par(conf.parallel())
   val results: ParSeq[String] = wrappedData.par.flatMap(wrappedArticle => {
     // Step 1. Find the metadata for this article.
-    val metadataEntry = metadataMap.get(wrappedArticle.sha1).head.head
+    metadataMap.get(wrappedArticle.sha1) match {
+      case None => {
+        logger.error(s"Could not find metadata for ${wrappedArticle.sha1}")
+        Seq()
+      }
+      case Some(Seq(metadataEntry: MetadataEntry)) => {
+        // Step 2. Find the ID of this article.
+        val id = if (metadataEntry.pmcid.nonEmpty) s"PMCID:${metadataEntry.pmcid}"
+        else if(metadataEntry.doi.nonEmpty) s"DOI:${metadataEntry.doi}"
+        else s"sha1:${wrappedArticle.sha1}"
 
-    // Step 2. Find the ID of this article.
-    val id = if (metadataEntry.pmcid.nonEmpty) s"PMCID:${metadataEntry.pmcid}"
-      else if(metadataEntry.doi.nonEmpty) s"DOI:${metadataEntry.doi}"
-      else s"sha1:${wrappedArticle.sha1}"
+        // Step 3. Find the annotations for this article.
+        val annotations = wrappedArticle.getSciGraphAnnotations(annotator)
 
-    // Step 3. Find the annotations for this article.
-    val annotations = wrappedArticle.getSciGraphAnnotations(annotator)
-
-    // Step 4. Write them all out.
-    logger.info(s"Identified ${annotations.size} annotations for article $id")
-    annotations.map(annotation => s"$id\t${annotation.getToken.getId}\t${annotation.toString}")
+        // Step 4. Write them all out.
+        logger.info(s"Identified ${annotations.size} annotations for article $id")
+        annotations.map(annotation => s"$id\t${annotation.getToken.getId}\t${annotation.toString}")
+      }
+      case Some(seq: Seq[MetadataEntry]) => {
+        logger.error(s"Found multiple entries of metadata for ${wrappedArticle.sha1}: ${seq}")
+        Seq()
+      }
+    }
   })
 
   // Write out all the results to the output file.
