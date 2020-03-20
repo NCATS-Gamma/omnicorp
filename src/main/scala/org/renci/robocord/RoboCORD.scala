@@ -11,7 +11,7 @@ import org.rogach.scallop.exceptions._
 import zamblauskas.csv.parser.Parser
 import zamblauskas.csv.parser._
 
-import scala.collection.parallel.immutable.ParSeq
+import scala.collection.parallel.ParSeq
 import scala.io.Source
 
 object RoboCORD extends App with LazyLogging {
@@ -85,7 +85,7 @@ object RoboCORD extends App with LazyLogging {
   logger.info(s"${metadata.size} metadata entries loaded from ${conf.metadata()}.")
 
   // Which files do we need to process?
-  val wrappedData: Stream[CORDArticleWrapper] = conf.data().flatMap(CORDJsonReader.wrapFileOrDir(_, logger)).toStream
+  val wrappedData: Seq[CORDArticleWrapper] = conf.data().flatMap(CORDJsonReader.wrapFileOrDir(_, logger))
 
   logger.info(s"${wrappedData.size} articles loaded from ${conf.data()}.")
 
