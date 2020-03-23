@@ -76,4 +76,7 @@ robocord-output: robocord-data SciGraph
 	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv robocord-data"
 
 robocord-test: SciGraph
-	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --currentChunk 0 --totalChunks 10000 robocord-data"
+	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk 0 --total-chunks 1000 robocord-data"
+	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk 1 --total-chunks 1000 robocord-data"
+	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk 2 --total-chunks 1000 robocord-data"
+	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk 3 --total-chunks 1000 robocord-data"
