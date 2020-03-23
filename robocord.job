@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+#SBATCH --job-name=RoboCORD
+#SBATCH --output=robocord-output/log-output-%a.txt
+#SBATCH --error=robocord-output/log-error-%a.txt
+#SBATCH --cpus-per-task 16
+#SBATCH --mem=50000
+#SBATCH --time=12:00:00
+#SBATCH --mail-user=gaurav@renci.org
+
+set -e # Exit immediately if a pipeline fails.
+
+export JAVA_OPTS="-Xmx50G"
+export MY_SCIGRAPH=omnicorp-scigraph-$SLURM_ARRAY_TASK_ID
+
+echo "Duplicating omnicorp-scigraph so we can use it on multiple clusters"
+cp -R omnicorp-scigraph "scigraphs/$MY_SCIGRAPH"
+
+echo "Starting RoboCORD"
+sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk $SLURM_ARRAY_TASK_ID --total-chunks $SLURM_ARRAY_TASK_MAX --output-prefix robocord-output/results --neo4j-location scigraphs/$MY_SCIGRAPH robocord-data"
+
+rm -rf "scigraphs/$MY_SCIGRAPH"
+echo "Deleted duplicated omnicorp-scigraph"
