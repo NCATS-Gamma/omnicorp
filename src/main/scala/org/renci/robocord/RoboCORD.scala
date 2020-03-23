@@ -1,17 +1,16 @@
 package org.renci.robocord
 
-import java.io.{BufferedWriter, File, FileWriter, PrintWriter}
+import java.io.{File, FileWriter, PrintWriter}
 import java.time.Duration
 
+import com.github.tototoshi.csv._
 import com.typesafe.scalalogging.{LazyLogging, Logger}
 import org.renci.robocord.annotator.Annotator
 import org.renci.robocord.json.{CORDArticleWrapper, CORDJsonReader}
 import org.rogach.scallop._
 import org.rogach.scallop.exceptions._
-import com.github.tototoshi.csv._
 
 import scala.collection.parallel.ParSeq
-import scala.io.Source
 
 object RoboCORD extends App with LazyLogging {
   /**
@@ -80,10 +79,13 @@ object RoboCORD extends App with LazyLogging {
 
   // Which files do we need to process?
   val wrappedData: Seq[CORDArticleWrapper] = conf.data().flatMap(CORDJsonReader.wrapFileOrDir(_, logger))
+  val articlesTotal = wrappedData.size
 
-  logger.info(s"${wrappedData.size} articles loaded from ${conf.data()}.")
+  logger.info(s"$articlesTotal articles loaded from ${conf.data()}.")
 
   logger.info(s"Starting SciGraph in parallel on ${Runtime.getRuntime.availableProcessors} processors.")
+
+  var articlesCompleted = 0
 
   // Summarize all files into the output directory.
   // .par(conf.parallel())
@@ -106,7 +108,9 @@ object RoboCORD extends App with LazyLogging {
         val annotations = wrappedArticle.getSciGraphAnnotations(annotator)
 
         // Step 4. Write them all out.
-        logger.info(s"Identified ${annotations.size} annotations for article $id")
+        articlesCompleted += 1
+        val articlesPercentage = f"${articlesCompleted/articlesTotal*100}%.2f%%"
+        logger.info(s"Identified ${annotations.size} annotations for article $id (approx $articlesCompleted out of $articlesTotal, $articlesPercentage)")
         annotations.map(annotation => s"$id\t${annotation.getToken.getId}\t${annotation.toString}")
       }
       case Some(list: List[Map[String, String]]) => {
@@ -123,5 +127,5 @@ object RoboCORD extends App with LazyLogging {
   pw.close
 
   val duration = Duration.ofNanos(System.nanoTime - timeStarted)
-  logger.info(s"Completed generating ${results.size} results for ${wrappedData.size} articles in ${duration.getSeconds} seconds ($duration)")
+  logger.info(s"Completed generating ${results.size} results for $articlesTotal articles in ${duration.getSeconds} seconds ($duration)")
 }
