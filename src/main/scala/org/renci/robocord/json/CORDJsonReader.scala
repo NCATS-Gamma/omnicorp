@@ -101,9 +101,9 @@ class CORDArticleWrapper(article: Article) {
 }
 
 object CORDJsonReader {
-  def wrapFileOrDir(file: File, logger: Logger): Seq[CORDArticleWrapper] = {
-    if (file.isDirectory) file.listFiles.flatMap(wrapFileOrDir(_, logger))
-    else if (file.getName.toLowerCase.endsWith(".json")) {
+  def wrapFileOrDir(file: File, logger: Logger, shasToLoadLowercase: Set[String]): Seq[CORDArticleWrapper] = {
+    if (file.isDirectory) file.listFiles.flatMap(wrapFileOrDir(_, logger, shasToLoadLowercase))
+    else if (file.getName.toLowerCase.endsWith(".json") && shasToLoadLowercase.contains(file.getName.toLowerCase.replace(".json", ""))) {
       val source = Source.fromFile(file)
       val content = source.mkString
       source.close
