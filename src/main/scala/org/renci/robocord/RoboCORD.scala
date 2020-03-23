@@ -33,13 +33,21 @@ object RoboCORD extends App with LazyLogging {
       descr = "The CSV file containing metadata",
       default = Some(new File("robocord-data/all_sources_metadata_latest.csv"))
     )
-    val output: ScallopOption[File] = opt[File](
-      descr = "Directory where report should be written",
-      default = Some(new File("robocord-output"))
+    val outputPrefix: ScallopOption[String] = opt[String](
+      descr = "Prefix for the filename (we will add '_from_<start index>_until_<end index>.txt' to the filename)",
+      default = Some("robocord-output/result")
     )
     val neo4jLocation: ScallopOption[File] = opt[File](
       descr = "Location of the Neo4J database that SciGraph should use.",
       default = Some(new File("omnicorp-scigraph"))
+    )
+    val currentChunk: ScallopOption[Int] = opt[Int](
+      descr = "The current chunks (from 0 to totalChunks-1)",
+      default = Some(0)
+    )
+    val totalChunks: ScallopOption[Int] = opt[Int](
+      descr = "The total number of chunks to process",
+      default = Some(-1)
     )
 
     verify()
@@ -73,15 +81,27 @@ object RoboCORD extends App with LazyLogging {
 
   // Load the metadata file.
   val csvReader = CSVReader.open(conf.metadata())
-  val metadata: List[Map[String, String]] = csvReader.allWithHeaders()
-  val metadataMap = metadata.groupBy(_.getOrElse("sha", ""))
-  logger.info(s"${metadata.size} metadata entries for ${metadataMap.keySet.size} unique SHA ids loaded from ${conf.metadata()}, of which ${metadataMap.getOrElse("", Seq.empty).size} have missing SHAs.")
+  val allMetadata: List[Map[String, String]] = csvReader.allWithHeaders()
+  logger.info(s"Loaded ${allMetadata.size} articles from metadata file ${conf.metadata()}.")
 
-  // Which files do we need to process?
-  val wrappedData: Seq[CORDArticleWrapper] = conf.data().flatMap(CORDJsonReader.wrapFileOrDir(_, logger))
-  val articlesTotal = wrappedData.size
+  // Which metadata entries do we actually need to process?
+  val currentChunk: Int = conf.currentChunk()
+  val totalChunks: Int = if (conf.totalChunks() == -1) allMetadata.size else conf.totalChunks()
+  val chunkLength: Int = allMetadata.size/totalChunks
+  val startIndex: Int = currentChunk * chunkLength
+  val endIndex: Int = startIndex + chunkLength
 
-  logger.info(s"$articlesTotal articles loaded from ${conf.data()}.")
+  // Divide allMetadata into chunks based on totalChunks.
+  val metadata: Seq[Map[String, String]] = allMetadata.slice(startIndex, endIndex)
+  val articlesTotal = metadata.size
+  logger.info(s"Selected $articlesTotal articles for processing (from $startIndex until $endIndex)")
+
+  // We primarily pull the metadata from allMetadata, which includes abstracts. In some cases, however,
+  // we also have full text for those files.
+  val shasToLoad = metadata.map(_.get("sha")).flatten.map(_.toLowerCase).toSet
+  val fullTextData: Seq[CORDArticleWrapper] = conf.data().flatMap(CORDJsonReader.wrapFileOrDir(_, logger, shasToLoad))
+  val fullTextBySHA: Map[String, Seq[CORDArticleWrapper]] = fullTextData.groupBy(_.sha1)
+  logger.info(s"Loaded ${fullTextData.size} full text documents corresponding to ${fullTextBySHA.keySet.size} SHA hashes.")
 
   logger.info(s"Starting SciGraph in parallel on ${Runtime.getRuntime.availableProcessors} processors.")
 
@@ -89,42 +109,42 @@ object RoboCORD extends App with LazyLogging {
 
   // Summarize all files into the output directory.
   // .par(conf.parallel())
-  val results: ParSeq[String] = wrappedData.par.flatMap(wrappedArticle => {
-    // Step 1. Find the metadata for this article.
-    metadataMap.get(wrappedArticle.sha1) match {
-      case None => {
-        logger.error(s"Could not find metadata for ${wrappedArticle.sha1}")
-        Seq()
-      }
-      case Some(List(metadata: Map[String, String])) => {
-        // Step 2. Find the ID of this article.
-        val pmid = metadata.getOrElse("pubmed_id", "")
-        val pmcid = metadata.getOrElse("pmcid", "")
-        val doi = metadata.getOrElse("doi", "")
-        val id = if (pmid != "") s"PMID:$pmid"
-        else if(pmcid != "") s"PMCID:$pmcid"
-        else if(doi != "") s"DOI:$doi"
-        else s"sha1:${wrappedArticle.sha1}"
+  val results: ParSeq[String] = metadata.par.flatMap(entry => {
+    // Step 1. Find the ID of this article.
+    val sha = entry.getOrElse("sha", "")
+    val pmid = entry.getOrElse("pubmed_id", "")
+    val pmcid = entry.getOrElse("pmcid", "")
+    val doi = entry.getOrElse("doi", "")
+    val title = entry.getOrElse("title", "")
+    val id = if (pmid != "") s"PMID:$pmid"
+    else if(pmcid != "") s"PMCID:$pmcid"
+    else if(doi != "") s"DOI:$doi"
+    else if(sha != "") s"SHA:$sha"
+    else if(title != "") s"TITLE:${title.replace("\\s", "_")}"
+    else s"UNKNOWN_ID"
 
-        // Step 3. Find the annotations for this article.
-        val annotations = wrappedArticle.getSciGraphAnnotations(annotator)
+    val abstractText = entry.getOrElse("abstract", "")
 
-        // Step 4. Write them all out.
-        articlesCompleted += 1
-        val articlesPercentage = f"${articlesCompleted/articlesTotal*100}%.2f%%"
-        logger.info(s"Identified ${annotations.size} annotations for article $id (approx $articlesCompleted out of $articlesTotal, $articlesPercentage)")
-        annotations.map(annotation => s"$id\t${annotation.getToken.getId}\t${annotation.toString}")
-      }
-      case Some(list: List[Map[String, String]]) => {
-        logger.error(s"Found multiple entries of metadata for ${wrappedArticle.sha1}: ${list}")
-        Seq()
-      }
+    // Is there a full text article for this entry?
+    val withFullText = if (sha.nonEmpty && fullTextBySHA.contains(sha)) s"with full text from $sha" else "without full text"
+    val annotations = if (sha.nonEmpty && fullTextBySHA.contains(sha)) {
+      fullTextBySHA.getOrElse(sha, Seq()).flatMap(fulltext => fulltext.getSciGraphAnnotations(annotator)).toSet.toSeq
+    } else {
+      // We don't have full text, so just annotate the title and abstract.
+      annotator.extractAnnotations(s"$title\n$abstractText")
     }
+
+    // Step 4. Write them all out.
+    articlesCompleted += 1
+    val articlesPercentage = f"${articlesCompleted/articlesTotal*100}%.2f%%"
+    logger.info(s"Identified ${annotations.size} annotations for article $id $withFullText (approx $articlesCompleted out of $articlesTotal, $articlesPercentage)")
+    annotations.map(annotation => s"$id\t${annotation.getToken.getId}\t${annotation.toString}")
   })
 
   // Write out all the results to the output file.
-  logger.info(s"Writing tab-delimited output to ${conf.output()}/results.txt.")
-  val pw = new PrintWriter(new FileWriter(new File(conf.output(), "results.txt")))
+  val outputFilename = conf.outputPrefix() + s"_from_${startIndex}_until_$endIndex.txt"
+  logger.info(s"Writing tab-delimited output to $outputFilename.")
+  val pw = new PrintWriter(new FileWriter(new File(outputFilename)))
   results.foreach(pw.println(_))
   pw.close
 
