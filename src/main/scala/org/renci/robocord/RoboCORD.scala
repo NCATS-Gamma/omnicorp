@@ -98,9 +98,11 @@ object RoboCORD extends App with LazyLogging {
       }
       case Some(List(metadata: Map[String, String])) => {
         // Step 2. Find the ID of this article.
+        val pmid = metadata.getOrElse("pubmed_id", "")
         val pmcid = metadata.getOrElse("pmcid", "")
         val doi = metadata.getOrElse("doi", "")
-        val id = if(pmcid != "") s"PMCID:$pmcid"
+        val id = if (pmid != "") s"PMID:$pmid"
+        else if(pmcid != "") s"PMCID:$pmcid"
         else if(doi != "") s"DOI:$doi"
         else s"sha1:${wrappedArticle.sha1}"
 
