@@ -94,7 +94,7 @@ object RoboCORD extends App with LazyLogging {
   // Divide allMetadata into chunks based on totalChunks.
   val metadata: Seq[Map[String, String]] = allMetadata.slice(startIndex, endIndex)
   val articlesTotal = metadata.size
-  logger.info(s"Selected $articlesTotal articles for processing (from $startIndex until $endIndex)")
+  logger.info(s"Selected $articlesTotal articles for processing (from $startIndex until $endIndex, chunk $currentChunk out of $totalChunks)")
 
   // We primarily pull the metadata from allMetadata, which includes abstracts. In some cases, however,
   // we also have full text for those files.
