@@ -136,7 +136,7 @@ object RoboCORD extends App with LazyLogging {
 
     // Step 4. Write them all out.
     articlesCompleted += 1
-    val articlesPercentage = f"${articlesCompleted/articlesTotal*100}%.2f%%"
+    val articlesPercentage = f"${articlesCompleted.toFloat/articlesTotal*100}%.2f%%"
     logger.info(s"Identified ${annotations.size} annotations for article $id $withFullText (approx $articlesCompleted out of $articlesTotal, $articlesPercentage)")
     annotations.map(annotation => s"$id\t${annotation.getToken.getId}\t${annotation.toString}")
   })
