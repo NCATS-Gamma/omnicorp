@@ -93,11 +93,13 @@ class CORDArticleWrapper(article: Article) {
   val titleText = article.metadata.title
   val abstractText = article.`abstract`.map(_.text).mkString("\n")
   val bodyText = article.body_text.map(_.text).mkString("\n")
+  val refText = article.ref_entries.values.map(_.text).mkString("\n")
+  val backText = article.back_matter.map(_.text).mkString("\n")
 
-  def getSciGraphAnnotations(ann: Annotator): Seq[EntityAnnotation] =
-    ann.extractAnnotations(
-      s"$titleText\n$abstractText\n$bodyText"
-    )
+  /** Returns the full text of this article */
+  def fullText: String = s"$titleText\n$abstractText\n$bodyText\n$refText\n$backText"
+
+  def getSciGraphAnnotations(ann: Annotator): Seq[EntityAnnotation] = ann.extractAnnotations(fullText)._2
 }
 
 object CORDJsonReader {
