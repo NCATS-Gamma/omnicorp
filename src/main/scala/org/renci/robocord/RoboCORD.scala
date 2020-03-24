@@ -49,6 +49,10 @@ object RoboCORD extends App with LazyLogging {
       descr = "The total number of chunks to process",
       default = Some(-1)
     )
+    val context: ScallopOption[Int] = opt[Int](
+      descr = "How many characters before and after the matched term should be displayed.",
+      default = Some(50)
+    )
 
     verify()
   }
@@ -126,19 +130,26 @@ object RoboCORD extends App with LazyLogging {
     val abstractText = entry.getOrElse("abstract", "")
 
     // Is there a full text article for this entry?
-    val withFullText = if (sha.nonEmpty && fullTextBySHA.contains(sha)) s"with full text from $sha" else "without full text"
-    val annotations = if (sha.nonEmpty && fullTextBySHA.contains(sha)) {
-      fullTextBySHA.getOrElse(sha, Seq()).flatMap(fulltext => fulltext.getSciGraphAnnotations(annotator)).toSet.toSeq
+    val fullText:String = if (sha.nonEmpty && fullTextBySHA.contains(sha)) {
+      // Retrieve the full text.
+      fullTextBySHA.getOrElse(sha, Seq()).map(_.fullText).mkString("\n===\n")
     } else {
       // We don't have full text, so just annotate the title and abstract.
-      annotator.extractAnnotations(s"$title\n$abstractText")
+      s"$title\n$abstractText"
     }
+    val withFullText = if (sha.nonEmpty && fullTextBySHA.contains(sha)) s"with full text from $sha" else "without full text"
+    val (parsedFullText, annotations) = annotator.extractAnnotations(fullText.replaceAll("\\s+", " "))
 
     // Step 4. Write them all out.
     articlesCompleted += 1
     val articlesPercentage = f"${articlesCompleted.toFloat/articlesTotal*100}%.2f%%"
     logger.info(s"Identified ${annotations.size} annotations for article $id $withFullText (approx $articlesCompleted out of $articlesTotal, $articlesPercentage)")
-    annotations.map(annotation => s"$id\t${annotation.getToken.getId}\t${annotation.toString}")
+    annotations.map(annotation => {
+      val matchedString = parsedFullText.slice(annotation.getStart, annotation.getEnd).replaceAll("\\s+", " ")
+      val preText = parsedFullText.slice(annotation.getStart - conf.context(), annotation.getStart).replaceAll("\\s+", " ")
+      val postText = parsedFullText.slice(annotation.getEnd, annotation.getEnd + conf.context()).replaceAll("\\s+", " ")
+      s"""$id\t${if(pmcid == "") "" else s"PMCID:$pmcid"}\t$withFullText\t"$preText"\t"$matchedString"\t"$postText"\t${annotation.getToken.getId}\t${annotation.toString}"""
+    })
   })
 
   // Write out all the results to the output file.
