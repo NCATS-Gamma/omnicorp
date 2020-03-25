@@ -1,0 +1,211 @@
+@prefix :      <http://example.org/> .
+@prefix shacl: <http://www.w3.org/ns/shacl#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix fabio: <http://purl.org/spar/fabio/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix frbr:  <http://purl.org/vocab/frbr/core#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix prism: <http://prismstandard.org/namespaces/basic/3.0/> .
+@prefix dc:    <http://purl.org/dc/terms/> .
+
+:JournalShape  a           shacl:NodeShape ;
+        shacl:property     [ shacl:datatype     xsd:string ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         dc:title
+                           ] ;
+        shacl:property     [ shacl:datatype     xsd:string ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         fabio:hasNLMJournalTitleAbbreviation
+                           ] ;
+        shacl:property     [ shacl:datatype     xsd:string ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "0"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         prism:issn
+                           ] ;
+        shacl:property     [ shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:BlankNodeOrIRI ;
+                             shacl:path         rdf:type
+                           ] ;
+        shacl:property     [ shacl:datatype     xsd:string ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "0"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         prism:eIssn
+                           ] ;
+        shacl:targetClass  fabio:Journal .
+
+:ArticleShape  a           shacl:NodeShape ;
+        shacl:property     [ shacl:datatype     xsd:string ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         prism:pageRange
+                           ] ;
+        shacl:property     [ shacl:datatype     xsd:date ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         dc:modified
+                           ] ;
+        shacl:property     [ shacl:datatype     xsd:string ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "0"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         prism:endingPage
+                           ] ;
+        shacl:property     [ shacl:datatype     xsd:string ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "0"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         prism:doi
+                           ] ;
+        shacl:property     [ shacl:datatype     xsd:gYear ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         fabio:hasPublicationYear
+                           ] ;
+        shacl:property     [ shacl:datatype     xsd:string ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "0"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         prism:startingPage
+                           ] ;
+        shacl:property     [ shacl:description  "Enter description here" ;
+                             shacl:maxCount     "150"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:BlankNodeOrIRI ;
+                             shacl:path         dc:references
+                           ] ;
+        shacl:property     [ shacl:datatype     xsd:string ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         dc:bibliographicCitation
+                           ] ;
+        shacl:property     [ shacl:datatype     xsd:string ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         dc:title
+                           ] ;
+        shacl:property     [ shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:BlankNodeOrIRI ;
+                             shacl:path         dc:creator
+                           ] ;
+        shacl:property     [ shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:BlankNodeOrIRI ;
+                             shacl:path         frbr:partOf
+                           ] ;
+        shacl:property     [ shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:BlankNodeOrIRI ;
+                             shacl:path         rdf:type
+                           ] ;
+        shacl:property     [ shacl:datatype     xsd:date , xsd:gYear , xsd:gYearMonth ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         dc:issued
+                           ] ;
+        shacl:targetClass  fabio:Article .
+
+:AgentShape  a             shacl:NodeShape ;
+        shacl:property     [ shacl:datatype     xsd:string ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         foaf:givenName
+                           ] ;
+        shacl:property     [ shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:BlankNodeOrIRI ;
+                             shacl:path         rdf:type
+                           ] ;
+        shacl:property     [ shacl:datatype     xsd:string ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         foaf:familyName
+                           ] ;
+        shacl:property     [ shacl:datatype     xsd:string ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         foaf:name
+                           ] ;
+        shacl:targetClass  foaf:Agent .
+
+:JournalIssueShape  a      shacl:NodeShape ;
+        shacl:property     [ shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:BlankNodeOrIRI ;
+                             shacl:path         frbr:partOf
+                           ] ;
+        shacl:property     [ shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:BlankNodeOrIRI ;
+                             shacl:path         rdf:type
+                           ] ;
+        shacl:property     [ shacl:datatype     xsd:string ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         prism:issueIdentifier
+                           ] ;
+        shacl:targetClass  fabio:JournalIssue .
+
+:JournalVolumeShape  a     shacl:NodeShape ;
+        shacl:property     [ shacl:datatype     xsd:string ;
+                             shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:Literal ;
+                             shacl:path         prism:volume
+                           ] ;
+        shacl:property     [ shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:BlankNodeOrIRI ;
+                             shacl:path         rdf:type
+                           ] ;
+        shacl:property     [ shacl:description  "Enter description here" ;
+                             shacl:maxCount     "1"^^xsd:long ;
+                             shacl:minCount     "1"^^xsd:long ;
+                             shacl:nodeKind     shacl:BlankNodeOrIRI ;
+                             shacl:path         frbr:partOf
+                           ] ;
+        shacl:targetClass  fabio:JournalVolume .
