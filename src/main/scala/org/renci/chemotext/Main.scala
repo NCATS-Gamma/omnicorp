@@ -60,7 +60,7 @@ class Annotator(neo4jLocation: String) {
 }
 
 /** Methods for generating an RDF description of a PubMedArticleWrapper. */
-object PubMedTripleGenerator {
+object PubMedTripleGenerator extends LazyLogging {
   // Some namespaces.
   val MESHNamespace       = "http://id.nlm.nih.gov/mesh"
   val PRISMBasicNamespace = "http://prismstandard.org/namespaces/basic/3.0"
@@ -72,22 +72,24 @@ object PubMedTripleGenerator {
   @SuppressWarnings(Array("org.wartremover.warts.Throw"))
   def convertDatesToTriples(pmidIRI: Resource, property: Property)(
     date: Try[TemporalAccessor]
-  ): Statement = {
-    ResourceFactory.createStatement(
-      pmidIRI,
-      property,
-      date match {
-        case Success(localDate: LocalDate) =>
-          ResourceFactory.createTypedLiteral(localDate.toString, XSDDatatype.XSDdate)
-        case Success(yearMonth: YearMonth) =>
-          ResourceFactory.createTypedLiteral(yearMonth.toString, XSDDatatype.XSDgYearMonth)
-        case Success(year: Year) =>
-          ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
-        case Success(ta: TemporalAccessor) =>
-          throw new RuntimeException(s"Unexpected temporal accessor found by parsing date: $ta")
-        case Failure(error: Throwable) => throw error
+  ): Option[Statement] = {
+    date match {
+      case Failure(err: Throwable) => {
+        logger.warn(s"Unable to parse date $property on $pmidIRI: ${err.getMessage}")
+        None
       }
-    )
+      case Success(ta: TemporalAccessor) =>
+        Some(ResourceFactory.createStatement(pmidIRI, property, ta match {
+          case localDate: LocalDate =>
+            ResourceFactory.createTypedLiteral(localDate.toString, XSDDatatype.XSDdate)
+          case yearMonth: YearMonth =>
+            ResourceFactory.createTypedLiteral(yearMonth.toString, XSDDatatype.XSDgYearMonth)
+          case year: Year =>
+            ResourceFactory.createTypedLiteral(year.toString, XSDDatatype.XSDgYear)
+          case _ =>
+            throw new RuntimeException(s"Unexpected temporal accessor found by parsing date: $ta")
+        }))
+    }
   }
 
   /** Generate the triples for a particular PubMed article. */
@@ -276,13 +278,17 @@ object PubMedTripleGenerator {
     val citationString =
       s"$authorString. $titleString $journalTitle ($pubYear);$journalVolume$journalIssue:$journalPages. PubMed PMID: $pmid"
 
+    val dateStatements: Seq[Statement] = (
+      (pubMedArticleWrapped.pubDatesParseResults map convertDatesToTriples(pmidIRI, DCTerms.issued)) ++
+        (pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(
+          pmidIRI,
+          DCTerms.modified
+        ))
+    ).flatten
+
     val metadataStatements = publicationMetadataStatements ++
       authorStatements ++
-      (pubMedArticleWrapped.pubDatesParseResults map convertDatesToTriples(pmidIRI, DCTerms.issued)) ++
-      (pubMedArticleWrapped.revisedDatesParseResults map convertDatesToTriples(
-        pmidIRI,
-        DCTerms.modified
-      )) :+ ResourceFactory.createStatement(
+      dateStatements :+ ResourceFactory.createStatement(
       pmidIRI,
       DCTerms.bibliographicCitation,
       ResourceFactory.createStringLiteral(citationString)
