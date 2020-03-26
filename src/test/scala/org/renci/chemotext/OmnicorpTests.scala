@@ -6,6 +6,7 @@ import java.nio.file.Files
 import utest._
 
 import sys.process._
+import scala.util.matching.Regex
 
 /**
   * Tests for the entire Omnicorp application.
@@ -23,6 +24,10 @@ object OmnicorpTests extends TestSuite {
     val status = args ! ProcessLogger(stdout append _, stderr append _)
     (status, stdout.toString, stderr.toString)
   }
+
+  // Regex for matching the final result line in STDERR.
+  val finalResultRegex: Regex =
+    "Took \\d+ seconds (.*) to create approx [\\d,]+ triples from [\\d,]+ articles in .*".r
 
   val tests: Tests = Tests {
     test("Make sure we can run Omnicorp and see runtime information") {
@@ -52,7 +57,7 @@ object OmnicorpTests extends TestSuite {
         assert(stdout contains "completed")
 
         assert(stderr contains "Begin processing")
-        assert(stderr contains "Done processing")
+        assert(!finalResultRegex.findFirstIn(stderr).isEmpty)
       }
     }
 
@@ -79,7 +84,7 @@ object OmnicorpTests extends TestSuite {
         assert(
           stderr contains "Unable to parse date http://purl.org/dc/terms/issued on https://www.ncbi.nlm.nih.gov/pubmed/10542500: Could not parse XML node as date: <PubDate><MedlineDate>Dec-Jan</MedlineDate></PubDate>"
         )
-        assert(stderr contains "Done processing")
+        assert(!finalResultRegex.findFirstIn(stderr).isEmpty)
       }
     }
   }
