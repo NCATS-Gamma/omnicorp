@@ -14,9 +14,10 @@ clean:
 	sbt clean
 	rm -rf output SciGraph omnicorp-scigraph pubmed-annual-baseline robot robot.jar
 
-pubmed-annual-baseline:
-	mkdir -p $@ && cd $@ &&\
-	curl --ftp-method singlecwd -O ftp://ftp.ncbi.nlm.nih.gov/pubmed/baseline/pubmed19n0[001-970].xml.gz
+pubmed-annual-baseline/done:
+	mkdir -p pubmed-annual-baseline &&\
+	wget -N ftp://ftp.ncbi.nlm.nih.gov/pubmed/baseline/* -P pubmed-annual-baseline &&\
+	touch pubmed-annual-baseline/done
 
 SciGraph:
 	git clone https://github.com/balhoff/SciGraph.git &&\
