@@ -34,7 +34,6 @@ testFrameworks += new TestFramework("utest.runner.Framework")
 // Dependency information.
 
 resolvers += Resolver.mavenLocal
-resolvers += Resolver.bintrayRepo("zamblauskas", "maven")
 
 libraryDependencies ++= {
   Seq(
