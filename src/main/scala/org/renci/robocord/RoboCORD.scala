@@ -115,40 +115,43 @@ object RoboCORD extends App with LazyLogging {
   // .par(conf.parallel())
   val results: ParSeq[String] = metadata.par.flatMap(entry => {
     // Step 1. Find the ID of this article.
-    val sha = entry.getOrElse("sha", "")
-    val pmid = entry.getOrElse("pubmed_id", "")
-    val pmcid = entry.getOrElse("pmcid", "")
-    val doi = entry.getOrElse("doi", "")
-    val title = entry.getOrElse("title", "")
-    val id = if (pmid != "") s"PMID:$pmid"
-    else if(pmcid != "") s"PMCID:$pmcid"
-    else if(doi != "") s"DOI:$doi"
-    else if(sha != "") s"SHA:$sha"
-    else if(title != "") s"TITLE:${title.replace("\\s", "_")}"
-    else s"UNKNOWN_ID"
+    val shas = entry.getOrElse("sha", "").split(';').map(_.trim)
 
-    val abstractText = entry.getOrElse("abstract", "")
+    shas.flatMap(sha => {
+      val pmid = entry.getOrElse("pubmed_id", "")
+      val pmcid = entry.getOrElse("pmcid", "")
+      val doi = entry.getOrElse("doi", "")
+      val title = entry.getOrElse("title", "")
+      val id = if (pmid != "") s"PMID:$pmid"
+      else if (pmcid != "") s"PMCID:$pmcid"
+      else if (doi != "") s"DOI:$doi"
+      else if (sha != "") s"SHA:$sha"
+      else if (title != "") s"TITLE:${title.replace("\\s", "_")}"
+      else s"UNKNOWN_ID"
 
-    // Is there a full text article for this entry?
-    val fullText:String = if (sha.nonEmpty && fullTextBySHA.contains(sha)) {
-      // Retrieve the full text.
-      fullTextBySHA.getOrElse(sha, Seq()).map(_.fullText).mkString("\n===\n")
-    } else {
-      // We don't have full text, so just annotate the title and abstract.
-      s"$title\n$abstractText"
-    }
-    val withFullText = if (sha.nonEmpty && fullTextBySHA.contains(sha)) s"with full text from $sha" else "without full text"
-    val (parsedFullText, annotations) = annotator.extractAnnotations(fullText.replaceAll("\\s+", " "))
+      val abstractText = entry.getOrElse("abstract", "")
 
-    // Step 4. Write them all out.
-    articlesCompleted += 1
-    val articlesPercentage = f"${articlesCompleted.toFloat/articlesTotal*100}%.2f%%"
-    logger.info(s"Identified ${annotations.size} annotations for article $id $withFullText (approx $articlesCompleted out of $articlesTotal, $articlesPercentage)")
-    annotations.map(annotation => {
-      val matchedString = parsedFullText.slice(annotation.getStart, annotation.getEnd).replaceAll("\\s+", " ")
-      val preText = parsedFullText.slice(annotation.getStart - conf.context(), annotation.getStart).replaceAll("\\s+", " ")
-      val postText = parsedFullText.slice(annotation.getEnd, annotation.getEnd + conf.context()).replaceAll("\\s+", " ")
-      s"""$id\t${if(pmcid == "") "" else s"PMCID:$pmcid"}\t$withFullText\t"$preText"\t"$matchedString"\t"$postText"\t${annotation.getToken.getId}\t${annotation.toString}"""
+      // Is there a full text article for this entry?
+      val fullText: String = if (sha.nonEmpty && fullTextBySHA.contains(sha)) {
+        // Retrieve the full text.
+        fullTextBySHA.getOrElse(sha, Seq()).map(_.fullText).mkString("\n===\n")
+      } else {
+        // We don't have full text, so just annotate the title and abstract.
+        s"$title\n$abstractText"
+      }
+      val withFullText = if (sha.nonEmpty && fullTextBySHA.contains(sha)) s"with full text from $sha" else "without full text"
+      val (parsedFullText, annotations) = annotator.extractAnnotations(fullText.replaceAll("\\s+", " "))
+
+      // Step 4. Write them all out.
+      articlesCompleted += 1
+      val articlesPercentage = f"${articlesCompleted.toFloat / articlesTotal * 100}%.2f%%"
+      logger.info(s"Identified ${annotations.size} annotations for article $id $withFullText (approx $articlesCompleted out of $articlesTotal, $articlesPercentage)")
+      annotations.map(annotation => {
+        val matchedString = parsedFullText.slice(annotation.getStart, annotation.getEnd).replaceAll("\\s+", " ")
+        val preText = parsedFullText.slice(annotation.getStart - conf.context(), annotation.getStart).replaceAll("\\s+", " ")
+        val postText = parsedFullText.slice(annotation.getEnd, annotation.getEnd + conf.context()).replaceAll("\\s+", " ")
+        s"""$id\t${if (pmcid == "") "" else s"PMCID:$pmcid"}\t$withFullText\t"$preText"\t"$matchedString"\t"$postText"\t${annotation.getToken.getId}\t${annotation.toString}"""
+      })
     })
   })
 
