@@ -102,7 +102,7 @@ object RoboCORD extends App with LazyLogging {
 
   // We primarily pull the metadata from allMetadata, which includes abstracts. In some cases, however,
   // we also have full text for those files.
-  val shasToLoad = metadata.map(_.get("sha")).flatten.map(_.toLowerCase).toSet
+  val shasToLoad = metadata.map(_.get("sha")).flatten.flatMap(_.split(';')).map(_.trim.toLowerCase).toSet
   val fullTextData: Seq[CORDArticleWrapper] = conf.data().flatMap(CORDJsonReader.wrapFileOrDir(_, logger, shasToLoad))
   val fullTextBySHA: Map[String, Seq[CORDArticleWrapper]] = fullTextData.groupBy(_.sha1)
   logger.info(s"Loaded ${fullTextData.size} full text documents corresponding to ${fullTextBySHA.keySet.size} SHA hashes.")
