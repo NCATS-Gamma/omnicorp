@@ -8,7 +8,7 @@ MEMORY = 16G
 PARALLEL = 4
 
 # The date of CORD-19 data to download.
-ROBOCORD_DATE="2020-03-20"
+ROBOCORD_DATE="2020-03-27"
 
 .PHONY: all
 all: output
@@ -33,8 +33,11 @@ robot.jar:
 robot: robot.jar
 	curl -L -O https://raw.githubusercontent.com/ontodev/robot/master/bin/robot && chmod +x robot
 
-ontologies-merged.ttl: robot ontologies.ofn
-	ROBOT_JAVA_ARGS=-Xmx$(MEMORY) ./robot merge -i ontologies.ofn -o ontologies-merged.ttl
+ontologies-merged-original.ttl: robot ontologies.ofn
+	ROBOT_JAVA_ARGS=-Xmx$(MEMORY) ./robot merge -i ontologies.ofn -o ontologies-merged-original.ttl
+
+ontologies-merged.ttl: ontologies-merged-original.ttl manually_added.ttl
+	cat ontologies-merged-original.ttl manually_added.ttl > ontologies-merged.ttl
 
 omnicorp-scigraph: ontologies-merged.ttl SciGraph
 	rm -rf $@ && cd SciGraph/SciGraph-core &&\
@@ -53,8 +56,11 @@ test: output
 # RoboCORD
 .PHONY: robocord-download robocord-output robocord-test
 robocord-download:
-	# rm -rf robocord-data
-	wget "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/comm_use_subset.tar.gz" -P robocord-data
+	# rm -rf robocord-datas/${ROBOCORD_DATE}
+	-rm robocord-data
+	-mkdir robocord-datas/${ROBOCORD_DATE}
+	-ln -s robocord-datas/${ROBOCORD_DATE} robocord-data
+	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/comm_use_subset.tar.gz" -P robocord-data
 	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/noncomm_use_subset.tar.gz" -P robocord-data
 	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/custom_license.tar.gz" -P robocord-data
 	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/biorxiv_medrxiv.tar.gz" -P robocord-data
