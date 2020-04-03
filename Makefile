@@ -44,5 +44,12 @@ output: $(OMNICORP) pubmed-annual-baseline omnicorp-scigraph
 	rm -rf $@ && mkdir -p $@ &&\
 	JAVA_OPTS="-Xmx$(MEMORY)" $(OMNICORP) omnicorp-scigraph pubmed-annual-baseline $@ $(PARALLEL)
 
-test: output
-	JAVA_OPTS="-Xmx$(MEMORY)" coursier launch com.ggvaidya:shacli_2.12:0.1-SNAPSHOT -- validate shacl/omnicorp-shapes.ttl output/*.ttl
+coursier:
+	# These are in the Linux installation instructions as per https://get-coursier.io/docs/cli-overview.html#linux
+	# Please create ./coursier as needed on your operating system.
+	curl -Lo coursier https://git.io/coursier-cli-linux &&
+	chmod +x coursier &&
+	./coursier --help
+
+test: coursier output
+	JAVA_OPTS="-Xmx$(MEMORY)" ./coursier launch com.ggvaidya:shacli_2.12:0.1-SNAPSHOT -- validate shacl/omnicorp-shapes.ttl output/*.ttl
