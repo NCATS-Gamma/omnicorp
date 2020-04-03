@@ -17,7 +17,8 @@ class AuthorWrapper(node: Node) {
   // Support for identifiers.
   val identifier: immutable.Seq[(String, String)] =
     (node \ "Identifier").map(id => (id.attribute("Source").map(_.text).mkString(", ") -> id.text))
-  val orcIds: Seq[String] = identifier.filter(_._1 == "ORCID")
+  val orcIds: Seq[String] = identifier
+    .filter(_._1 == "ORCID")
     .map(_._2)
     .map(_.replaceAll("[\\s+\\-]", ""))
     .map(_.replaceAll("^https?:\\/\\/(?:www.)?orcid.org\\/", ""))

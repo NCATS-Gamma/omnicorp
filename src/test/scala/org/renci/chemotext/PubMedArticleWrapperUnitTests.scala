@@ -55,32 +55,19 @@ object PubMedArticleWrapperUnitTests extends TestSuite {
     test("PubMedArticleWrapper") {
       test("#parseDate") {
         test("Test processing of valid dates") {
-          val datesTested = Seq(
-            (Year.of(2006), <PubDate>
+          val datesTested = Seq((Year.of(2006), <PubDate>
               <Year>2006</Year>
-            </PubDate>),
-            (YearMonth.of(2006, 10), <PubDate>
+            </PubDate>), (YearMonth.of(2006, 10), <PubDate>
               <Year>2006</Year> <Month>Oct</Month>
-            </PubDate>),
-            (
-              LocalDate.of(2006, 10, 21),
-              <PubDate>
+            </PubDate>), (LocalDate.of(2006, 10, 21), <PubDate>
                 <Year>2006</Year> <Day>21</Day> <Month>Oct</Month>
-              </PubDate>
-            ),
-            (Year.of(1998), <PubDate>
+              </PubDate>), (Year.of(1998), <PubDate>
               <MedlineDate>1998 Dec-1999 Jan</MedlineDate>
-            </PubDate>),
-            (
-              LocalDate.of(2006, 10, 21),
-              <PubDate>
+            </PubDate>), (LocalDate.of(2006, 10, 21), <PubDate>
                 <Year>2006</Year> <Day>21</Day> <Month>10</Month>
-              </PubDate>
-            ),
-            (Year.of(2016), <PubDate>
+              </PubDate>), (Year.of(2016), <PubDate>
               <MedlineDate>Summer 2016</MedlineDate>
-            </PubDate>)
-          )
+            </PubDate>))
 
           datesTested.foreach({
             case (expected, xmlNode) =>

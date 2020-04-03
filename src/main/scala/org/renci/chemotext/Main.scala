@@ -234,8 +234,8 @@ object PubMedTripleGenerator extends LazyLogging {
         if (author.orcIds.isEmpty) authorModel.createResource(FOAF.Agent)
         else {
           val orcid = author.orcIds.headOption
-            // We shouldn't need the getOrElse part of this, but just in case,
-            // that's the ORCID testing URI: https://orcid.org/0000-0002-1825-0097
+          // We shouldn't need the getOrElse part of this, but just in case,
+          // that's the ORCID testing URI: https://orcid.org/0000-0002-1825-0097
             .getOrElse("https://orcid.org/0000-0002-1825-0097")
             // We also have a buggy ORCID in the system that includes an internal
             // space. This breaks our output, since for some reason this isn't
@@ -404,7 +404,8 @@ object Main extends App with LazyLogging {
         StreamRDFOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
         if (tripleCount % 100 == 0)
           logger.info(
-            s"Approximately %,d triples added from %,d articles in %s.".format(tripleCount, articleCount, file)
+            s"Approximately %,d triples added from %,d articles in %s."
+              .format(tripleCount, articleCount, file)
           )
       }
 
