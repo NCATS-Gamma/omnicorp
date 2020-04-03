@@ -18,6 +18,7 @@ ontologies-merged.ttl
 /output
 /results
 /robocord-data
+/robocord-datas
 /robocord-output
 
 # Ignore robot.
