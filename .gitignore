@@ -14,7 +14,7 @@ target
 ontologies-merged.ttl
 
 # Ignore input and output directories.
-/pubmed-annual-baseline
+pubmed-annual-baseline
 /output
 /results
 /robocord-data
