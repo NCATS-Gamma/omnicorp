@@ -10,6 +10,7 @@ target
 /SciGraph
 /omnicorp-scigraph
 /.idea
+/.java-version
 ontologies-merged.ttl
 
 # Ignore input and output directories.
@@ -20,6 +21,9 @@ ontologies-merged.ttl
 # Ignore robot.
 /robot
 /robot.jar
+
+# Ignore coursier.
+/coursier
 
 # Ignore log files.
 /pubmed-terms.log

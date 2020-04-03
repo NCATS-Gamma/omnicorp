@@ -21,7 +21,7 @@ import io.scigraph.vocabulary.{Vocabulary, VocabularyNeo4jImpl}
 import org.apache.jena.datatypes.xsd.XSDDatatype
 import org.apache.jena.graph
 import org.apache.jena.rdf.model.{ModelFactory, Property, Resource, ResourceFactory, Statement}
-import org.apache.jena.riot.Lang
+import org.apache.jena.riot.RDFFormat
 import org.apache.jena.riot.system.{StreamRDFOps, StreamRDFWriter}
 import org.apache.jena.vocabulary.{DCTerms, RDF}
 import org.apache.jena.sparql.vocabulary.FOAF
@@ -232,11 +232,18 @@ object PubMedTripleGenerator extends LazyLogging {
       // If we have an ORCID for this author, use that to create a URL for this author. Otherwise, leave it as a blank node.
       val authorResource =
         if (author.orcIds.isEmpty) authorModel.createResource(FOAF.Agent)
-        else
-          authorModel.createResource(
-            s"http://orcid.org/${author.orcIds.headOption.getOrElse("")}#person",
-            FOAF.Agent
-          )
+        else {
+          val orcid = author.orcIds.headOption
+          // We shouldn't need the getOrElse part of this, but just in case,
+          // that's the ORCID testing URI: https://orcid.org/0000-0002-1825-0097
+            .getOrElse("https://orcid.org/0000-0002-1825-0097")
+            // We also have a buggy ORCID in the system that includes an internal
+            // space. This breaks our output, since for some reason this isn't
+            // escaped properly when writing it out in Turtle.
+            .replace("\\s", "")
+
+          authorModel.createResource(orcid, FOAF.Agent)
+        }
 
       if (author.collectiveName.isEmpty) {
         authorResource
@@ -377,7 +384,7 @@ object Main extends App with LazyLogging {
 
     // Prepare to write out triples in RDF/Turtle.
     val outStream = new FileOutputStream(new File(s"$outDir/${file.getName}.ttl"))
-    val rdfStream = StreamRDFWriter.getWriterStream(outStream, Lang.TURTLE)
+    val rdfStream = StreamRDFWriter.getWriterStream(outStream, RDFFormat.TURTLE_BLOCKS)
     rdfStream.start()
 
     // Generate triples for all wrapped PubMed articles.
@@ -397,7 +404,8 @@ object Main extends App with LazyLogging {
         StreamRDFOps.sendTriplesToStream(triples.iterator.asJava, rdfStream)
         if (tripleCount % 100 == 0)
           logger.info(
-            s"Approximately %,d triples added from %,d articles in %s.".format(tripleCount, articleCount, file)
+            s"Approximately %,d triples added from %,d articles in %s."
+              .format(tripleCount, articleCount, file)
           )
       }
 
