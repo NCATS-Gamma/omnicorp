@@ -33,11 +33,8 @@ robot.jar:
 robot: robot.jar
 	curl -L -O https://raw.githubusercontent.com/ontodev/robot/master/bin/robot && chmod +x robot
 
-ontologies-merged-original.ttl: robot ontologies.ofn
-	ROBOT_JAVA_ARGS=-Xmx$(MEMORY) ./robot merge -i ontologies.ofn -o ontologies-merged-original.ttl
-
-ontologies-merged.ttl: ontologies-merged-original.ttl manually_added.ttl
-	cat ontologies-merged-original.ttl manually_added.ttl > ontologies-merged.ttl
+ontologies-merged.ttl: robot ontologies.ofn
+	ROBOT_JAVA_ARGS=-Xmx$(MEMORY) ./robot merge -i ontologies.ofn -i manually_added.ttl -o ontologies-merged.ttl
 
 omnicorp-scigraph: ontologies-merged.ttl SciGraph
 	rm -rf $@ && cd SciGraph/SciGraph-core &&\
