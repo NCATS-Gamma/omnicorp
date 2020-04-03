@@ -57,14 +57,20 @@ coursier:
 test: coursier output
 	JAVA_OPTS="-Xmx$(MEMORY)" ./coursier launch com.ggvaidya:shacli_2.12:0.1-SNAPSHOT -- validate shacl/omnicorp-shapes.ttl output/*.ttl
 
-
 # RoboCORD
 .PHONY: robocord-download robocord-output robocord-test
 robocord-download:
-	# rm -rf robocord-datas/${ROBOCORD_DATE}
-	-rm robocord-data
-	-mkdir robocord-datas/${ROBOCORD_DATE}
-	-ln -s robocord-datas/${ROBOCORD_DATE} robocord-data
+	# robocord-data is intended to be a symlink to robocord-datas/$ROBOCORD_DATE, so that it is updated automatically. 
+	# If robocord-data doesn't exist or is a symlink, we update it
+	# automatically. Otherwise (i.e. if it's an existing directory),
+	# we only update the files already in it.
+	@if [ ! -e robocord-data ] || [ -L robocord-data ]; then \
+		rm robocord-data; \
+		mkdir -p robocord-datas/${ROBOCORD_DATE}; \
+		ln -s robocord-datas/${ROBOCORD_DATE} robocord-data; \
+	fi
+	
+	# Download CORD-19 into robocord-data.
 	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/comm_use_subset.tar.gz" -P robocord-data
 	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/noncomm_use_subset.tar.gz" -P robocord-data
 	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/custom_license.tar.gz" -P robocord-data
