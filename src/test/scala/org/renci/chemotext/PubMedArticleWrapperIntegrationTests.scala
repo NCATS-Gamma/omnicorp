@@ -182,7 +182,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
 
       assert(
         summarizedTriples == Map(
-          "https://orcid.org/0000000305870454" -> Map(
+          "https://orcid.org/0000-0003-0587-0454" -> Map(
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI"                                     -> 1),
             "http://xmlns.com/foaf/0.1/name"                  -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
             "http://xmlns.com/foaf/0.1/familyName" -> Map(
@@ -257,7 +257,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         @prefix prism: <http://prismstandard.org/namespaces/basic/3.0/> .
         @prefix foaf:  <http://xmlns.com/foaf/0.1/> .
 
-        <https://orcid.org/0000000305870454> a foaf:Agent ;
+        <https://orcid.org/0000-0003-0587-0454> a foaf:Agent ;
           foaf:familyName  "Vaidya Jr" ;
           foaf:givenName   "Gaurav" ;
           foaf:name        "Gaurav Vaidya Jr" .
@@ -278,7 +278,7 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
                                                foaf:givenName   "Kwong" ;
                                                foaf:name        "Kwong Shiyang"
                                              ]
-                                             <https://orcid.org/0000000305870454>
+                                             <https://orcid.org/0000-0003-0587-0454>
                                              [ a foaf:Agent ;
                                                foaf:familyName  "Ng" ;
                                                foaf:givenName   "Peter K L" ;
