@@ -17,6 +17,9 @@ ontologies-merged.ttl
 /pubmed-annual-baseline
 /output
 /results
+/robocord-data
+/robocord-datas
+/robocord-output
 
 # Ignore robot.
 /robot
