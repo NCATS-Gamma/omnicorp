@@ -22,8 +22,21 @@ object PubMedArticleWrapper {
       // We can't parse a month-only date: to parse it, we need to include the year as well.
       val monthStr = (date \\ "Month").text
       val maybeMonth: Try[Int] = Try(monthStr.toInt) orElse (Try(
+        // Try parsing the month as a short month name.
         YearMonth
           .parse(s"$year-$monthStr", DateTimeFormatter.ofPattern("uuuu-MMM"))
+          .getMonth
+          .getValue
+      )) orElse (Try(
+        // Try parsing the month as a full month name.
+        YearMonth
+          .parse(s"$year-$monthStr", DateTimeFormatter.ofPattern("uuuu-MMMM"))
+          .getMonth
+          .getValue
+      )) orElse (Try(
+        // Try parsing the month as a narrow month name.
+        YearMonth
+          .parse(s"$year-$monthStr", DateTimeFormatter.ofPattern("uuuu-MMMMM"))
           .getMonth
           .getValue
       ))
