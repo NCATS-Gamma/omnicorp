@@ -23,7 +23,6 @@ object PubMedArticleWrapperUnitTests extends TestSuite {
           val orcids = new AuthorWrapper(<Author>
             <Identifier Source="ORCID">0000000305870454</Identifier>
           </Author>).orcIds
-          println(orcids)
           assert(orcids == Seq("https://orcid.org/0000-0003-0587-0454"))
         }
         test("ORCID as a hyphenated number") {
