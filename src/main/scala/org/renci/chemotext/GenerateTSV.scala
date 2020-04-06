@@ -25,7 +25,10 @@ object GenerateTSV extends App with LazyLogging {
   def writeTSVToDir(inputFile: File, outputDir: File): Unit = {
     if (inputFile.isDirectory) {
       logger.info(s"Recursing into directory $inputFile")
-      inputFile.listFiles.filter(_.getName.toLowerCase.endsWith(".gz.ttl")).par.foreach(writeTSVToDir(_, outputDir))
+      inputFile.listFiles.filter(file =>
+        file.getName.toLowerCase.endsWith(".gz.ttl") ||
+        file.getName.toLowerCase.endsWith(".gz.completed.ttl")
+      ).par.foreach(writeTSVToDir(_, outputDir))
     } else {
       logger.info(s"Processing file $inputFile")
 
