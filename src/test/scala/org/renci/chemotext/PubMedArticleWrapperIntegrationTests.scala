@@ -423,5 +423,78 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         )
       )
     }
+
+    test("An example that failed previously") {
+      val wrappedArticle = new PubMedArticleWrapper(pubmedArticles(4))
+
+      assert(wrappedArticle.pmid == "15517475")
+      assert(
+        wrappedArticle.title == "Differentiated Operative Strategy in Minimally invasive, Video-assisted Thyroid Surgery Results in 196 Patients."
+      )
+      val authorNames = wrappedArticle.authors.map(_.name)
+      assert(
+        authorNames == Seq(
+          "Jochen Schabram",
+          "Christian Vorländer",
+          "Robert A Wahl"
+        )
+      )
+      assert(
+        wrappedArticle.asString == "Differentiated Operative Strategy in Minimally invasive, Video-assisted Thyroid Surgery Results in 196 Patients. To date, experience in minimally invasive thyroid surgery has been limited to unilateral lobectomy and total thyroidectomy. There are no reports regarding selective operative strategy, guided by morphology and function, which is widely accepted in endemic goiter regions. To analyze the efficiency and outcome of tissue-preserving thyroid surgery using a minimally invasive video-assisted technique (MIVA-T), a total of 196 patients were operated on for thyroid nodules between February 1999 and October 2003. Concurrent primary hyperthyroidism was treated in 22 (11%) cases. Indications for operation were solitary, multiple unilateral, or bilateral nodules with a maximum diameter of 30 mm and a maximum lobe volume of 15 ml. Contraindications for minimally invasive operation were thyroid malignancy diagnosed by fine-needle aspiration (FNA), recurrent goiter, and Hashimoto's thyroiditis. Nodule excision was performed in 6% of these cases; subtotal lobectomy, in 6%; selective resection, in 48%; and total lobectomy, in 39%. Histological examination revealed follicular adenoma in 82%, colloid and cystic lesions in 11%, thyroiditis in 1%, and differentiated thyroid carcinoma in 6%. Conversion to open surgery was necessary in 7.7% of the patients (secondary to malignancy demonstrated on frozen section in 3% and to technical difficulties in 4.7%). Transient and permanent laryngeal nerve palsy occurred in 2.0% and 0.5% of patients, respectively. Temporary hypoparathyroidism occurred in 5.6% of patients exclusively after conversion to open total thyroidectomy or in those patients ( n = 22) with additional primary hyperparathyroidism. Given a correct indication, MIVA-T technique can be performed with low conversion and complication rates. Selective operative strategy, guided by morphology and thyroid function, with a variety of operative procedures fitting the individual situation may be performed by this minimally invasive technique.  "
+      )
+      assert(wrappedArticle.allMeshTermIDs == Set())
+      assert(wrappedArticle.pubDates == Seq(LocalDate.of(2004, 10, 29)))
+      assert(wrappedArticle.revisedDates == Seq(LocalDate.of(2019, 11, 20)))
+      assert(wrappedArticle.dois == Seq("10.1007/s00268-004-7681-0"))
+
+      val triples           = PubMedTripleGenerator.generateTriples(wrappedArticle, None)
+      val summarizedTriples = summarizeTriples(triples)
+
+      assert(
+        summarizedTriples == Map(
+          "https://orcid.org/0000-0003-0587-0454" -> Map(
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI"                                     -> 1),
+            "http://xmlns.com/foaf/0.1/name"                  -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
+            "http://xmlns.com/foaf/0.1/familyName" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://xmlns.com/foaf/0.1/givenName" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            )
+          ),
+          "https://www.ncbi.nlm.nih.gov/pubmed/17060194" -> Map(
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI" -> 1),
+            "http://purl.org/spar/fabio/hasPublicationYear" -> Map(
+              "http://www.w3.org/2001/XMLSchema#gYear" -> 1
+            ),
+            "http://purl.org/dc/terms/title"      -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
+            "http://purl.org/dc/terms/creator"    -> Map("blank"                                   -> 1),
+            "http://purl.org/dc/terms/references" -> Map("URI"                                     -> 15),
+            "http://purl.org/dc/terms/issued" -> Map(
+              "http://www.w3.org/2001/XMLSchema#gYearMonth" -> 1
+            ),
+            "http://purl.org/dc/terms/modified" -> Map(
+              "http://www.w3.org/2001/XMLSchema#date" -> 1
+            ),
+            "http://prismstandard.org/namespaces/basic/3.0/doi" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://prismstandard.org/namespaces/basic/3.0/pageRange" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://prismstandard.org/namespaces/basic/3.0/startingPage" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://prismstandard.org/namespaces/basic/3.0/endingPage" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            ),
+            "http://purl.org/vocab/frbr/core#partOf" -> Map("blank" -> 1),
+            "http://purl.org/dc/terms/bibliographicCitation" -> Map(
+              "http://www.w3.org/2001/XMLSchema#string" -> 1
+            )
+          )
+        )
+      )
+    }
   }
 }
