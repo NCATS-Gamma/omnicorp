@@ -3,7 +3,7 @@
 #SBATCH --job-name=OmnicorpTSV
 #SBATCH --output=tsv-output/log-output-%A.txt
 #SBATCH --error=tsv-output/log-error-%A.txt
-#SBATCH --cpus-per-task 40
+#SBATCH --cpus-per-task 32
 #SBATCH --mem=50000
 #SBATCH --time=12:00:00
 #SBATCH --mail-user=gaurav@renci.org
