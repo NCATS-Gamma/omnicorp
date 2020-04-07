@@ -2,7 +2,6 @@
 <!DOCTYPE PubmedArticleSet PUBLIC "-//NLM//DTD PubMedArticle, 1st January 2019//EN"
         "https://dtd.nlm.nih.gov/ncbi/pubmed/out/pubmed_190101.dtd">
 <PubmedArticleSet>
-
   <PubmedArticle>
       <MedlineCitation Status="MEDLINE" Owner="NLM">
           <PMID Version="1">11237011</PMID>
@@ -1965,5 +1964,98 @@
           </ArticleIdList>
       </PubmedData>
   </PubmedArticle>
-
+  <PubmedArticle>
+    <MedlineCitation Status="Publisher" Owner="NLM">
+      <PMID Version="1">15517475</PMID>
+      <DateRevised>
+        <Year>2019</Year>
+        <Month>11</Month>
+        <Day>20</Day>
+      </DateRevised>
+      <Article PubModel="Print-Electronic">
+        <Journal>
+          <ISSN IssnType="Electronic">1432-2323</ISSN>
+          <JournalIssue CitedMedium="Internet">
+            <PubDate>
+              <Year>2004</Year>
+              <Month>October</Month>
+              <Day>29</Day>
+            </PubDate>
+          </JournalIssue>
+          <Title>World journal of surgery</Title>
+          <ISOAbbreviation>World J Surg</ISOAbbreviation>
+        </Journal>
+        <ArticleTitle>Differentiated Operative Strategy in Minimally invasive, Video-assisted Thyroid Surgery Results in 196 Patients.</ArticleTitle>
+        <ELocationID EIdType="doi" ValidYN="Y">10.1007/s00268-004-7681-0</ELocationID>
+        <Abstract>
+          <AbstractText>To date, experience in minimally invasive thyroid surgery has been limited to unilateral lobectomy and total thyroidectomy. There are no reports regarding selective operative strategy, guided by morphology and function, which is widely accepted in endemic goiter regions. To analyze the efficiency and outcome of tissue-preserving thyroid surgery using a minimally invasive video-assisted technique (MIVA-T), a total of 196 patients were operated on for thyroid nodules between February 1999 and October 2003. Concurrent primary hyperthyroidism was treated in 22 (11%) cases. Indications for operation were solitary, multiple unilateral, or bilateral nodules with a maximum diameter of 30 mm and a maximum lobe volume of 15 ml. Contraindications for minimally invasive operation were thyroid malignancy diagnosed by fine-needle aspiration (FNA), recurrent goiter, and Hashimoto's thyroiditis. Nodule excision was performed in 6% of these cases; subtotal lobectomy, in 6%; selective resection, in 48%; and total lobectomy, in 39%. Histological examination revealed follicular adenoma in 82%, colloid and cystic lesions in 11%, thyroiditis in 1%, and differentiated thyroid carcinoma in 6%. Conversion to open surgery was necessary in 7.7% of the patients (secondary to malignancy demonstrated on frozen section in 3% and to technical difficulties in 4.7%). Transient and permanent laryngeal nerve palsy occurred in 2.0% and 0.5% of patients, respectively. Temporary hypoparathyroidism occurred in 5.6% of patients exclusively after conversion to open total thyroidectomy or in those patients ( n = 22) with additional primary hyperparathyroidism. Given a correct indication, MIVA-T technique can be performed with low conversion and complication rates. Selective operative strategy, guided by morphology and thyroid function, with a variety of operative procedures fitting the individual situation may be performed by this minimally invasive technique.</AbstractText>
+        </Abstract>
+        <AuthorList CompleteYN="Y">
+          <Author ValidYN="Y">
+            <LastName>Schabram</LastName>
+            <ForeName>Jochen</ForeName>
+            <Initials>J</Initials>
+            <AffiliationInfo>
+              <Affiliation>Department of Surgery, Bürgerhospital, Nibelungenallee 37-41, D-60318, Frankfurt, Germany.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+          <Author ValidYN="Y">
+            <LastName>Vorländer</LastName>
+            <ForeName>Christian</ForeName>
+            <Initials>C</Initials>
+          </Author>
+          <Author ValidYN="Y">
+            <LastName>Wahl</LastName>
+            <ForeName>Robert A</ForeName>
+            <Initials>RA</Initials>
+          </Author>
+        </AuthorList>
+        <Language>eng</Language>
+        <PublicationTypeList>
+          <PublicationType UI="D016428">Journal Article</PublicationType>
+        </PublicationTypeList>
+        <ArticleDate DateType="Electronic">
+          <Year>2004</Year>
+          <Month>10</Month>
+          <Day>29</Day>
+        </ArticleDate>
+      </Article>
+      <MedlineJournalInfo>
+        <Country>United States</Country>
+        <MedlineTA>World J Surg</MedlineTA>
+        <NlmUniqueID>7704052</NlmUniqueID>
+        <ISSNLinking>0364-2313</ISSNLinking>
+      </MedlineJournalInfo>
+    </MedlineCitation>
+    <PubmedData>
+      <History>
+        <PubMedPubDate PubStatus="pubmed">
+          <Year>2004</Year>
+          <Month>11</Month>
+          <Day>2</Day>
+          <Hour>9</Hour>
+          <Minute>0</Minute>
+        </PubMedPubDate>
+        <PubMedPubDate PubStatus="medline">
+          <Year>2004</Year>
+          <Month>11</Month>
+          <Day>2</Day>
+          <Hour>9</Hour>
+          <Minute>0</Minute>
+        </PubMedPubDate>
+        <PubMedPubDate PubStatus="entrez">
+          <Year>2004</Year>
+          <Month>11</Month>
+          <Day>2</Day>
+          <Hour>9</Hour>
+          <Minute>0</Minute>
+        </PubMedPubDate>
+      </History>
+      <PublicationStatus>aheadofprint</PublicationStatus>
+      <ArticleIdList>
+        <ArticleId IdType="pubmed">15517475</ArticleId>
+        <ArticleId IdType="doi">10.1007/s00268-004-7681-0</ArticleId>
+      </ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
 </PubmedArticleSet>
