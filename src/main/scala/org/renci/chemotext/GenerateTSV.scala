@@ -63,7 +63,7 @@ object GenerateTSV extends App with LazyLogging {
         val duration = Duration.ofNanos(System.nanoTime - startTime)
 
         val articlesPerSecond = (articleCount.toFloat / duration.getSeconds)
-        logger.info(f"Took ${duration.getSeconds} seconds ($duration) to process $articleCount ($articlesPerSecond%.2f articles/sec) from $inputFile to $outputFilename")
+        logger.info(f"Took ${duration.getSeconds} seconds ($duration) to process $articleCount articles ($articlesPerSecond%.2f articles/sec) from $inputFile to $outputFilename")
 
         // Rename file to completed.
         Files.move(
