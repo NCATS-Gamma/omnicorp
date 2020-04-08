@@ -7,12 +7,15 @@ MEMORY = 16G
 # Number of parallel jobs to start.
 PARALLEL = 4
 
+# The date of CORD-19 data to download.
+ROBOCORD_DATE="2020-03-27"
+
 .PHONY: all
 all: output
 
 clean:
 	sbt clean
-	rm -rf output SciGraph omnicorp-scigraph pubmed-annual-baseline robot robot.jar
+	rm -rf output SciGraph omnicorp-scigraph pubmed-annual-baseline robot robot.jar robocord-data
 
 pubmed-annual-baseline/done:
 	mkdir -p pubmed-annual-baseline &&\
@@ -32,7 +35,7 @@ robot: robot.jar
 	curl -L -O https://raw.githubusercontent.com/ontodev/robot/master/bin/robot && chmod +x robot
 
 ontologies-merged.ttl: robot ontologies.ofn
-	ROBOT_JAVA_ARGS=-Xmx$(MEMORY) ./robot merge -i ontologies.ofn -o ontologies-merged.ttl
+	ROBOT_JAVA_ARGS=-Xmx$(MEMORY) ./robot merge -i ontologies.ofn -i manually_added.ttl -o ontologies-merged.ttl
 
 omnicorp-scigraph: ontologies-merged.ttl SciGraph
 	rm -rf $@ && cd SciGraph/SciGraph-core &&\
@@ -54,3 +57,36 @@ coursier:
 
 test: coursier output
 	JAVA_OPTS="-Xmx$(MEMORY)" ./coursier launch com.ggvaidya:shacli_2.12:0.1-SNAPSHOT -- validate shacl/omnicorp-shapes.ttl output/*.ttl
+
+# RoboCORD
+.PHONY: robocord-download robocord-output robocord-test
+robocord-download:
+	# robocord-data is intended to be a symlink to robocord-datas/$ROBOCORD_DATE, so that it is updated automatically. 
+	# If robocord-data doesn't exist or is a symlink, we update it
+	# automatically. Otherwise (i.e. if it's an existing directory),
+	# we only update the files already in it.
+	@if [ ! -e robocord-data ] || [ -L robocord-data ]; then \
+		rm robocord-data; \
+		mkdir -p robocord-datas/${ROBOCORD_DATE}; \
+		ln -s robocord-datas/${ROBOCORD_DATE} robocord-data; \
+	fi
+	
+	# Download CORD-19 into robocord-data.
+	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/comm_use_subset.tar.gz" -P robocord-data
+	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/noncomm_use_subset.tar.gz" -P robocord-data
+	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/custom_license.tar.gz" -P robocord-data
+	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/biorxiv_medrxiv.tar.gz" -P robocord-data
+	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/metadata.csv" -P robocord-data
+
+robocord-data: robocord-download
+	cd robocord-data; for f in *.tar.gz; do echo Uncompressing "$$f"; tar zxvf $$f; done; cd -
+	touch robocord-data
+
+robocord-output: robocord-data SciGraph
+	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv robocord-data"
+
+robocord-test: SciGraph
+	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk 0 --total-chunks 1000 robocord-data"
+	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk 1 --total-chunks 1000 robocord-data"
+	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk 2 --total-chunks 1000 robocord-data"
+	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk 3 --total-chunks 1000 robocord-data"
