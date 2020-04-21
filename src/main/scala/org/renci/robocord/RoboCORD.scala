@@ -62,24 +62,6 @@ object RoboCORD extends App with LazyLogging {
   // Parse command line arguments.
   val conf = new Conf(args, logger)
 
-  // Load the metadata CSV file.
-  case class MetadataEntry (
-    sha: String,
-    source_x: String,
-    title: String,
-    doi: String,
-    pmcid: String,
-    pubmed_id: String,
-    license: String,
-    `abstract`: String,
-    publish_time: String,
-    authors: String,
-    journal: String,
-    `Microsoft Academic Paper ID`: String,
-    `WHO #Covidence`: String,
-    has_full_text: String
-  )
-
   // Set up Annotator.
   val annotator: Annotator = new Annotator(conf.neo4jLocation())
 
@@ -103,9 +85,12 @@ object RoboCORD extends App with LazyLogging {
   // We primarily pull the metadata from allMetadata, which includes abstracts. In some cases, however,
   // we also have full text for those files.
   val shasToLoad = metadata.map(_.get("sha")).flatten.flatMap(_.split(';')).map(_.trim.toLowerCase).toSet
-  val fullTextData: Seq[CORDArticleWrapper] = conf.data().flatMap(CORDJsonReader.wrapFileOrDir(_, logger, shasToLoad))
-  val fullTextBySHA: Map[String, Seq[CORDArticleWrapper]] = fullTextData.groupBy(_.sha1)
-  logger.info(s"Loaded ${fullTextData.size} full text documents corresponding to ${fullTextBySHA.keySet.size} SHA hashes.")
+  val pmcIdsToLoad = metadata.map(_.get("pmcid")).flatten.flatMap(_.split(';')).map(_.trim.toLowerCase).toSet
+  // logger.info(s"shasToLoad: $shasToLoad")
+  // logger.info(s"pmcIdsToLoad: $pmcIdsToLoad")
+  val fullTextData: Seq[CORDArticleWrapper] = conf.data().flatMap(CORDJsonReader.wrapFileOrDir(_, logger, shasToLoad, pmcIdsToLoad))
+  val fullTextById: Map[String, Seq[CORDArticleWrapper]] = fullTextData.groupBy(_.id)
+  logger.info(s"Loaded ${fullTextData.size} full text documents corresponding to ${fullTextById.keySet.size} IDs.")
 
   logger.info(s"Starting SciGraph in parallel on ${Runtime.getRuntime.availableProcessors} processors.")
 
@@ -115,15 +100,9 @@ object RoboCORD extends App with LazyLogging {
   // .par(conf.parallel())
   val results: ParSeq[String] = metadata.par.flatMap(entry => {
     // Get ID.
-    val pmid = entry.getOrElse("pubmed_id", "")
-    val pmcid = entry.getOrElse("pmcid", "")
-    val doi = entry.getOrElse("doi", "")
-    val title = entry.getOrElse("title", "")
-    val id = if (pmid != "") s"PMID:$pmid"
-    else if (pmcid != "") s"PMCID:$pmcid"
-    else if (doi != "") s"DOI:$doi"
-    else if (title != "") s"TITLE:${title.replace("\\s", "_")}"
-    else s"UNKNOWN_ID"
+    val id = entry("cord_uid")
+    val pmid = entry.get("pubmed_id")
+    val doi = entry.get("doi")
 
     // Step 1. Find the ID of this article.
     val shas = entry.getOrElse("sha", "").split(';').map(_.trim).filter(_.nonEmpty)
@@ -132,18 +111,33 @@ object RoboCORD extends App with LazyLogging {
       logger.info(s"Found multiple SHAs for $id, choosing the last one ($shaLast) out of: $shas")
       shaLast
     } else shas.headOption.getOrElse("")
+    val pmcids = entry.getOrElse("pmcid", "").split(';').map(_.trim).filter(_.nonEmpty)
+    val pmcid = if (pmcids.length > 1) {
+      val pmcidLast = pmcids.last
+      logger.info(s"Found multiple PMCIDs for $id, choosing the last one ($pmcidLast) out of: $pmcids")
+      pmcidLast
+    } else pmcids.headOption.getOrElse("")
+    val articleId = pmid.map("PMID:" + _).getOrElse(doi.map("DOI:" + _).getOrElse("PMCID:" + pmcid))
 
+    // Get article.
+    val title: String = entry.getOrElse("title", "")
     val abstractText = entry.getOrElse("abstract", "")
 
     // Is there a full text article for this entry?
-    val fullText: String = if (sha.nonEmpty && fullTextBySHA.contains(sha)) {
+    val fullText: String = if (pmcid.nonEmpty && fullTextById.contains(pmcid)) {
       // Retrieve the full text.
-      fullTextBySHA.getOrElse(sha, Seq()).map(_.fullText).mkString("\n===\n")
+      fullTextById.getOrElse(pmcid, Seq()).map(_.fullText).mkString("\n===\n")
+    } else if (sha.nonEmpty && fullTextById.contains(sha)) {
+      // Retrieve the full text.
+      fullTextById.getOrElse(sha, Seq()).map(_.fullText).mkString("\n===\n")
     } else {
       // We don't have full text, so just annotate the title and abstract.
       s"$title\n$abstractText"
     }
-    val withFullText = if (sha.nonEmpty && fullTextBySHA.contains(sha)) s"with full text from $sha" else "without full text"
+    val withFullText = if (pmcid.nonEmpty && fullTextById.contains(pmcid)) s"with full text from PMCID $pmcid"
+      else if (sha.nonEmpty && fullTextById.contains(sha)) s"with full text from SHA $sha"
+      else "without full text"
+
     val (parsedFullText, annotations) = annotator.extractAnnotations(fullText.replaceAll("\\s+", " "))
 
     // Step 4. Write them all out.
@@ -154,7 +148,7 @@ object RoboCORD extends App with LazyLogging {
       val matchedString = parsedFullText.slice(annotation.getStart, annotation.getEnd).replaceAll("\\s+", " ")
       val preText = parsedFullText.slice(annotation.getStart - conf.context(), annotation.getStart).replaceAll("\\s+", " ")
       val postText = parsedFullText.slice(annotation.getEnd, annotation.getEnd + conf.context()).replaceAll("\\s+", " ")
-      s"""$id\t${if (pmcid == "") "" else s"PMCID:$pmcid"}\t$withFullText\t"$preText"\t"$matchedString"\t"$postText"\t${annotation.getToken.getId}\t${annotation.toString}"""
+      s"""$id\t$articleId\t${if (pmcid == "") "" else s"PMCID:$pmcid"}\t$withFullText\t"$preText"\t"$matchedString"\t"$postText"\t${annotation.getToken.getId}\t${annotation.toString}"""
     })
   })
 
