@@ -124,19 +124,25 @@ object RoboCORD extends App with LazyLogging {
     val abstractText = entry.getOrElse("abstract", "")
 
     // Is there a full text article for this entry?
-    val fullText: String = if (pmcid.nonEmpty && fullTextById.contains(pmcid)) {
+    val (fullText, withFullText) = if (pmcid.nonEmpty && fullTextById.contains(pmcid)) {
       // Retrieve the full text.
-      fullTextById.getOrElse(pmcid, Seq()).map(_.fullText).mkString("\n===\n")
+      (
+        fullTextById.getOrElse(pmcid, Seq()).map(_.fullText).mkString("\n===\n"),
+        s"with full text from PMCID $pmcid"
+      )
     } else if (sha.nonEmpty && fullTextById.contains(sha)) {
       // Retrieve the full text.
-      fullTextById.getOrElse(sha, Seq()).map(_.fullText).mkString("\n===\n")
+      (
+        fullTextById.getOrElse(sha, Seq()).map(_.fullText).mkString("\n===\n"),
+        s"with full text from SHA $sha"
+      )
     } else {
       // We don't have full text, so just annotate the title and abstract.
-      s"$title\n$abstractText"
+      (
+        s"$title\n$abstractText",
+        "without full text"
+      )
     }
-    val withFullText = if (pmcid.nonEmpty && fullTextById.contains(pmcid)) s"with full text from PMCID $pmcid"
-      else if (sha.nonEmpty && fullTextById.contains(sha)) s"with full text from SHA $sha"
-      else "without full text"
 
     val (parsedFullText, annotations) = annotator.extractAnnotations(fullText.replaceAll("\\s+", " "))
 
