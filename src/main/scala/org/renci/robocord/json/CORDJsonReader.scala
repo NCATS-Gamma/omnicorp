@@ -67,21 +67,21 @@ case class ArticleRefEntry(
 )
 
 case class ArticleBibEntry(
-  ref_id: String,
+  ref_id: Option[String],
   title: String,
   authors: Seq[Author],
   year: Option[Int],
   venue: String,
   volume: String,
   issn: String,
-  pages: String,
+  pages: Option[String],
   other_ids: Map[String, Seq[String]]
 )
 
 case class Article(
   paper_id: String,
   metadata: ArticleMetadata,
-  `abstract`: Seq[ArticleAbstract],
+  `abstract`: Option[Seq[ArticleAbstract]],
   body_text: Seq[ArticleBodyText],
   bib_entries: Map[String, ArticleBibEntry],
   ref_entries: Map[String, ArticleRefEntry],
@@ -89,9 +89,9 @@ case class Article(
 )
 
 class CORDArticleWrapper(article: Article) {
-  val sha1 = article.paper_id
+  val id = article.paper_id
   val titleText = article.metadata.title
-  val abstractText = article.`abstract`.map(_.text).mkString("\n")
+  val abstractText = article.`abstract`.getOrElse(Seq()).map(_.text).mkString("\n")
   val bodyText = article.body_text.map(_.text).mkString("\n")
   val refText = article.ref_entries.values.map(_.text).mkString("\n")
   val backText = article.back_matter.map(_.text).mkString("\n")
@@ -103,9 +103,15 @@ class CORDArticleWrapper(article: Article) {
 }
 
 object CORDJsonReader {
-  def wrapFileOrDir(file: File, logger: Logger, shasToLoadLowercase: Set[String]): Seq[CORDArticleWrapper] = {
-    if (file.isDirectory) file.listFiles.flatMap(wrapFileOrDir(_, logger, shasToLoadLowercase))
-    else if (file.getName.toLowerCase.endsWith(".json") && shasToLoadLowercase.contains(file.getName.toLowerCase.replace(".json", ""))) {
+  def wrapFileOrDir(file: File, logger: Logger, shasToLoadLowercase: Set[String], pmcidsToLoadLowercase: Set[String]): Seq[CORDArticleWrapper] = {
+    // logger.info(s"wrapFileOrDir($file, $logger, $shasToLoadLowercase, $pmcidsToLoadLowercase)")
+    if (file.isDirectory) file.listFiles.flatMap(wrapFileOrDir(_, logger, shasToLoadLowercase, pmcidsToLoadLowercase))
+    else if (
+      // Check if the filename is a PMC ID we're interested in.
+      (file.getName.toLowerCase.endsWith(".xml.json") && pmcidsToLoadLowercase.contains(file.getName.toLowerCase.replace(".xml.json", "")))
+      // Check if the filename is an SHA we're interested in.
+      || (file.getName.toLowerCase.endsWith(".json") && shasToLoadLowercase.contains(file.getName.toLowerCase.replace(".json", "")))
+    ) {
       val source = Source.fromFile(file)
       val content = source.mkString
       source.close
