@@ -117,7 +117,10 @@ object RoboCORD extends App with LazyLogging {
       logger.info(s"Found multiple PMCIDs for $id, choosing the last one ($pmcidLast) out of: $pmcids")
       pmcidLast
     } else pmcids.headOption.getOrElse("")
-    val articleId = pmid.map("PMID:" + _).getOrElse(doi.map("DOI:" + _).getOrElse("PMCID:" + pmcid))
+    val articleId = if (pmid.nonEmpty && pmid.get.nonEmpty) pmid.map("PMID:" + _).mkString("|")
+      else if(doi.nonEmpty && doi.get.nonEmpty) doi.map("DOI:" + _).mkString("|")
+      else if(pmcid.nonEmpty) pmcid.map("PMCID:" + _)
+      else s"CORD_UID:$id"
 
     // Get article.
     val title: String = entry.getOrElse("title", "")
