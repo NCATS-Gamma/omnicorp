@@ -82,29 +82,31 @@ object RoboCORD extends App with LazyLogging {
   val articlesTotal = metadata.size
   logger.info(s"Selected $articlesTotal articles for processing (from $startIndex until $endIndex, chunk $currentChunk out of $totalChunks)")
 
-  // We primarily pull the metadata from allMetadata, which includes abstracts. In some cases, however,
-  // we also have full text for those files.
+  // Identify full text SHAs and PMCIDs in the current chunk (`metadata`).
   val shasToLoad = metadata.map(_.get("sha")).flatten.flatMap(_.split(';')).map(_.trim.toLowerCase).toSet
   val pmcIdsToLoad = metadata.map(_.get("pmcid")).flatten.flatMap(_.split(';')).map(_.trim.toLowerCase).toSet
   // logger.info(s"shasToLoad: $shasToLoad")
   // logger.info(s"pmcIdsToLoad: $pmcIdsToLoad")
+
+  // Load up full text data for those SHAs and PMCIDs, and create a map so we can identify them easily.
   val fullTextData: Seq[CORDArticleWrapper] = conf.data().flatMap(CORDJsonReader.wrapFileOrDir(_, logger, shasToLoad, pmcIdsToLoad))
   val fullTextById: Map[String, Seq[CORDArticleWrapper]] = fullTextData.groupBy(_.id)
   logger.info(s"Loaded ${fullTextData.size} full text documents corresponding to ${fullTextById.keySet.size} IDs.")
 
+  // Run SciGraph in parallel over the chunk we need to process.
   logger.info(s"Starting SciGraph in parallel on ${Runtime.getRuntime.availableProcessors} processors.")
 
   var articlesCompleted = 0
 
   // Summarize all files into the output directory.
-  // .par(conf.parallel())
   val results: ParSeq[String] = metadata.par.flatMap(entry => {
-    // Get ID.
+    // Find the ID of this article.
     val id = entry("cord_uid")
     val pmid = entry.get("pubmed_id")
     val doi = entry.get("doi")
 
-    // Step 1. Find the ID of this article.
+    // For SHA and PMCID, we do a little additional processing: if there are multiple SHAs or PMCIDs,
+    // we only use the last one, but we record all IDs in the log.
     val shas = entry.getOrElse("sha", "").split(';').map(_.trim).filter(_.nonEmpty)
     val sha = if (shas.length > 1) {
       val shaLast = shas.last
@@ -117,16 +119,15 @@ object RoboCORD extends App with LazyLogging {
       logger.info(s"Found multiple PMCIDs for $id, choosing the last one ($pmcidLast) out of: $pmcids")
       pmcidLast
     } else pmcids.headOption.getOrElse("")
+
+    // Choose an "article ID", which is one of: (1) PubMed ID, (2) DOI, (3) PMCID or (4) CORD_UID.
     val articleId = if (pmid.nonEmpty && pmid.get.nonEmpty) pmid.map("PMID:" + _).mkString("|")
       else if(doi.nonEmpty && doi.get.nonEmpty) doi.map("DOI:" + _).mkString("|")
       else if(pmcid.nonEmpty) pmcid.map("PMCID:" + _)
       else s"CORD_UID:$id"
 
-    // Get article.
-    val title: String = entry.getOrElse("title", "")
-    val abstractText = entry.getOrElse("abstract", "")
-
-    // Is there a full text article for this entry?
+    // Determine which full text document to use. If a full text JSON document (via SHA or PMCID) is available,
+    // we use that. Otherwise, we fall back to the title and abstract from the metadata file.
     val (fullText, withFullText) = if (pmcid.nonEmpty && fullTextById.contains(pmcid)) {
       // Retrieve the full text.
       (
@@ -141,15 +142,18 @@ object RoboCORD extends App with LazyLogging {
       )
     } else {
       // We don't have full text, so just annotate the title and abstract.
+      val title: String = entry.getOrElse("title", "")
+      val abstractText = entry.getOrElse("abstract", "")
       (
         s"$title\n$abstractText",
         "without full text"
       )
     }
 
+    // Extract annotations from the full text using SciGraph.
     val (parsedFullText, annotations) = annotator.extractAnnotations(fullText.replaceAll("\\s+", " "))
 
-    // Step 4. Write them all out.
+    // Write them all out.
     articlesCompleted += 1
     val articlesPercentage = f"${articlesCompleted.toFloat / articlesTotal * 100}%.2f%%"
     logger.info(s"Identified ${annotations.size} annotations for article $id $withFullText (approx $articlesCompleted out of $articlesTotal, $articlesPercentage)")
