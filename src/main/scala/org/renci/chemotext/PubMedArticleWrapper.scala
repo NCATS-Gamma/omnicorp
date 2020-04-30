@@ -71,6 +71,7 @@ object PubMedArticleWrapper {
 class PubMedArticleWrapper(val article: Node) {
   // The following methods extract particular fields from the wrapped PubMed article.
   val pmid: String                 = (article \ "MedlineCitation" \ "PMID").text
+  val version: String              = (article \ "MedlineCitation" \ "PMID" \ "@Version").text
   val title: String                = (article \\ "ArticleTitle").map(_.text).mkString(" ")
   val abstractText: String         = (article \\ "AbstractText").map(_.text).mkString(" ")
   val journalNodes: NodeSeq        = (article \\ "Article" \ "Journal")
@@ -145,6 +146,10 @@ class PubMedArticleWrapper(val article: Node) {
 
   // Generate an IRI for this PubMedArticleWrapper.
   val iriAsString: String = {
+    val PMIDNamespace = "https://www.ncbi.nlm.nih.gov/pubmed"
+    s"$PMIDNamespace/$pmid.$version"
+  }
+  val pmidIRI: String = {
     val PMIDNamespace = "https://www.ncbi.nlm.nih.gov/pubmed"
     s"$PMIDNamespace/$pmid"
   }
