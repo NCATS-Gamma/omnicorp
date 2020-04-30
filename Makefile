@@ -61,7 +61,7 @@ test: coursier output
 # RoboCORD
 .PHONY: robocord-download robocord-output robocord-test
 robocord-download:
-	# robocord-data is intended to be a symlink to robocord-datas/$ROBOCORD_DATE, so that it is updated automatically. 
+	# robocord-data is intended to be a symlink to robocord-datas/${ROBOCORD_DATE}, so that it is updated automatically. 
 	# If robocord-data doesn't exist or is a symlink, we update it
 	# automatically. Otherwise (i.e. if it's an existing directory),
 	# we only update the files already in it.
@@ -86,6 +86,12 @@ robocord-output: robocord-data SciGraph
 	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv robocord-data"
 
 robocord-test: SciGraph
+	@if [ ! -e robocord-output ] || [ -L robocord-output ]; then \
+		rm robocord-output; \
+		mkdir -p robocord-outputs/${ROBOCORD_DATE}; \
+		ln -s robocord-outputs/${ROBOCORD_DATE} robocord-output; \
+	fi
+
 	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk 4 --total-chunks 1000 robocord-data"
 	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk 5 --total-chunks 1000 robocord-data"
 	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk 6 --total-chunks 1000 robocord-data"
