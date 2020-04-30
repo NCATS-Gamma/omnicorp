@@ -101,8 +101,9 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
 
       assert(
         summarizedTriples == Map(
-          "https://www.ncbi.nlm.nih.gov/pubmed/11237011" -> Map(
+          "https://www.ncbi.nlm.nih.gov/pubmed/11237011.1" -> Map(
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI" -> 1),
+            "http://purl.org/dc/terms/isVersionOf" -> Map("URI" -> 1),
             "http://purl.org/spar/fabio/hasPublicationYear" -> Map(
               "http://www.w3.org/2001/XMLSchema#gYear" -> 1
             ),
@@ -192,8 +193,9 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
               "http://www.w3.org/2001/XMLSchema#string" -> 1
             )
           ),
-          "https://www.ncbi.nlm.nih.gov/pubmed/17060194" -> Map(
+          "https://www.ncbi.nlm.nih.gov/pubmed/17060194.1" -> Map(
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI" -> 1),
+            "http://purl.org/dc/terms/isVersionOf" -> Map("URI" -> 1),
             "http://purl.org/spar/fabio/hasPublicationYear" -> Map(
               "http://www.w3.org/2001/XMLSchema#gYear" -> 1
             ),
@@ -262,7 +264,8 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
           foaf:givenName   "Gaurav" ;
           foaf:name        "Gaurav Vaidya Jr" .
 
-        <https://www.ncbi.nlm.nih.gov/pubmed/17060194> a fabio:Article ;
+        <https://www.ncbi.nlm.nih.gov/pubmed/17060194.1> a fabio:Article ;
+          dct:isVersionOf                  <https://www.ncbi.nlm.nih.gov/pubmed/17060194> ;
           prism:doi                        "10.1080/10635150600969864" ;
           prism:endingPage                 "28" ;
           prism:pageRange                  "715-28" ;
@@ -335,8 +338,9 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
       val summarizedTriples = summarizeTriples(triples)
       assert(
         summarizedTriples == Map(
-          "https://www.ncbi.nlm.nih.gov/pubmed/22859891" -> Map(
+          "https://www.ncbi.nlm.nih.gov/pubmed/22859891.1" -> Map(
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI" -> 1),
+            "http://purl.org/dc/terms/isVersionOf" -> Map("URI" -> 1),
             "http://purl.org/spar/fabio/hasPublicationYear" -> Map(
               "http://www.w3.org/2001/XMLSchema#gYear" -> 1
             ),
@@ -394,8 +398,9 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
         summarizeTriples(PubMedTripleGenerator.generateTriples(wrappedArticle, None))
       assert(
         summarizedTriples == Map(
-          "https://www.ncbi.nlm.nih.gov/pubmed/10542500" -> Map(
+          "https://www.ncbi.nlm.nih.gov/pubmed/10542500.1" -> Map(
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" -> Map("URI" -> 1),
+            "http://purl.org/dc/terms/isVersionOf" -> Map("URI" -> 1),
             "http://purl.org/spar/fabio/hasPublicationYear" -> Map(
               "http://www.w3.org/2001/XMLSchema#gYear" -> 1
             ),
@@ -446,7 +451,8 @@ object PubMedArticleWrapperIntegrationTests extends TestSuite {
 
       assert(
         summarizedTriples == Map(
-          "https://www.ncbi.nlm.nih.gov/pubmed/15517475" -> Map(
+          "https://www.ncbi.nlm.nih.gov/pubmed/15517475.1" -> Map(
+            "http://purl.org/dc/terms/isVersionOf" -> Map("URI" -> 1),
             "http://purl.org/dc/terms/issued" -> Map("http://www.w3.org/2001/XMLSchema#date"   -> 1),
             "http://purl.org/dc/terms/title"  -> Map("http://www.w3.org/2001/XMLSchema#string" -> 1),
             "http://purl.org/dc/terms/modified" -> Map(

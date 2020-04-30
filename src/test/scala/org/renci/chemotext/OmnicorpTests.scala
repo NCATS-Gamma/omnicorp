@@ -81,7 +81,7 @@ object OmnicorpTests extends TestSuite {
         assert(stdout contains "Begin processing")
         assert(stdout contains "WARN org.renci.chemotext.PubMedTripleGenerator")
         assert(
-          stdout contains "Unable to parse date http://purl.org/dc/terms/issued on https://www.ncbi.nlm.nih.gov/pubmed/10542500: Could not parse XML node as date: <PubDate><MedlineDate>Dec-Jan</MedlineDate></PubDate>"
+          stdout contains "Unable to parse date http://purl.org/dc/terms/issued on https://www.ncbi.nlm.nih.gov/pubmed/10542500.1: Could not parse XML node as date: <PubDate><MedlineDate>Dec-Jan</MedlineDate></PubDate>"
         )
         assert(!finalResultRegex.findFirstIn(stdout).isEmpty)
       }
