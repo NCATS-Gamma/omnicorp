@@ -83,8 +83,8 @@ object RoboCORD extends App with LazyLogging {
   logger.info(s"Selected $articlesTotal articles for processing (from $startIndex until $endIndex, chunk $currentChunk out of $totalChunks)")
 
   // Identify full text SHAs and PMCIDs in the current chunk (`metadata`).
-  val shasToLoad = metadata.map(_.get("sha")).flatten.flatMap(_.split(';')).map(_.trim.toLowerCase).toSet
-  val pmcIdsToLoad = metadata.map(_.get("pmcid")).flatten.flatMap(_.split(';')).map(_.trim.toLowerCase).toSet
+  val shasToLoad = metadata.flatMap(_.get("sha")).flatMap(_.split(';')).map(_.trim.toLowerCase).toSet
+  val pmcIdsToLoad = metadata.flatMap(_.get("pmcid")).flatMap(_.split(';')).map(_.trim.toLowerCase).toSet
   // logger.info(s"shasToLoad: $shasToLoad")
   // logger.info(s"pmcIdsToLoad: $pmcIdsToLoad")
 
