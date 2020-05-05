@@ -5,24 +5,25 @@ import java.util.zip.GZIPInputStream
 
 import com.typesafe.scalalogging.LazyLogging
 
-import scala.collection.immutable
-
 /**
- * IdentifyVersions identifies PubMed identifiers in the PubMed XML files
- * that refer to multiple versions. This can be useful in
- */
+  * IdentifyVersions identifies PubMed identifiers in the PubMed XML files
+  * that refer to multiple versions. This can be useful in
+  */
 object IdentifyVersions extends App with LazyLogging {
   // TODO: Replace with command line option.
-  val xmlDir:File = new File("pubmed-annual-baseline")
+  val xmlDir: File = new File("pubmed-annual-baseline")
 
   /** Identify PMIDs with multiple versions in the input file or directory. */
   def identifyPMIDs(inputFile: File): Unit = {
-    if(inputFile.isDirectory) {
+    if (inputFile.isDirectory) {
       logger.info(s"Recursing into directory $inputFile")
-      inputFile.listFiles.filter(file =>
-        file.getName.toLowerCase.endsWith(".xml.gz") ||
-        file.getName.toLowerCase.endsWith(".xml")
-      ).foreach(identifyPMIDs(_))
+      inputFile.listFiles
+        .filter(
+          file =>
+            file.getName.toLowerCase.endsWith(".xml.gz") ||
+              file.getName.toLowerCase.endsWith(".xml")
+        )
+        .foreach(identifyPMIDs(_))
     } else {
       logger.info(s"Processing input file $inputFile")
 
@@ -39,7 +40,7 @@ object IdentifyVersions extends App with LazyLogging {
         .filter(node => (node \@ "Version") != "1")
         .map(pmidElement => (pmidElement.text, pmidElement \@ "Version"))
 
-      results.map(result => println(result._1 + "\t" + result._2))
+      results.foreach(result => println(result._1 + "\t" + result._2))
 
       val uniqPMIDs = results.map(_._1).toSet
       logger.info(s"Checked $inputFile, found ${uniqPMIDs.size} PMIDs with two or more versions.")

@@ -120,14 +120,16 @@ object PubMedTripleGenerator extends LazyLogging {
         pmidIRI,
         RDF.`type`,
         ResourceFactory.createResource(s"$FaBiONamespace/Article")
-      ), (
-      // <pmidIRI> dct:isVersionOf <pmid IRI without version>
-      ResourceFactory.createStatement(
-        pmidIRI,
-        DCTerms.isVersionOf,
-        ResourceFactory.createResource(pubMedArticleWrapped.pmidIRI)
+      ),
+      (
+        // <pmidIRI> dct:isVersionOf <pmid IRI without version>
+        ResourceFactory.createStatement(
+          pmidIRI,
+          DCTerms.isVersionOf,
+          ResourceFactory.createResource(pubMedArticleWrapped.pmidIRI)
+        )
       )
-    )) ++ (
+    ) ++ (
       // <pmidIRI> fabio:hasPublicationYear "2019"^xsd:gYear
       pubMedArticleWrapped.pubDateYears.map(
         year =>

@@ -115,14 +115,17 @@ object OmnicorpTests extends TestSuite {
         model.read(outputFile.toURI.toString)
 
         val articleClass = model.createResource("http://purl.org/spar/fabio/Article");
-        val articles: Seq[Resource] = model.listResourcesWithProperty(RDF.`type`, articleClass).toList.asScala
+        val articles: Seq[Resource] =
+          model.listResourcesWithProperty(RDF.`type`, articleClass).toList.asScala
         assert(articles.size == 4)
-        assert(articles.map(_.getURI).toSet == Set(
-          "https://www.ncbi.nlm.nih.gov/pubmed/31431825.1",
-          "https://www.ncbi.nlm.nih.gov/pubmed/31431825.2",
-          "https://www.ncbi.nlm.nih.gov/pubmed/31431825.3",
-          "https://www.ncbi.nlm.nih.gov/pubmed/31431825.4"
-        ))
+        assert(
+          articles.map(_.getURI).toSet == Set(
+            "https://www.ncbi.nlm.nih.gov/pubmed/31431825.1",
+            "https://www.ncbi.nlm.nih.gov/pubmed/31431825.2",
+            "https://www.ncbi.nlm.nih.gov/pubmed/31431825.3",
+            "https://www.ncbi.nlm.nih.gov/pubmed/31431825.4"
+          )
+        )
 
         // Clean up temporary folder.
         outputFile.delete()
