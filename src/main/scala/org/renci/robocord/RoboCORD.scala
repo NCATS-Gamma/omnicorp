@@ -131,13 +131,13 @@ object RoboCORD extends App with LazyLogging {
     val (fullText, withFullText) = if (pmcid.nonEmpty && fullTextById.contains(pmcid)) {
       // Retrieve the full text.
       (
-        fullTextById.getOrElse(pmcid, Seq()).map(_.fullText).mkString("\n===\n"),
+        fullTextById.getOrElse(pmcid, Seq.empty).map(_.fullText).mkString("\n===\n"),
         s"with full text from PMCID $pmcid"
       )
     } else if (sha.nonEmpty && fullTextById.contains(sha)) {
       // Retrieve the full text.
       (
-        fullTextById.getOrElse(sha, Seq()).map(_.fullText).mkString("\n===\n"),
+        fullTextById.getOrElse(sha, Seq.empty).map(_.fullText).mkString("\n===\n"),
         s"with full text from SHA $sha"
       )
     } else {
