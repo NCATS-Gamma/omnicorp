@@ -2,8 +2,11 @@ package org.renci.chemotext
 
 import scala.xml.Node
 import scala.collection.immutable
-import java.net.{URI, URISyntaxException}
+import java.net.URI
+
 import com.typesafe.scalalogging.LazyLogging
+
+import scala.util.Try
 
 /** Author name management. */
 class AuthorWrapper(node: Node) extends LazyLogging {
@@ -29,16 +32,9 @@ class AuthorWrapper(node: Node) extends LazyLogging {
     .map("https://orcid.org/" + _.trim)
     .filter(orcid => {
       // Make sure we have a valid URI. If not, skip this.
-      try {
-        new URI(orcid)
-        true;
-      } catch {
-        case ex: URISyntaxException => {
-          logger.warn(s"Skipping unreadable ORCID '${orcid}' for author ${name}: ${ex}")
-          false;
-        }
-        case _: Throwable => false;
-      }
+      val result = Try(new URI(orcid))
+      if (result.isFailure) logger.warn(s"Skipping unreadable ORCID '${orcid}' for author ${name}")
+      result.isSuccess
     })
 
   // FOAF uses foaf:givenName and foaf:familyName.
