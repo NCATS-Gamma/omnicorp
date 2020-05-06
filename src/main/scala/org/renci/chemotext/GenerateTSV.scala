@@ -46,6 +46,9 @@ object GenerateTSV extends App with LazyLogging {
       if (completedFilename.exists) {
         logger.info(s"Skipping, since $completedFilename already exists.")
       } else {
+        // TODO replace with https://doc.akka.io/docs/akka/current/stream/stream-quickstart.html
+        // TODO replace with https://jena.apache.org/documentation/io/streaming-io.html
+
         // Start creating an in-progress file.
         val outputFilename = new File(outputDir, inputFile.getName + ".in-progress.tsv")
         val outputStream = new PrintWriter(new BufferedWriter(new FileWriter(outputFilename)))
