@@ -47,6 +47,8 @@ libraryDependencies ++= {
     "ch.qos.logback"              %  "logback-classic"        % "1.2.3",
     "org.codehaus.groovy"         %  "groovy-all"             % "2.4.6",
     "org.apache.jena"             %  "apache-jena-libs"       % "3.13.1",
+    "dev.zio"                     %% "zio"                    % "1.0.0-RC18-2",
+    "dev.zio"                     %% "zio-streams"            % "1.0.0-RC18-2",
     "com.lihaoyi"                 %% "utest"                  % "0.7.1" % "test"
   )
 }

@@ -1,6 +1,6 @@
 package org.renci.chemotext
 
-import java.io.{BufferedWriter, File, FileWriter, PrintWriter}
+import java.io.{BufferedWriter, File, FileWriter, IOException, PrintWriter}
 import java.nio.file.{Files, Paths, StandardCopyOption}
 import java.time.Duration
 
@@ -8,16 +8,44 @@ import com.typesafe.scalalogging.LazyLogging
 import org.apache.jena.rdf.model.ModelFactory
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.jena.vocabulary.{DCTerms, RDF}
+import zio._
+import zio.stream._
 
 /**
  * GenerateTSV generates tab-delimited files summarizing the results of the
  * Omnicorp processing.
  */
 object GenerateTSV extends App with LazyLogging {
-  // List of files to process and output directory.
-  // TODO replace with command line argument.
-  val files: Seq[File] = Seq(new File("output"))
-  val outputDir: File = new File("tsv-output")
+  // Some constants to use.
+  val articleClass = "http://purl.org/spar/fabio/Article"
+
+  // Make a list of all the files we need to process.
+  def getFilesInDir(files: Stream[Nothing, File]): Stream[Nothing, File] = {
+    files.map(file => {
+      logger.info(s"Examining file $file")
+      file
+    }).flatMap(file => {
+      if (file.isDirectory) {
+        logger.info(s"Recursing into directory $file")
+        getFilesInDir(Stream.fromIterable(file.listFiles))
+      } else Stream.fromIterable(Seq(file))
+    })
+  }
+
+  def run(args: List[String]): ZIO[ZEnv, Nothing, Int]  = {
+    // TODO replace with command line argument.
+    val inputFiles: Seq[File] = Seq(new File("/"), new File("."))
+    val outputDir: File = new File("tsv-output")
+
+    val files = getFilesInDir(Stream.fromIterable(inputFiles))
+      .filter(_.getName.toLowerCase.endsWith(".ttl"))
+      .foldM(
+        ex => console.putStrLn(ex.toString).
+        res => console.putStrLn(res).const(0)
+      )
+
+    IO.succeed(0)
+  }
 
   /**
    * Extract PubMed articles and results from the input file.
@@ -34,11 +62,12 @@ object GenerateTSV extends App with LazyLogging {
 
       val startTime = System.nanoTime
 
+      // TODO replace with https://jena.apache.org/documentation/io/streaming-io.html
       val dataModel = RDFDataMgr.loadModel(inputFile.toURI.toString)
       val infModel = ModelFactory.createRDFSModel(dataModel)
       val articles = infModel.listResourcesWithProperty(
         RDF.`type`,
-        infModel.createResource("http://purl.org/spar/fabio/Article")
+        infModel.createResource(articleClass)
       )
 
       // Check to see if we've already completed processing this file.
@@ -77,5 +106,5 @@ object GenerateTSV extends App with LazyLogging {
   }
 
   // Process files.
-  files.foreach(writeTSVToDir(_, outputDir))
+  // files.foreach(writeTSVToDir(_, outputDir))
 }
