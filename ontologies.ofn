@@ -14,6 +14,7 @@ Import(<http://purl.obolibrary.org/obo/envo.owl>)
 Import(<http://purl.obolibrary.org/obo/go/extensions/go-plus.owl>)
 Import(<http://purl.obolibrary.org/obo/ncbitaxon.owl>)
 Import(<http://purl.obolibrary.org/obo/ro.owl>)
+Import(<http://purl.obolibrary.org/obo/pr.owl>)
 
 Import(<http://purl.obolibrary.org/obo/bspo.owl>)
 Import(<http://purl.obolibrary.org/obo/mondo.owl>)
