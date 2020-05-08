@@ -13,6 +13,7 @@ Currently, we look for terms from the following ontologies:
 * [Gene Ontology (plus)](http://www.obofoundry.org/ontology/go.html) ([OWL](http://purl.obolibrary.org/obo/go/extensions/go-plus.owl))
 * [NCBITaxon](http://www.obofoundry.org/ontology/ncbitaxon.html) ([OWL](http://purl.obolibrary.org/obo/ncbitaxon.owl))
 * [Relation Ontology](http://www.obofoundry.org/ontology/ro.html) ([OWL](http://purl.obolibrary.org/obo/ro.owl))
+* [PRotein Ontology (PRO)](http://www.obofoundry.org/ontology/pr.html) ([OWL](http://purl.obolibrary.org/obo/pr.owl))
 * [Biological Spatial Ontology](http://www.obofoundry.org/ontology/bspo.html) ([OWL](http://purl.obolibrary.org/obo/bspo.owl))
 * [Mondo Disease Ontology](http://obofoundry.org/ontology/mondo.html) ([OWL](http://purl.obolibrary.org/obo/mondo.owl))
 * [The Human Phenotype Ontology](https://hpo.jax.org/) ([OWL](http://purl.obolibrary.org/obo/hp.owl))
