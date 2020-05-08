@@ -6,7 +6,7 @@ Extract ontology terms referenced from PubMed abstracts as per the [MEDLINE/PubM
 
 ## Ontologies
 Currently, we look for terms from the following ontologies:
-* [Uberon (base)](http://uberon.org) ([OWL](http://purl.obolibrary.org/obo/uberon/ext.owl))
+* [Uberon (base)](http://uberon.org) ([OWL](http://purl.obolibrary.org/obo/uberon/uberon-base.owl))
 * [ChEBI](https://www.ebi.ac.uk/chebi/) ([OWL](http://purl.obolibrary.org/obo/chebi.owl))
 * [Cell Ontology](http://www.obofoundry.org/ontology/cl.html) ([OWL](http://purl.obolibrary.org/obo/cl.owl))
 * [Environment Ontology](https://github.com/EnvironmentOntology/envo) ([OWL](http://purl.obolibrary.org/obo/envo.owl))
