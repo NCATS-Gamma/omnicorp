@@ -152,7 +152,7 @@ object RoboCORD extends App with LazyLogging {
     } else ""
 
     val (fullText, withFullText) = if (fullTextFilename.nonEmpty) {
-      val jsonReader = CORDJsonReader.wrapFile(new File(fullTextFilename), logger)
+      val jsonReader = CORDJsonReader.wrapFile(new File(new File("robocord-data"), fullTextFilename), logger)
       (jsonReader.map(_.fullText).mkString("\n===\n"), s"with full text from $fullTextFilename")
     } else {
       // We don't have full text, so just annotate the title and abstract.
