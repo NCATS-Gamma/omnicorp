@@ -8,7 +8,7 @@ MEMORY = 16G
 PARALLEL = 4
 
 # The date of CORD-19 data to download.
-ROBOCORD_DATE="2020-04-17"
+ROBOCORD_DATE="2020-05-12"
 
 .PHONY: all
 all: output
@@ -61,7 +61,7 @@ test: coursier output
 # RoboCORD
 .PHONY: robocord-download robocord-output robocord-test
 robocord-download:
-	# robocord-data is intended to be a symlink to robocord-datas/${ROBOCORD_DATE}, so that it is updated automatically. 
+	# robocord-data is intended to be a symlink to robocord-datas/${ROBOCORD_DATE}, so that it is updated automatically.
 	# If robocord-data doesn't exist or is a symlink, we update it
 	# automatically. Otherwise (i.e. if it's an existing directory),
 	# we only update the files already in it.
@@ -70,13 +70,11 @@ robocord-download:
 		mkdir -p robocord-datas/${ROBOCORD_DATE}; \
 		ln -s robocord-datas/${ROBOCORD_DATE} robocord-data; \
 	fi
-	
+
 	# Download CORD-19 into robocord-data.
-	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/comm_use_subset.tar.gz" -P robocord-data
-	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/noncomm_use_subset.tar.gz" -P robocord-data
-	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/custom_license.tar.gz" -P robocord-data
-	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/biorxiv_medrxiv.tar.gz" -P robocord-data
+	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/document_parses.tar.gz" -P robocord-data
 	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/metadata.csv" -P robocord-data
+	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/changelog" -P robocord-data
 
 robocord-data: robocord-download
 	cd robocord-data; for f in *.tar.gz; do echo Uncompressing "$$f"; tar zxvf $$f; done; cd -
