@@ -67,8 +67,30 @@ object RoboCORD extends App with LazyLogging {
 
   // Load the metadata file.
   val csvReader = CSVReader.open(conf.metadata())
-  val allMetadata: List[Map[String, String]] = csvReader.allWithHeaders()
+  val (headers: List[String], allMetadata: List[Map[String, String]]) = csvReader.allWithOrderedHeaders()
   logger.info(s"Loaded ${allMetadata.size} articles from metadata file ${conf.metadata()}.")
+
+  // Let's make sure the loaded metadata is what we expect -- if not, fields might have changed unexpectedly!
+  assert(headers == List(
+    "cord_uid",
+    "sha",
+    "source_x",
+    "title",
+    "doi",
+    "pmcid",
+    "pubmed_id",
+    "license",
+    "abstract",
+    "publish_time",
+    "authors",
+    "journal",
+    "mag_id",
+    "who_covidence_id",
+    "arxiv_id",
+    "pdf_json_files",
+    "pmc_json_files",
+    "url"
+  ))
 
   // Which metadata entries do we actually need to process?
   val currentChunk: Int = conf.currentChunk()
