@@ -103,6 +103,21 @@ class CORDArticleWrapper(article: Article) {
 }
 
 object CORDJsonReader {
+  def wrapFile(file: File, logger: Logger): Seq[CORDArticleWrapper] = {
+    val source = Source.fromFile(file)
+    val content = source.mkString
+    source.close
+    decode[Article](content) match {
+      case Right(article) => {
+        Seq(new CORDArticleWrapper(article))
+      }
+      case Left(ex) => {
+        logger.error(s"COULD NOT PARSE $file: $ex")
+        Seq.empty[CORDArticleWrapper]
+      }
+    }
+  }
+
   def wrapFileOrDir(file: File, logger: Logger, shasToLoadLowercase: Set[String], pmcidsToLoadLowercase: Set[String]): Seq[CORDArticleWrapper] = {
     // logger.info(s"wrapFileOrDir($file, $logger, $shasToLoadLowercase, $pmcidsToLoadLowercase)")
     if (file.isDirectory) file.listFiles.flatMap(wrapFileOrDir(_, logger, shasToLoadLowercase, pmcidsToLoadLowercase))
@@ -112,18 +127,7 @@ object CORDJsonReader {
       // Check if the filename is an SHA we're interested in.
       || (file.getName.toLowerCase.endsWith(".json") && shasToLoadLowercase.contains(file.getName.toLowerCase.replace(".json", "")))
     ) {
-      val source = Source.fromFile(file)
-      val content = source.mkString
-      source.close
-      decode[Article](content) match {
-        case Right(article) => {
-          Seq(new CORDArticleWrapper(article))
-        }
-        case Left(ex) => {
-          logger.error(s"COULD NOT PARSE $file: $ex")
-          Seq.empty[CORDArticleWrapper]
-        }
-      }
+      wrapFile(file, logger)
     } else {
       Seq.empty[CORDArticleWrapper]
     }
