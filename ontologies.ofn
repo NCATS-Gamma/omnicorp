@@ -6,16 +6,21 @@ Prefix(rdfs:=<http://www.w3.org/2000/01/rdf-schema#>)
 
 
 Ontology(<https://github.com/NCATS-Gamma/omnicorp/ontologies.ofn>
-Import(<http://purl.obolibrary.org/obo/uberon/ext.owl>)
-Import(<http://purl.obolibrary.org/obo/bspo.owl>)
+
+Import(<http://purl.obolibrary.org/obo/uberon/uberon-base.owl>)
+Import(<http://purl.obolibrary.org/obo/chebi.owl>)
+Import(<http://purl.obolibrary.org/obo/cl.owl>)
+Import(<http://purl.obolibrary.org/obo/envo.owl>)
 Import(<http://purl.obolibrary.org/obo/go/extensions/go-plus.owl>)
+Import(<http://purl.obolibrary.org/obo/ncbitaxon.owl>)
+Import(<http://purl.obolibrary.org/obo/ro.owl>)
+Import(<http://purl.obolibrary.org/obo/pr.owl>)
+
+Import(<http://purl.obolibrary.org/obo/bspo.owl>)
 Import(<http://purl.obolibrary.org/obo/mondo.owl>)
 Import(<http://purl.obolibrary.org/obo/hp.owl>)
-Import(<http://purl.obolibrary.org/obo/envo.owl>)
 Import(<http://purl.obolibrary.org/obo/obi.owl>)
-Import(<http://purl.obolibrary.org/obo/cl.owl>)
 Import(<http://purl.obolibrary.org/obo/so.owl>)
-Import(<http://purl.obolibrary.org/obo/chebi.owl>)
 Import(<https://data.monarchinitiative.org/ttl/hgnc.ttl>)
 Import(<http://www.ebi.ac.uk/efo/efo.owl>)
 )
