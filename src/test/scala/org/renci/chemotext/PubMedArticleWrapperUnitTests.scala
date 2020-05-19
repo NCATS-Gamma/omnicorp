@@ -49,6 +49,24 @@ object PubMedArticleWrapperUnitTests extends TestSuite {
           </Author>).orcIds
           assert(orcids == Seq("https://orcid.org/0000-0003-0587-0454"))
         }
+        test("ORCID with HTTPS URL") {
+          val orcids = new AuthorWrapper(<Author>
+            <Identifier Source="ORCID">https://orcid.org/0000-0003-0587-0454</Identifier>
+          </Author>).orcIds
+          assert(orcids == Seq("https://orcid.org/0000-0003-0587-0454"))
+        }
+        test("Malformed ORCIDs") {
+          val orcids = new AuthorWrapper(<Author>
+            <Identifier Source="ORCID">orcid"&gt;0000-0002-9335-1218</Identifier>
+          </Author>).orcIds
+          assert(orcids == Seq())
+        }
+        test("Truncated ORCIDs") {
+          val orcids = new AuthorWrapper(<Author>
+            <Identifier Source="ORCID">0000-0002-9335-121</Identifier>
+          </Author>).orcIds
+          assert(orcids == Seq())
+        }
       }
     }
     test("PubMedArticleWrapper") {
