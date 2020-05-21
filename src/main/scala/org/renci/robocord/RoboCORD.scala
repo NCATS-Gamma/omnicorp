@@ -89,7 +89,8 @@ object RoboCORD extends App with LazyLogging {
     "arxiv_id",
     "pdf_json_files",
     "pmc_json_files",
-    "url"
+    "url",
+    "s2_id"
   ))
 
   // Which metadata entries do we actually need to process?
