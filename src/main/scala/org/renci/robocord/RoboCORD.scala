@@ -100,6 +100,13 @@ object RoboCORD extends App with LazyLogging {
   val startIndex: Int = currentChunk * chunkLength
   val endIndex: Int = startIndex + chunkLength
 
+  // Do we already have an output file? If so, we abort.
+  val outputFilename = conf.outputPrefix() + s"_from_${startIndex}_until_$endIndex.txt"
+  if (new File(outputFilename).length > 0) {
+    logger.info(s"Output file '${outputFilename}' already exists, skipping.")
+    System.exit(0);
+  }
+
   // Divide allMetadata into chunks based on totalChunks.
   val metadata: Seq[Map[String, String]] = allMetadata.slice(startIndex, endIndex)
   val articlesTotal = metadata.size
@@ -181,7 +188,6 @@ object RoboCORD extends App with LazyLogging {
   })
 
   // Write out all the results to the output file.
-  val outputFilename = conf.outputPrefix() + s"_from_${startIndex}_until_$endIndex.txt"
   logger.info(s"Writing tab-delimited output to $outputFilename.")
   val pw = new PrintWriter(new FileWriter(new File(outputFilename)))
   results.foreach(pw.println(_))
