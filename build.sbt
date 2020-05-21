@@ -27,7 +27,7 @@ wartremoverWarnings ++= Warts.unsafe
 
 javaOptions += "-Xmx20G"
 
-fork in Test := true
+fork := true
 
 testFrameworks += new TestFramework("utest.runner.Framework")
 
