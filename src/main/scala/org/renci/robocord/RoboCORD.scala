@@ -1,12 +1,13 @@
 package org.renci.robocord
 
 import java.io.{File, FileWriter, PrintWriter}
+import java.nio.file.{CopyOption, Files, StandardCopyOption}
 import java.time.Duration
 
 import com.github.tototoshi.csv._
 import com.typesafe.scalalogging.{LazyLogging, Logger}
 import org.renci.robocord.annotator.Annotator
-import org.renci.robocord.json.{CORDArticleWrapper, CORDJsonReader}
+import org.renci.robocord.json.CORDJsonReader
 import org.rogach.scallop._
 import org.rogach.scallop.exceptions._
 
@@ -101,10 +102,20 @@ object RoboCORD extends App with LazyLogging {
   val endIndex: Int = startIndex + chunkLength
 
   // Do we already have an output file? If so, we abort.
+  val inProgressFilename = "in-progress." + conf.outputPrefix() + s"_from_${startIndex}_until_$endIndex.txt"
+  if (new File(inProgressFilename).exists()) {
+    if (new File(inProgressFilename).delete())
+      logger.info(s"In-progress output file '${inProgressFilename}' already exists and has been deleted.")
+    else {
+      logger.info(s"In-progress output file '${inProgressFilename}' already exists but could not be deleted.")
+      System.exit(2)
+    }
+  }
+
   val outputFilename = conf.outputPrefix() + s"_from_${startIndex}_until_$endIndex.txt"
   if (new File(outputFilename).length > 0) {
     logger.info(s"Output file '${outputFilename}' already exists, skipping.")
-    System.exit(0);
+    System.exit(0)
   }
 
   // Divide allMetadata into chunks based on totalChunks.
@@ -189,10 +200,17 @@ object RoboCORD extends App with LazyLogging {
 
   // Write out all the results to the output file.
   logger.info(s"Writing tab-delimited output to $outputFilename.")
-  val pw = new PrintWriter(new FileWriter(new File(outputFilename)))
+  val pw = new PrintWriter(new FileWriter(new File(inProgressFilename)))
   results.foreach(pw.println(_))
   pw.close
 
   val duration = Duration.ofNanos(System.nanoTime - timeStarted)
   logger.info(s"Completed generating ${results.size} results for $articlesTotal articles in ${duration.getSeconds} seconds ($duration)")
+
+  Files.move(
+    new File(inProgressFilename).toPath,
+    new File(outputFilename).toPath,
+    StandardCopyOption.REPLACE_EXISTING
+  )
+  logger.info(s"Renamed ${inProgressFilename} to ${outputFilename}; file ready for use.")
 }
