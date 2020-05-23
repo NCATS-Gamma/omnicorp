@@ -102,7 +102,7 @@ object RoboCORD extends App with LazyLogging {
   val endIndex: Int = startIndex + chunkLength
 
   // Do we already have an output file? If so, we abort.
-  val inProgressFilename = "in-progress." + conf.outputPrefix() + s"_from_${startIndex}_until_$endIndex.txt"
+  val inProgressFilename = conf.outputPrefix() + s"_from_${startIndex}_until_$endIndex.in-progress.txt"
   if (new File(inProgressFilename).exists()) {
     if (new File(inProgressFilename).delete())
       logger.info(s"In-progress output file '${inProgressFilename}' already exists and has been deleted.")
