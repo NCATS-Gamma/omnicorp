@@ -49,6 +49,11 @@ libraryDependencies ++= {
     "org.apache.jena"             %  "apache-jena-libs"       % "3.13.1",
     "com.lihaoyi"                 %% "utest"                  % "0.7.1" % "test",
 
+    // fs2 streams
+    "co.fs2"                      %% "fs2-core"               % "2.2.1", // For cats 2 and cats-effect 2
+    "co.fs2"                      %% "fs2-io"                 % "2.2.1",
+    "co.fs2"                      %% "fs2-reactive-streams"   % "2.2.1",
+
     // Command line argument parsing.
     "org.rogach"                  %% "scallop"                % "3.3.2",
 
