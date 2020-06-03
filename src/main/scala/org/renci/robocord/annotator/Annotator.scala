@@ -28,10 +28,10 @@ class Annotator(neo4jLocation: File) extends LazyLogging {
 
   /** Extract annotations from a particular string using SciGraph. */
   def extractAnnotations(str: String): (String, List[EntityAnnotation]) = {
-    val parsedString = QueryParserBase.escape(str)
-    val configBuilder = new EntityFormatConfiguration.Builder(new StringReader(parsedString))
+    //val parsedString = QueryParserBase.escape(str)
+    val configBuilder = new EntityFormatConfiguration.Builder(new StringReader(str))
         .longestOnly(true)
         .minLength(3)
-    (parsedString, processor.annotateEntities(configBuilder.get).asScala.toList)
+    (str, processor.getAnnotations(str, configBuilder.get).asScala.toList)
   }
 }
