@@ -8,7 +8,7 @@ MEMORY = 16G
 PARALLEL = 4
 
 # The date of CORD-19 data to download.
-ROBOCORD_DATE="2020-04-17"
+ROBOCORD_DATE="2020-06-02"
 
 .PHONY: all
 all: output
@@ -72,14 +72,13 @@ robocord-download:
 	fi
 	
 	# Download CORD-19 into robocord-data.
-	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/comm_use_subset.tar.gz" -P robocord-data
-	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/noncomm_use_subset.tar.gz" -P robocord-data
-	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/custom_license.tar.gz" -P robocord-data
-	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/biorxiv_medrxiv.tar.gz" -P robocord-data
-	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/metadata.csv" -P robocord-data
+	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/historical_releases/cord-19_${ROBOCORD_DATE}.tar.gz" -P robocord-data
 
 robocord-data: robocord-download
-	cd robocord-data; for f in *.tar.gz; do echo Uncompressing "$$f"; tar zxvf $$f; done; cd -
+	# Uncompress the main download file.
+	tar zxvf robocord-data/cord-19_${ROBOCORD_DATE}.tar.gz -C robocord-data --strip-components=1
+	# Uncompress the document_parses.
+	tar zxvf robocord-data/document_parses.tar.gz -C robocord-data
 	touch robocord-data
 
 robocord-output: robocord-data SciGraph
