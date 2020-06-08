@@ -145,7 +145,7 @@ object RoboCORD extends App with LazyLogging {
     // Choose an "article ID", which is one of: (1) PubMed ID, (2) DOI, (3) PMCID or (4) CORD_UID.
     val articleId = if (pmid.nonEmpty && pmid.get.nonEmpty) pmid.map("PMID:" + _).mkString("|")
       else if(doi.nonEmpty && doi.get.nonEmpty) doi.map("DOI:" + _).mkString("|")
-      else if(pmcid.nonEmpty) pmcid.map("PMCID:" + _)
+      else if(pmcid.nonEmpty) s"PMCID:${pmcid}"
       else s"CORD_UID:$id"
 
     // Full-text articles are stored by path. We might have multiple PMC or PDF parses; we prioritize PMC over PDF.
