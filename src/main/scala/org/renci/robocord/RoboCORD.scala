@@ -42,13 +42,13 @@ object RoboCORD extends App with LazyLogging {
       descr = "Location of the Neo4J database that SciGraph should use.",
       default = Some(new File("omnicorp-scigraph"))
     )
-    val currentChunk: ScallopOption[Int] = opt[Int](
-      descr = "The current chunks (from 0 to totalChunks-1)",
-      default = Some(0)
+    val fromRow: ScallopOption[Int] = opt[Int](
+      descr = "The row to start processing on",
+      required = true
     )
-    val totalChunks: ScallopOption[Int] = opt[Int](
-      descr = "The total number of chunks to process",
-      default = Some(-1)
+    val untilRow: ScallopOption[Int] = opt[Int](
+      descr = "The row to end processing before (i.e. this row will not be processed)",
+      required = true
     )
     val context: ScallopOption[Int] = opt[Int](
       descr = "How many characters before and after the matched term should be displayed.",
@@ -95,11 +95,8 @@ object RoboCORD extends App with LazyLogging {
   ))
 
   // Which metadata entries do we actually need to process?
-  val currentChunk: Int = conf.currentChunk()
-  val totalChunks: Int = if (conf.totalChunks() == -1) allMetadata.size else conf.totalChunks()
-  val chunkLength: Int = allMetadata.size/totalChunks
-  val startIndex: Int = currentChunk * chunkLength
-  val endIndex: Int = startIndex + chunkLength
+  val startIndex = conf.fromRow.toOption.get
+  val endIndex = conf.untilRow.toOption.get
 
   // Do we already have an output file? If so, we abort.
   val inProgressFilename = conf.outputPrefix() + s"_from_${startIndex}_until_$endIndex.in-progress.txt"
@@ -121,7 +118,7 @@ object RoboCORD extends App with LazyLogging {
   // Divide allMetadata into chunks based on totalChunks.
   val metadata: Seq[Map[String, String]] = allMetadata.slice(startIndex, endIndex)
   val articlesTotal = metadata.size
-  logger.info(s"Selected $articlesTotal articles for processing (from $startIndex until $endIndex, chunk $currentChunk out of $totalChunks)")
+  logger.info(s"Selected $articlesTotal articles for processing (from $startIndex until $endIndex)")
 
   // Run SciGraph in parallel over the chunk we need to process.
   logger.info(s"Starting SciGraph in parallel on ${Runtime.getRuntime.availableProcessors} processors.")
