@@ -1,10 +1,10 @@
 package org.renci.robocord
 
 import scala.sys.process._
-
 import org.rogach.scallop.{ScallopConf, ScallopOption}
 import org.rogach.scallop.exceptions.ScallopException
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 import com.github.tototoshi.csv.CSVReader
 
@@ -51,6 +51,14 @@ object RoboCORDManager extends App {
     val dryRun: ScallopOption[Boolean] = opt[Boolean](
       descr = "If true, perform a dry run: display the srun commands to be executed, but don't actually execute them.",
       default = Some(false)
+    )
+    val tryOne: ScallopOption[Boolean] = opt[Boolean](
+      descr = "If true, try executing a single job.",
+      default = Some(false)
+    )
+    val cmdDelay: ScallopOption[Int] = opt[Int](
+      descr = "The number of seconds to wait before running the subsequent job.",
+      default = Some(2)
     )
 
     verify()
@@ -112,18 +120,21 @@ object RoboCORDManager extends App {
       if (conf.dryRun.getOrElse(true)) {
         scribe.info(s" - Would execute job ${jobCount}: ${range} (size: ${range.size})")
       } else {
-        val process = Seq(
+        val cmd = Seq(
           "robocord-sbatch.sh",
           "--metadata", "robocord-data/metadata.csv",
           "--from-row", range.start.toString,
           "--to-row", range.end.toString,
           "--output-prefix", "robocord-output/results",
           "robocord-data"
-        ).run(logger)
+        )
+        val process = cmd.run(logger)
         if (process.exitValue == 0)
-          scribe.info(s" - Executed job ${jobCount}: ${range} (size: ${range.size})")
+          scribe.info(s" - Executed job ${jobCount}: ${range} (size: ${range.size}): ${cmd}")
         else
           scribe.error(s" - Could not execute job ${jobCount}: ${range} (size: ${range.size})")
+        if(conf.tryOne.getOrElse(false)) System.exit(0)
+        TimeUnit.SECONDS.sleep(conf.cmdDelay.getOrElse(2))
       }
     }
   }
