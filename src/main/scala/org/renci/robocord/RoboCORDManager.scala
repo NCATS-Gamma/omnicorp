@@ -115,6 +115,10 @@ object RoboCORDManager extends App {
     })
   })
 
+  if (rangesToProcess.isEmpty) {
+    scribe.info("No ranges remain to be processed. No jobs need to be created.")
+  }
+
   // Okay, now we know the ranges that need to be processed. We divide them up into jobs recursively.
   var jobCount = 0
   def processJob(range: Range): Unit = {
