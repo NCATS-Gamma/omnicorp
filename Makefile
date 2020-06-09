@@ -8,7 +8,7 @@ MEMORY = 16G
 PARALLEL = 4
 
 # The date of CORD-19 data to download.
-ROBOCORD_DATE="2020-06-02"
+ROBOCORD_DATE="2020-06-03"
 
 .PHONY: all
 all: output
