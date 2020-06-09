@@ -107,6 +107,14 @@ object RoboCORDManager extends App {
   }
   scribe.info(s"Ranges to process: ${rangesToProcess.mkString(", ")}")
 
+  // Generate warnings for overlapping output files.
+  val existingRanges = existingRangesSorted.toSet
+  existingRanges.foreach(range => {
+    existingRanges.filter(r => r != range && r.intersect(range).nonEmpty).foreach(r => {
+      scribe.warn(s"Output files are present for both ${range} and ${r}")
+    })
+  })
+
   // Okay, now we know the ranges that need to be processed. We divide them up into jobs recursively.
   var jobCount = 0
   def processJob(range: Range): Unit = {
