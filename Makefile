@@ -9,7 +9,6 @@ PARALLEL = 4
 
 # The date of CORD-19 data to download.
 ROBOCORD_DATE="2020-08-30"
-
 .PHONY: all
 all: output
 
