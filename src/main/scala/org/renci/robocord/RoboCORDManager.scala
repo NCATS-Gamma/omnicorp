@@ -73,12 +73,12 @@ object RoboCORDManager extends App {
   scribe.info(s"Loaded ${metadata.size} articles from metadata file ${conf.metadata()}.")
 
   // Get all existing output files.
-  val filenameRegex = """result_from_(\d+)_until_(\d+).tsv""".r
+  val filenameRegex = """results_from_(\d+)_until_(\d+).txt""".r
   val existingRangesSorted: Seq[Range] = conf.outputDir
     .getOrElse(new File("robocord-output"))
     .listFiles()
     .toSeq
-    .filter(file => file.getName.startsWith("result_") && file.getName.endsWith(".tsv"))
+    .filter(file => file.getName.startsWith("results_") && file.getName.endsWith(".txt"))
     .map(file => file.getName match {
       case filenameRegex(from, until) => new Range(from.toInt, until.toInt, 1)
       case _ => throw new RuntimeException(s"Unexpected result filename found: ${file.getName}.")
@@ -121,10 +121,11 @@ object RoboCORDManager extends App {
         scribe.info(s" - Would execute job ${jobCount}: ${range} (size: ${range.size})")
       } else {
         val cmd = Seq(
+	  "/bin/bash",
           "robocord-sbatch.sh",
           "--metadata", "robocord-data/metadata.csv",
           "--from-row", range.start.toString,
-          "--to-row", range.end.toString,
+          "--until-row", range.end.toString,
           "--output-prefix", "robocord-output/results",
           "robocord-data"
         )
