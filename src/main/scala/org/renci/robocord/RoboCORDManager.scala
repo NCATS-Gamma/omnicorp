@@ -121,7 +121,7 @@ object RoboCORDManager extends App {
         scribe.info(s" - Would execute job ${jobCount}: ${range} (size: ${range.size})")
       } else {
         val cmd = Seq(
-	  "/bin/bash",
+          "/bin/bash",
           "robocord-sbatch.sh",
           "--metadata", "robocord-data/metadata.csv",
           "--from-row", range.start.toString,
