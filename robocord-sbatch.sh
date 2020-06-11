@@ -10,7 +10,7 @@ sbatch <<EOT
 #SBATCH --error=robocord-output/log-error-%A.txt
 #SBATCH --cpus-per-task 16
 #SBATCH --mem=50000
-#SBATCH --time=12:00:00
+#SBATCH --time=2:00:00
 #SBATCH --mail-user=gaurav@renci.org
 
 set -e # Exit immediately if a pipeline fails.
