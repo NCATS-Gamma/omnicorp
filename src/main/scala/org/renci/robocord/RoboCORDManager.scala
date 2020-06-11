@@ -52,7 +52,7 @@ object RoboCORDManager extends App {
       descr = "If true, perform a dry run: display the srun commands to be executed, but don't actually execute them.",
       default = Some(false)
     )
-    val tryOnce: ScallopOption[Boolean] = opt[Boolean](
+    val tryOne: ScallopOption[Boolean] = opt[Boolean](
       descr = "If true, try executing a single job.",
       default = Some(false)
     )
@@ -146,7 +146,7 @@ object RoboCORDManager extends App {
           scribe.info(s" - Executed job ${jobCount}: ${range} (size: ${range.size}): ${cmd}")
         else
           scribe.error(s" - Could not execute job ${jobCount}: ${range} (size: ${range.size})")
-        if(conf.tryOnce.getOrElse(false)) System.exit(0)
+        if(conf.tryOne.getOrElse(false)) System.exit(0)
         TimeUnit.SECONDS.sleep(conf.cmdDelay.getOrElse(2))
       }
     }
