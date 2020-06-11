@@ -35,7 +35,7 @@ object RoboCORD extends App with LazyLogging {
       default = Some(new File("robocord-data/all_sources_metadata_latest.csv"))
     )
     val outputPrefix: ScallopOption[String] = opt[String](
-      descr = "Prefix for the filename (we will add '_from_<start index>_until_<end index>.txt' to the filename)",
+      descr = "Prefix for the filename (we will add '_from_<start index>_until_<end index>.tsv' to the filename)",
       default = Some("robocord-output/result")
     )
     val neo4jLocation: ScallopOption[File] = opt[File](
@@ -109,7 +109,7 @@ object RoboCORD extends App with LazyLogging {
     }
   }
 
-  val outputFilename = conf.outputPrefix() + s"_from_${startIndex}_until_$endIndex.txt"
+  val outputFilename = conf.outputPrefix() + s"_from_${startIndex}_until_$endIndex.tsv"
   if (new File(outputFilename).length > 0) {
     logger.info(s"Output file '${outputFilename}' already exists, skipping.")
     System.exit(0)
