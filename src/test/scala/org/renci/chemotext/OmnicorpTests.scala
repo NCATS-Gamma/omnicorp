@@ -34,8 +34,7 @@ object OmnicorpTests extends TestSuite {
       val (status, stdout, stderr) = exec(Seq("sbt", "run"))
       assert(status == 1)
       assert(stdout contains "Omnicorp requires four arguments:")
-      assert(stdout contains "Nonzero exit code: 2")
-      assert(stderr contains "TrapExitSecurityException")
+      assert(stdout contains "Nonzero exit code returned from runner: 2")
     }
 
     test("On input file examplesForTests.xml") {
@@ -56,8 +55,8 @@ object OmnicorpTests extends TestSuite {
         assert(stdout contains "Total time:")
         assert(stdout contains "completed")
 
-        assert(stderr contains "Begin processing")
-        assert(!finalResultRegex.findFirstIn(stderr).isEmpty)
+        assert(stdout contains "Begin processing")
+        assert(!finalResultRegex.findFirstIn(stdout).isEmpty)
       }
     }
 
@@ -79,12 +78,12 @@ object OmnicorpTests extends TestSuite {
         assert(stdout contains "Total time:")
         assert(stdout contains "completed")
 
-        assert(stderr contains "Begin processing")
-        assert(stderr contains "WARN org.renci.chemotext.PubMedTripleGenerator")
+        assert(stdout contains "Begin processing")
+        assert(stdout contains "WARN org.renci.chemotext.PubMedTripleGenerator")
         assert(
-          stderr contains "Unable to parse date http://purl.org/dc/terms/issued on https://www.ncbi.nlm.nih.gov/pubmed/10542500: Could not parse XML node as date: <PubDate><MedlineDate>Dec-Jan</MedlineDate></PubDate>"
+          stdout contains "Unable to parse date http://purl.org/dc/terms/issued on https://www.ncbi.nlm.nih.gov/pubmed/10542500: Could not parse XML node as date: <PubDate><MedlineDate>Dec-Jan</MedlineDate></PubDate>"
         )
-        assert(!finalResultRegex.findFirstIn(stderr).isEmpty)
+        assert(!finalResultRegex.findFirstIn(stdout).isEmpty)
       }
     }
   }
