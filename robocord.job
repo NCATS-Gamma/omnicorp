@@ -26,7 +26,7 @@ else
     cp -R omnicorp-scigraph "scigraphs/$MY_SCIGRAPH"
 
     echo "Starting RoboCORD from row $FROM_ROW until $UNTIL_ROW."
-    sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --from-row $FROM_ROW --until-row $UNTIL_ROW --output-prefix robocord-output/results --neo4j-location scigraphs/$MY_SCIGRAPH robocord-data"
+    sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --from-row $FROM_ROW --until-row $UNTIL_ROW --output-prefix robocord-output/result --neo4j-location scigraphs/$MY_SCIGRAPH robocord-data"
 
     rm -rf "scigraphs/$MY_SCIGRAPH"
     echo "Deleted duplicated omnicorp-scigraph"
