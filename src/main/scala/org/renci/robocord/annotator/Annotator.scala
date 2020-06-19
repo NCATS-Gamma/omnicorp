@@ -35,7 +35,12 @@ class Annotator(neo4jLocation: File) extends LazyLogging {
 
   /** Extract annotations from a particular string using SciGraph. */
   def extractAnnotations(str: String): (String, List[EntityAnnotation]) = {
-    val parsedString = QueryParserBase.escape(str)
+    // These articles don't actually contain HTML tags, but SciGraph thinks they do.
+    // Instead, we eliminate anything that looks like HTML tags.
+    val parsedString = str
+      .replaceAll("\\s+", " ")
+      .replace("<", "_lt_")
+      .replace(">", "_gt_")
     val configBuilder = new EntityFormatConfiguration.Builder(new StringReader(parsedString))
       .longestOnly(true)
       .minLength(3)
