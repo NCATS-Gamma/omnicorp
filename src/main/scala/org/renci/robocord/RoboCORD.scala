@@ -6,6 +6,7 @@ import java.time.Duration
 
 import com.github.tototoshi.csv._
 import com.typesafe.scalalogging.{LazyLogging, Logger}
+import org.apache.lucene.analysis.core.StopAnalyzer
 import org.renci.robocord.annotator.Annotator
 import org.renci.robocord.json.CORDJsonReader
 import org.rogach.scallop._
@@ -120,6 +121,9 @@ object RoboCORD extends App with LazyLogging {
   val articlesTotal = metadata.size
   logger.info(s"Selected $articlesTotal articles for processing (from $startIndex until $endIndex)")
 
+  // Prepare a list of stop words.
+  val stopWords = StopAnalyzer.ENGLISH_STOP_WORDS_SET
+
   // Run SciGraph in parallel over the chunk we need to process.
   logger.info(s"Starting SciGraph in parallel on ${Runtime.getRuntime.availableProcessors} processors.")
 
@@ -191,7 +195,21 @@ object RoboCORD extends App with LazyLogging {
       val matchedString = parsedFullText.slice(annotation.getStart, annotation.getEnd).replaceAll("\\s+", " ")
       val preText = parsedFullText.slice(annotation.getStart - conf.context(), annotation.getStart).replaceAll("\\s+", " ")
       val postText = parsedFullText.slice(annotation.getEnd, annotation.getEnd + conf.context()).replaceAll("\\s+", " ")
-      s"""$id\t$articleId\t${if (pmcid == "") "" else s"PMCID:$pmcid"}\t$withFullText\t"$preText"\t"$matchedString"\t"$postText"\t${annotation.getToken.getId}\t${annotation.toString}"""
+
+      // For some reason, matchedString includes stop words. Let's see if we can't get rid of all of them.
+      val matchedStringNoStops = matchedString
+        .replaceAll("^\\W+", "")                                // Remove leading non-word characters.
+        .replaceAll("\\W+$", "")                                // Remove trailing non-word characters.
+        .replaceAll("\\\\-", "-")                               // Unescape dashes.
+        .split("\\b+")                                          // Split at word boundaries.
+        .map(_.trim)                                            // Trim all strings.
+        .filter(!_.isEmpty)                                     // Remove all empty strings.
+        .filter(str => !stopWords.contains(str.toLowerCase))    // Filter out stop words.
+        .mkString(" ")                                          // Recombine into a single string.
+        .replaceAll("\\s+-\\s+", "-")                           // Remove spaces around dashes.
+        .trim                                                   // Make sure we don't have any leading/trailing spaces left over.
+
+      s"""$id\t$articleId\t${if (pmcid == "") "" else s"PMCID:$pmcid"}\t$withFullText\t"$preText"\t"$matchedString"\t"$matchedStringNoStops"\t"$postText"\t${annotation.getToken.getId}\t${annotation.toString}"""
     })
   })
 
