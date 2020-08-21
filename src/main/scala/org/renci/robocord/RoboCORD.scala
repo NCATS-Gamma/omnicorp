@@ -198,6 +198,9 @@ object RoboCORD extends App with LazyLogging {
 
       // For some reason, matchedString includes stop words. Let's see if we can't get rid of all of them.
       val matchedStringNoStops = matchedString
+        // TODO: we currently see "pig\-tailed macaques \(a" -> "pig-tailed macaques \(".
+        // Maybe unescape all "\x" to "x"?
+
         .replaceAll("^\\W+", "")                                // Remove leading non-word characters.
         .replaceAll("\\W+$", "")                                // Remove trailing non-word characters.
         .replaceAll("\\\\-", "-")                               // Unescape dashes.
