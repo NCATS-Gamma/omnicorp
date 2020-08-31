@@ -2,9 +2,14 @@ package org.renci.chemotext
 
 import scala.xml.Node
 import scala.collection.immutable
+import java.net.URI
+
+import com.typesafe.scalalogging.LazyLogging
+
+import scala.util.Try
 
 /** Author name management. */
-class AuthorWrapper(node: Node) {
+class AuthorWrapper(node: Node) extends LazyLogging {
   val isSpellingCorrect      = ((node \ "ValidYN").text == "Y")
   val collectiveName: String = (node \ "CollectiveName").text
   val lastName: String       = (node \ "LastName").text
@@ -22,8 +27,15 @@ class AuthorWrapper(node: Node) {
     .map(_._2)
     .map(_.replaceAll("[\\s+\\-]", ""))
     .map(_.replaceAll("^https?:\\/\\/(?:www.)?orcid.org\\/", ""))
+    .filter(_.size == 16) // We should have a sixteen character ORCID code at this point.
     .map(_.replaceAll("(.{4})(?!$)", "$1-"))
     .map("https://orcid.org/" + _.trim)
+    .filter(orcid => {
+      // Make sure we have a valid URI. If not, skip this.
+      val result = Try(new URI(orcid))
+      if (result.isFailure) logger.warn(s"Skipping unreadable ORCID '${orcid}' for author ${name}")
+      result.isSuccess
+    })
 
   // FOAF uses foaf:givenName and foaf:familyName.
   val givenName: String = foreName

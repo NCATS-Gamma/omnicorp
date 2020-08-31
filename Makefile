@@ -72,12 +72,13 @@ robocord-download:
 	fi
 
 	# Download CORD-19 into robocord-data.
-	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/document_parses.tar.gz" -P robocord-data
-	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/metadata.csv" -P robocord-data
-	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/${ROBOCORD_DATE}/changelog" -P robocord-data
+	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/historical_releases/cord-19_${ROBOCORD_DATE}.tar.gz" -P robocord-data
 
 robocord-data: robocord-download
-	cd robocord-data; for f in *.tar.gz; do echo Uncompressing "$$f"; tar zxvf $$f; done; cd -
+	# Uncompress the main download file.
+	tar zxvf robocord-data/cord-19_${ROBOCORD_DATE}.tar.gz -C robocord-data --strip-components=1
+	# Uncompress the document_parses.
+	tar zxvf robocord-data/document_parses.tar.gz -C robocord-data
 	touch robocord-data
 
 robocord-output: robocord-data SciGraph
