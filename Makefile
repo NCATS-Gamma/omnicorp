@@ -59,8 +59,8 @@ test: coursier output
 	JAVA_OPTS="-Xmx$(MEMORY)" ./coursier launch com.ggvaidya:shacli_2.12:0.1-SNAPSHOT -- validate shacl/omnicorp-shapes.ttl output/*.ttl
 
 # RoboCORD
-.PHONY: robocord-download robocord-output robocord-test
-robocord-download:
+.PHONY: robocord-data robocord-output robocord-test
+robocord-data/cord-19_${ROBOCORD_DATE}.tar.gz:
 	# robocord-data is intended to be a symlink to robocord-datas/${ROBOCORD_DATE}, so that it is updated automatically.
 	# If robocord-data doesn't exist or is a symlink, we update it
 	# automatically. Otherwise (i.e. if it's an existing directory),
@@ -74,7 +74,7 @@ robocord-download:
 	# Download CORD-19 into robocord-data.
 	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/historical_releases/cord-19_${ROBOCORD_DATE}.tar.gz" -P robocord-data
 
-robocord-data: robocord-download
+robocord-data:robocord-data/cord-19_${ROBOCORD_DATE}.tar.gz 
 	# Uncompress the main download file.
 	tar zxvf robocord-data/cord-19_${ROBOCORD_DATE}.tar.gz -C robocord-data --strip-components=1
 	# Uncompress the document_parses.
