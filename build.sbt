@@ -33,6 +33,10 @@ testFrameworks += new TestFramework("utest.runner.Framework")
 
 // Dependency information.
 
+// I'm currently running into an issue when updating existing libraries in
+// running srun stalls for a long period of time. This should fix it temporarily.
+offline := true
+
 resolvers += Resolver.mavenLocal
 
 libraryDependencies ++= {
