@@ -1,5 +1,10 @@
 #!/bin/bash
 #
+# This script should be run:
+#   sbatch --array=0-3999 robocord.job
+# Where the total number of jobs (3999 in the example above) can be
+# any number.
+#
 #SBATCH --job-name=RoboCORD
 #SBATCH --output=robocord-output/log-output-%a.txt
 #SBATCH --error=robocord-output/log-error-%a.txt
