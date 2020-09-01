@@ -67,8 +67,31 @@ object RoboCORD extends App with LazyLogging {
 
   // Load the metadata file.
   val csvReader = CSVReader.open(conf.metadata())
-  val allMetadata: List[Map[String, String]] = csvReader.allWithHeaders()
+  val (headers: List[String], allMetadata: List[Map[String, String]]) = csvReader.allWithOrderedHeaders()
   logger.info(s"Loaded ${allMetadata.size} articles from metadata file ${conf.metadata()}.")
+
+  // Let's make sure the loaded metadata is what we expect -- if not, fields might have changed unexpectedly!
+  assert(headers == List(
+    "cord_uid",
+    "sha",
+    "source_x",
+    "title",
+    "doi",
+    "pmcid",
+    "pubmed_id",
+    "license",
+    "abstract",
+    "publish_time",
+    "authors",
+    "journal",
+    "mag_id",
+    "who_covidence_id",
+    "arxiv_id",
+    "pdf_json_files",
+    "pmc_json_files",
+    "url",
+    "s2_id"
+  ))
 
   // Which metadata entries do we actually need to process?
   val currentChunk: Int = conf.currentChunk()
@@ -82,37 +105,21 @@ object RoboCORD extends App with LazyLogging {
   val articlesTotal = metadata.size
   logger.info(s"Selected $articlesTotal articles for processing (from $startIndex until $endIndex, chunk $currentChunk out of $totalChunks)")
 
-  // Identify full text SHAs and PMCIDs in the current chunk (`metadata`).
-  val shasToLoad = metadata.flatMap(_.get("sha")).flatMap(_.split(';')).map(_.trim.toLowerCase).toSet
-  val pmcIdsToLoad = metadata.flatMap(_.get("pmcid")).flatMap(_.split(';')).map(_.trim.toLowerCase).toSet
-  // logger.info(s"shasToLoad: $shasToLoad")
-  // logger.info(s"pmcIdsToLoad: $pmcIdsToLoad")
-
-  // Load up full text data for those SHAs and PMCIDs, and create a map so we can identify them easily.
-  val fullTextData: Seq[CORDArticleWrapper] = conf.data().flatMap(CORDJsonReader.wrapFileOrDir(_, logger, shasToLoad, pmcIdsToLoad))
-  val fullTextById: Map[String, Seq[CORDArticleWrapper]] = fullTextData.groupBy(_.id)
-  logger.info(s"Loaded ${fullTextData.size} full text documents corresponding to ${fullTextById.keySet.size} IDs.")
-
   // Run SciGraph in parallel over the chunk we need to process.
   logger.info(s"Starting SciGraph in parallel on ${Runtime.getRuntime.availableProcessors} processors.")
 
   var articlesCompleted = 0
 
   // Summarize all files into the output directory.
-  val results: ParSeq[String] = metadata.par.flatMap(entry => {
+  val results: ParSeq[String] = metadata.zipWithIndex.par.flatMap({ case (entry, index) =>
     // Find the ID of this article.
-    val id = entry("cord_uid")
+    // We have some duplicate CORD_UIDs (yes, really!). So we add the metadata row index to make it fully unique.
+    val id = s"${entry("cord_uid")}:${startIndex + index}"
     val pmid = entry.get("pubmed_id")
     val doi = entry.get("doi")
 
-    // For SHA and PMCID, we do a little additional processing: if there are multiple SHAs or PMCIDs,
-    // we only use the last one, but we record all IDs in the log.
-    val shas = entry.getOrElse("sha", "").split(';').map(_.trim).filter(_.nonEmpty)
-    val sha = if (shas.length > 1) {
-      val shaLast = shas.last
-      logger.info(s"Found multiple SHAs for $id, choosing the last one ($shaLast) out of: $shas")
-      shaLast
-    } else shas.headOption.getOrElse("")
+    // It looks like there are no articles with multiple duplicate PMCIDs, but let's be paranoid
+    // and use only the last one.
     val pmcids = entry.getOrElse("pmcid", "").split(';').map(_.trim).filter(_.nonEmpty)
     val pmcid = if (pmcids.length > 1) {
       val pmcidLast = pmcids.last
@@ -126,20 +133,28 @@ object RoboCORD extends App with LazyLogging {
       else if(pmcid.nonEmpty) pmcid.map("PMCID:" + _)
       else s"CORD_UID:$id"
 
-    // Determine which full text document to use. If a full text JSON document (via SHA or PMCID) is available,
-    // we use that. Otherwise, we fall back to the title and abstract from the metadata file.
-    val (fullText, withFullText) = if (pmcid.nonEmpty && fullTextById.contains(pmcid)) {
-      // Retrieve the full text.
-      (
-        fullTextById.getOrElse(pmcid, Seq.empty).map(_.fullText).mkString("\n===\n"),
-        s"with full text from PMCID $pmcid"
-      )
-    } else if (sha.nonEmpty && fullTextById.contains(sha)) {
-      // Retrieve the full text.
-      (
-        fullTextById.getOrElse(sha, Seq.empty).map(_.fullText).mkString("\n===\n"),
-        s"with full text from SHA $sha"
-      )
+    // Full-text articles are stored by path. We might have multiple PMC or PDF parses; we prioritize PMC over PDF.
+    val pmcJSONFiles = entry("pmc_json_files").split(';').map(_.trim).filter(_.nonEmpty)
+    val pdfJSONFiles = entry("pdf_json_files").split(';').map(_.trim).filter(_.nonEmpty)
+    val fullTextFilename: String = if (pmcJSONFiles.nonEmpty) {
+      if (pmcJSONFiles.length == 1) pmcJSONFiles.head
+      else {
+        val pmcLast = pmcJSONFiles.last
+        logger.info(s"Found multiple PMC JSON files, choosing the last one ($pmcLast) out of $pmcJSONFiles")
+        pmcLast
+      }
+    } else if (pdfJSONFiles.nonEmpty) {
+      if (pdfJSONFiles.length == 1) pdfJSONFiles.head
+      else {
+        val pdfLast = pdfJSONFiles.last
+        logger.info(s"Found multiple PDF JSON files, choosing the last one ($pdfLast) out of $pdfJSONFiles")
+        pdfLast
+      }
+    } else ""
+
+    val (fullText, withFullText) = if (fullTextFilename.nonEmpty) {
+      val jsonReader = CORDJsonReader.wrapFile(new File(new File("robocord-data"), fullTextFilename), logger)
+      (jsonReader.map(_.fullText).mkString("\n===\n"), s"with full text from $fullTextFilename")
     } else {
       // We don't have full text, so just annotate the title and abstract.
       val title: String = entry.getOrElse("title", "")

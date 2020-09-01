@@ -8,7 +8,7 @@ MEMORY = 16G
 PARALLEL = 4
 
 # The date of CORD-19 data to download.
-ROBOCORD_DATE="2020-06-02"
+ROBOCORD_DATE="2020-08-30"
 
 .PHONY: all
 all: output
@@ -61,7 +61,7 @@ test: coursier output
 # RoboCORD
 .PHONY: robocord-download robocord-output robocord-test
 robocord-download:
-	# robocord-data is intended to be a symlink to robocord-datas/${ROBOCORD_DATE}, so that it is updated automatically. 
+	# robocord-data is intended to be a symlink to robocord-datas/${ROBOCORD_DATE}, so that it is updated automatically.
 	# If robocord-data doesn't exist or is a symlink, we update it
 	# automatically. Otherwise (i.e. if it's an existing directory),
 	# we only update the files already in it.
@@ -70,7 +70,7 @@ robocord-download:
 		mkdir -p robocord-datas/${ROBOCORD_DATE}; \
 		ln -s robocord-datas/${ROBOCORD_DATE} robocord-data; \
 	fi
-	
+
 	# Download CORD-19 into robocord-data.
 	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/historical_releases/cord-19_${ROBOCORD_DATE}.tar.gz" -P robocord-data
 
