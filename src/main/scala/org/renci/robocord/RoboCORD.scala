@@ -118,7 +118,7 @@ object RoboCORD extends App with LazyLogging {
     val pmid = entry.get("pubmed_id")
     val doi = entry.get("doi")
 
-    // It looks like there are no articules with multiple duplicate PMCIDs, but let's be paranoid
+    // It looks like there are no articles with multiple duplicate PMCIDs, but let's be paranoid
     // and use only the last one.
     val pmcids = entry.getOrElse("pmcid", "").split(';').map(_.trim).filter(_.nonEmpty)
     val pmcid = if (pmcids.length > 1) {
