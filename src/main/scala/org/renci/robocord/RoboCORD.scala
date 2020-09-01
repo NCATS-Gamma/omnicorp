@@ -1,12 +1,13 @@
 package org.renci.robocord
 
 import java.io.{File, FileWriter, PrintWriter}
+import java.nio.file.{CopyOption, Files, StandardCopyOption}
 import java.time.Duration
 
 import com.github.tototoshi.csv._
 import com.typesafe.scalalogging.{LazyLogging, Logger}
 import org.renci.robocord.annotator.Annotator
-import org.renci.robocord.json.{CORDArticleWrapper, CORDJsonReader}
+import org.renci.robocord.json.CORDJsonReader
 import org.rogach.scallop._
 import org.rogach.scallop.exceptions._
 
@@ -34,20 +35,20 @@ object RoboCORD extends App with LazyLogging {
       default = Some(new File("robocord-data/all_sources_metadata_latest.csv"))
     )
     val outputPrefix: ScallopOption[String] = opt[String](
-      descr = "Prefix for the filename (we will add '_from_<start index>_until_<end index>.txt' to the filename)",
+      descr = "Prefix for the filename (we will add '_from_<start index>_until_<end index>.tsv' to the filename)",
       default = Some("robocord-output/result")
     )
     val neo4jLocation: ScallopOption[File] = opt[File](
       descr = "Location of the Neo4J database that SciGraph should use.",
       default = Some(new File("omnicorp-scigraph"))
     )
-    val currentChunk: ScallopOption[Int] = opt[Int](
-      descr = "The current chunks (from 0 to totalChunks-1)",
-      default = Some(0)
+    val fromRow: ScallopOption[Int] = opt[Int](
+      descr = "The row to start processing on",
+      required = true
     )
-    val totalChunks: ScallopOption[Int] = opt[Int](
-      descr = "The total number of chunks to process",
-      default = Some(-1)
+    val untilRow: ScallopOption[Int] = opt[Int](
+      descr = "The row to end processing before (i.e. this row will not be processed)",
+      required = true
     )
     val context: ScallopOption[Int] = opt[Int](
       descr = "How many characters before and after the matched term should be displayed.",
@@ -94,16 +95,30 @@ object RoboCORD extends App with LazyLogging {
   ))
 
   // Which metadata entries do we actually need to process?
-  val currentChunk: Int = conf.currentChunk()
-  val totalChunks: Int = if (conf.totalChunks() == -1) allMetadata.size else conf.totalChunks()
-  val chunkLength: Int = allMetadata.size/totalChunks
-  val startIndex: Int = currentChunk * chunkLength
-  val endIndex: Int = startIndex + chunkLength
+  val startIndex = conf.fromRow.toOption.get
+  val endIndex = conf.untilRow.toOption.get
+
+  // Do we already have an output file? If so, we abort.
+  val inProgressFilename = conf.outputPrefix() + s"_from_${startIndex}_until_$endIndex.in-progress.txt"
+  if (new File(inProgressFilename).exists()) {
+    if (new File(inProgressFilename).delete())
+      logger.info(s"In-progress output file '${inProgressFilename}' already exists and has been deleted.")
+    else {
+      logger.info(s"In-progress output file '${inProgressFilename}' already exists but could not be deleted.")
+      System.exit(2)
+    }
+  }
+
+  val outputFilename = conf.outputPrefix() + s"_from_${startIndex}_until_$endIndex.tsv"
+  if (new File(outputFilename).length > 0) {
+    logger.info(s"Output file '${outputFilename}' already exists, skipping.")
+    System.exit(0)
+  }
 
   // Divide allMetadata into chunks based on totalChunks.
   val metadata: Seq[Map[String, String]] = allMetadata.slice(startIndex, endIndex)
   val articlesTotal = metadata.size
-  logger.info(s"Selected $articlesTotal articles for processing (from $startIndex until $endIndex, chunk $currentChunk out of $totalChunks)")
+  logger.info(s"Selected $articlesTotal articles for processing (from $startIndex until $endIndex)")
 
   // Run SciGraph in parallel over the chunk we need to process.
   logger.info(s"Starting SciGraph in parallel on ${Runtime.getRuntime.availableProcessors} processors.")
@@ -130,7 +145,7 @@ object RoboCORD extends App with LazyLogging {
     // Choose an "article ID", which is one of: (1) PubMed ID, (2) DOI, (3) PMCID or (4) CORD_UID.
     val articleId = if (pmid.nonEmpty && pmid.get.nonEmpty) pmid.map("PMID:" + _).mkString("|")
       else if(doi.nonEmpty && doi.get.nonEmpty) doi.map("DOI:" + _).mkString("|")
-      else if(pmcid.nonEmpty) pmcid.map("PMCID:" + _)
+      else if(pmcid.nonEmpty) s"PMCID:${pmcid}"
       else s"CORD_UID:$id"
 
     // Full-text articles are stored by path. We might have multiple PMC or PDF parses; we prioritize PMC over PDF.
@@ -181,12 +196,18 @@ object RoboCORD extends App with LazyLogging {
   })
 
   // Write out all the results to the output file.
-  val outputFilename = conf.outputPrefix() + s"_from_${startIndex}_until_$endIndex.txt"
   logger.info(s"Writing tab-delimited output to $outputFilename.")
-  val pw = new PrintWriter(new FileWriter(new File(outputFilename)))
+  val pw = new PrintWriter(new FileWriter(new File(inProgressFilename)))
   results.foreach(pw.println(_))
   pw.close
 
   val duration = Duration.ofNanos(System.nanoTime - timeStarted)
   logger.info(s"Completed generating ${results.size} results for $articlesTotal articles in ${duration.getSeconds} seconds ($duration)")
+
+  Files.move(
+    new File(inProgressFilename).toPath,
+    new File(outputFilename).toPath,
+    StandardCopyOption.REPLACE_EXISTING
+  )
+  logger.info(s"Renamed ${inProgressFilename} to ${outputFilename}; file ready for use.")
 }

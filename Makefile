@@ -9,7 +9,6 @@ PARALLEL = 4
 
 # The date of CORD-19 data to download.
 ROBOCORD_DATE="2020-08-30"
-
 .PHONY: all
 all: output
 
@@ -91,7 +90,8 @@ robocord-test: SciGraph
 		ln -s robocord-outputs/${ROBOCORD_DATE} robocord-output; \
 	fi
 
-	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk 4 --total-chunks 1000 robocord-data"
-	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk 5 --total-chunks 1000 robocord-data"
-	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk 6 --total-chunks 1000 robocord-data"
-	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk 437 --total-chunks 1000 robocord-data"
+	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --from-row 512 --until-row 640 robocord-data"
+	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --from-row 640 --until-row 768  robocord-data"
+	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --from-row 768 --until-row 896  robocord-data"
+	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --from-row 55936 --until-row 56064 robocord-data"
+	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --from-row 140776 --until-row 141109 robocord-data"

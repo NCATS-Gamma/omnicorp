@@ -1,11 +1,16 @@
 #!/bin/bash
 #
+# This script should be run:
+#   sbatch --array=0-3999 robocord.job
+# Where the total number of jobs (3999 in the example above) can be
+# any number.
+#
 #SBATCH --job-name=RoboCORD
 #SBATCH --output=robocord-output/log-output-%a.txt
 #SBATCH --error=robocord-output/log-error-%a.txt
 #SBATCH --cpus-per-task 16
 #SBATCH --mem=50000
-#SBATCH --time=12:00:00
+#SBATCH --time=4:00:00
 #SBATCH --mail-user=gaurav@renci.org
 
 set -e # Exit immediately if a pipeline fails.
@@ -13,11 +18,21 @@ set -e # Exit immediately if a pipeline fails.
 export JAVA_OPTS="-Xmx50G"
 export MY_SCIGRAPH=omnicorp-scigraph-$SLURM_ARRAY_TASK_ID
 
-echo "Duplicating omnicorp-scigraph so we can use it on multiple clusters"
-cp -R omnicorp-scigraph "scigraphs/$MY_SCIGRAPH"
+export METADATA_SIZE=$(wc -l < robocord-data/metadata.csv)
+export CHUNK_SIZE=$(($METADATA_SIZE/$SLURM_ARRAY_TASK_MAX))
+export FROM_ROW=$(($SLURM_ARRAY_TASK_ID * $CHUNK_SIZE))
+export UNTIL_ROW=$(($FROM_ROW + $CHUNK_SIZE))
+export OUTPUT_FILENAME=robocord-output/result_from_${FROM_ROW}_until_${UNTIL_ROW}.tsv
 
-echo "Starting RoboCORD"
-sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --current-chunk $SLURM_ARRAY_TASK_ID --total-chunks $SLURM_ARRAY_TASK_MAX --output-prefix robocord-output/results --neo4j-location scigraphs/$MY_SCIGRAPH robocord-data"
+if [ -f $OUTPUT_FILENAME ]; then
+    echo Output filename $OUTPUT_FILENAME already exists, skipping.
+else
+    echo "Duplicating omnicorp-scigraph so we can use it on multiple clusters"
+    cp -R omnicorp-scigraph "scigraphs/$MY_SCIGRAPH"
 
-rm -rf "scigraphs/$MY_SCIGRAPH"
-echo "Deleted duplicated omnicorp-scigraph"
+    echo "Starting RoboCORD from row $FROM_ROW until $UNTIL_ROW."
+    sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --from-row $FROM_ROW --until-row $UNTIL_ROW --output-prefix robocord-output/result --neo4j-location scigraphs/$MY_SCIGRAPH robocord-data"
+
+    rm -rf "scigraphs/$MY_SCIGRAPH"
+    echo "Deleted duplicated omnicorp-scigraph"
+fi

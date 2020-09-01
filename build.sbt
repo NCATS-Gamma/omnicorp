@@ -27,7 +27,7 @@ wartremoverWarnings ++= Warts.unsafe
 
 javaOptions += "-Xmx20G"
 
-fork in Test := true
+fork := true
 
 testFrameworks += new TestFramework("utest.runner.Framework")
 
@@ -43,11 +43,16 @@ libraryDependencies ++= {
     "org.scala-lang.modules"      %% "scala-xml"              % "1.0.6",
     "io.scigraph"                 %  "scigraph-core"          % "2.1-SNAPSHOT",
     "io.scigraph"                 %  "scigraph-entity"        % "2.1-SNAPSHOT",
-    "com.typesafe.scala-logging"  %% "scala-logging"          % "3.7.1",
-    "ch.qos.logback"              %  "logback-classic"        % "1.2.3",
     "org.codehaus.groovy"         %  "groovy-all"             % "2.4.6",
     "org.apache.jena"             %  "apache-jena-libs"       % "3.13.1",
+
+    // Testing
     "com.lihaoyi"                 %% "utest"                  % "0.7.1" % "test",
+
+    // Logging
+    "com.typesafe.scala-logging"  %% "scala-logging"          % "3.7.1",
+    "ch.qos.logback"              %  "logback-classic"        % "1.2.3",
+    "com.outr"                    %% "scribe"                 % "2.7.3",
 
     // Command line argument parsing.
     "org.rogach"                  %% "scallop"                % "3.3.2",

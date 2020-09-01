@@ -4,7 +4,21 @@
 
 Extract ontology terms referenced from PubMed abstracts as per the [MEDLINE/PubMed Baseline Repository](https://mbr.nlm.nih.gov/) by using [SciGraph](https://github.com/SciGraph/SciGraph) against a set of ontologies.
 
-## Ontologies
+# OmniCORD
+
+Extract ontology terms used in the [COVID-19 Open Research Dataset (CORD)](https://www.semanticscholar.org/cord19) as tab-delimited files for further processing in [COVID-KOP](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7316095/).
+
+In order to generate OmniCORD output files, you should:
+1. Use `robocord.job` to attempt to run all the jobs on a SLURM cluster.
+   Any number of jobs can be specified, but values of around 4000 seem
+   to work with. Example: `sbatch --array=0-3999 robocord.job`.
+2. Use RoboCORDManager to re-run any jobs that failed to complete. You can
+   use the `--dry-run` option to see what jobs will be executed before they
+   are run. Jobs are executed using the `robocord-sbatch.sh` script, so
+   modify that if necessary.
+   Example: `srun sbt "runMain org.renci.robocord.RoboCORDManager --job-size 20`
+
+# Ontologies used
 Currently, we look for terms from the following ontologies:
 * [Uberon (base)](http://uberon.org) ([OWL](http://purl.obolibrary.org/obo/uberon/uberon-base.owl))
 * [ChEBI](https://www.ebi.ac.uk/chebi/) ([OWL](http://purl.obolibrary.org/obo/chebi.owl))
