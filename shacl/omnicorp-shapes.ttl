@@ -95,8 +95,12 @@
                            ] ;
         shacl:property     [ shacl:path         dc:references ;
                              shacl:description  "The number of concepts referenced by this publication, based on terms in its abstract and (possibly) full-text" ;
-                             shacl:minCount     1 ;
                              shacl:nodeKind     shacl:IRI
+                           ] ;
+        shacl:property     [ shacl:path         dc:references ;
+                             shacl:minCount     1 ;
+                             shacl:severity     shacl:Warning ;
+                             shacl:message      "Expected at least one term for each article"
                            ] ;
         shacl:property     [ shacl:path         frbr:partOf ;
                              shacl:description  "The journal issue, volume or journal this article is a part of" ;
