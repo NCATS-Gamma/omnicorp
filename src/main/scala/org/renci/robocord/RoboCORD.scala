@@ -4,7 +4,7 @@ import java.io.File
 import java.nio.file.{Files, StandardCopyOption}
 import java.time.Duration
 
-import cats.effect.{Blocker, ContextShift, ExitCode, IO}
+import cats.effect.{Blocker, ContextShift, ExitCode, IO, IOApp}
 import com.github.tototoshi.csv._
 import com.typesafe.scalalogging.{LazyLogging, Logger}
 import fs2.{Stream, io, text}
@@ -13,7 +13,7 @@ import org.renci.robocord.json.CORDJsonReader
 import org.rogach.scallop._
 import org.rogach.scallop.exceptions._
 
-object RoboCORD extends App with LazyLogging {
+object RoboCORD extends IOApp with LazyLogging {
   /**
    * Command line configuration for RoboCORD.
    */
@@ -213,6 +213,8 @@ object RoboCORD extends App with LazyLogging {
           val (parsedFullText, annotations) =
             annotator.extractAnnotations(fullText.replaceAll("\\s+", " "))
 
+          logger.info(s"Found ${annotations.size} annotations in ${metadataString}")
+
           // Write them all out.
           Stream.emits(annotations.map(annotation => {
             val matchedString =
@@ -224,14 +226,12 @@ object RoboCORD extends App with LazyLogging {
               .slice(annotation.getEnd, annotation.getEnd + conf.context())
               .replaceAll("\\s+", " ")
 
-            s"""${metadataString}\t"$preText"\t"$matchedString"\t"$postText"\t${annotation.getToken.getId}\t${annotation.toString}"""
+            s"""$metadataString\t"$preText"\t"$matchedString"\t"$postText"\t${annotation.getToken.getId}\t${annotation.toString}"""
           }))
       })
 
     // Write all outputs to the in-progress file.
     logger.info(s"Writing tab-delimited output to $inProgressFile.")
-    implicit val ioContextShift: ContextShift[IO] =
-      IO.contextShift(scala.concurrent.ExecutionContext.Implicits.global)
     val finalStream: Stream[IO, Unit] = Stream.resource(Blocker[IO]).flatMap { blocker =>
       annotationStream
         .intersperse("\n")
