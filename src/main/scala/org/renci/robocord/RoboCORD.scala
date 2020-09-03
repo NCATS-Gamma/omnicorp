@@ -206,7 +206,7 @@ object RoboCORD extends IOApp with LazyLogging {
 
     // Step 2. Annotate full texts, and concatenate annotations with metadata to produce final output.
     val annotationStream: Stream[IO, String] = preAnnotationStream
-      .debug(metadata => s"Processing ${metadata._1}")
+      .debug(metadata => s"Searching for annotations in ${metadata._1}")
       .flatMap({
         case (metadataString, fullText) =>
           // Extract annotations from the full text using SciGraph.
