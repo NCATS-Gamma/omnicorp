@@ -46,6 +46,11 @@ libraryDependencies ++= {
     "org.codehaus.groovy"         %  "groovy-all"             % "2.4.6",
     "org.apache.jena"             %  "apache-jena-libs"       % "3.13.1",
 
+    // fs2 streams
+    "co.fs2"                      %% "fs2-core"               % "2.4.4", // For cats 2 and cats-effect 2
+    "co.fs2"                      %% "fs2-io"                 % "2.4.4",
+    "co.fs2"                      %% "fs2-reactive-streams"   % "2.4.4",
+
     // Testing
     "com.lihaoyi"                 %% "utest"                  % "0.7.1" % "test",
 
