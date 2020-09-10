@@ -22,9 +22,9 @@ pubmed-annual-baseline/done:
 	touch pubmed-annual-baseline/done
 
 SciGraph:
-	git clone https://github.com/balhoff/SciGraph.git &&\
+	git clone https://github.com/gaurav/SciGraph.git &&\
 	cd SciGraph &&\
-	git checkout public-constructors &&\
+	git checkout public-constructors-and-methods &&\
 	mvn -B -DskipTests -DskipITs install
 
 robot.jar:
