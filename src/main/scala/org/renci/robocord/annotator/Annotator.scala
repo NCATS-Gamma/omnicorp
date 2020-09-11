@@ -12,6 +12,7 @@ import io.scigraph.annotation.{
 }
 import io.scigraph.neo4j.NodeTransformer
 import io.scigraph.vocabulary.{Vocabulary, VocabularyNeo4jImpl}
+import org.apache.lucene.analysis.core.StopAnalyzer
 import org.apache.lucene.queryparser.classic.QueryParserBase
 import org.neo4j.graphdb.GraphDatabaseService
 import org.neo4j.graphdb.factory.GraphDatabaseFactory
@@ -40,5 +41,24 @@ class Annotator(neo4jLocation: File) extends LazyLogging {
         .longestOnly(true)
         .minLength(3)
     (parsedString, processor.getAnnotations(parsedString, configBuilder.get).asScala.toList)
+  }
+}
+
+object Annotator {
+  /** Remove stop characters from matched string. */
+  def removeStopCharacters(matchedString: String): String = {
+    matchedString
+      // TODO: we currently see "pig\-tailed macaques \(a" -> "pig-tailed macaques \(".
+      // Maybe unescape all "\x" to "x"?
+      .replaceAll("^\\W+", "")              // Remove leading non-word characters.
+      .replaceAll("\\W+$", "")              // Remove trailing non-word characters.
+      .replaceAll("\\\\-", "-")             // Unescape dashes.
+      .split("\\b+")                                   // Split at word boundaries.
+      .map(_.trim)                                            // Trim all strings.
+      .filter(!_.isEmpty)                                     // Remove all empty strings.
+      .filter(str => !StopAnalyzer.ENGLISH_STOP_WORDS_SET.contains(str.toLowerCase))    // Filter out stop words.
+      .mkString(" ")                                          // Recombine into a single string.
+      .replaceAll("\\s+-\\s+", "-")         // Remove spaces around dashes.
+      .trim                                                   // Make sure we don't have any leading/trailing spaces left over.
   }
 }

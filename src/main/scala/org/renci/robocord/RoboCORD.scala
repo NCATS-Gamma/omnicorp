@@ -263,7 +263,9 @@ object RoboCORD extends IOApp with LazyLogging {
               .slice(annotation.getEnd, annotation.getEnd + conf.context())
               .replaceAll("\\s+", " ")
 
-            s"""$metadataString\t"$preText"\t"$matchedString"\t"$postText"\t${annotation.getToken.getId}\t${annotation.toString}"""
+            val cleanedString = Annotator.removeStopCharacters(matchedString)
+
+            s"""$metadataString\t"$preText"\t"$matchedString"\t"$cleanedString\"\t"$postText"\t${annotation.getToken.getId}\t${annotation.toString}"""
           }))
       })
 
