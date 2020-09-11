@@ -15,7 +15,8 @@ object AnnotatorUnitTests extends TestSuite {
           "H1N1 virus infection\\:" -> "H1N1 virus infection",
           "nephrotic syndrome." -> "nephrotic syndrome",
           "\\(Figure" -> "Figure",
-          "\\(C\\)," -> "C"
+          "\\(C\\)," -> "C",
+          "pig\\-tailed macaques \\(a" -> "pig-tailed macaques"
         )
 
         examples.foreach({ case (example, expected) =>

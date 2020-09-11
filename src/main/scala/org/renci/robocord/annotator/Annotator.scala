@@ -50,14 +50,14 @@ object Annotator {
     matchedString
       // TODO: we currently see "pig\-tailed macaques \(a" -> "pig-tailed macaques \(".
       // Maybe unescape all "\x" to "x"?
-      .replaceAll("^\\W+", "")              // Remove leading non-word characters.
-      .replaceAll("\\W+$", "")              // Remove trailing non-word characters.
-      .replaceAll("\\\\-", "-")             // Unescape dashes.
       .split("\\b+")                                   // Split at word boundaries.
       .map(_.trim)                                            // Trim all strings.
       .filter(!_.isEmpty)                                     // Remove all empty strings.
       .filter(str => !StopAnalyzer.ENGLISH_STOP_WORDS_SET.contains(str.toLowerCase))    // Filter out stop words.
       .mkString(" ")                                          // Recombine into a single string.
+      .replaceAll("^\\W+", "")              // Remove leading non-word characters.
+      .replaceAll("\\W+$", "")              // Remove trailing non-word characters.
+      .replaceAll("\\\\-", "-")             // Unescape dashes.
       .replaceAll("\\s+-\\s+", "-")         // Remove spaces around dashes.
       .trim                                                   // Make sure we don't have any leading/trailing spaces left over.
   }
