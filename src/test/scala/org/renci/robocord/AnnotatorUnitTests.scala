@@ -7,12 +7,6 @@ import utest._
 /**
   * Unit tests for the RoboCORD Annotator class.
   */
-@SuppressWarnings(
-  Array(
-    "org.wartremover.warts.TryPartial",       // We use Try.get() in a
-    "org.wartremover.warts.NonUnitStatements" // non-unit statements to test whether parsing fails correctly.
-  )
-)
 object AnnotatorUnitTests extends TestSuite {
   val tests = Tests {
     test("Annotator") {
