@@ -58,12 +58,19 @@ object RoboCORD extends IOApp with LazyLogging {
     verify()
   }
 
+  /**
+   * Main method for a FS2 IO App.
+   *
+   * @param args Command line arguments.
+   * @return Exit code.
+   */
   def run(args: List[String]): IO[ExitCode] = {
-    val timeStarted = System.nanoTime
-
     // Parse command line arguments.
     val conf = new Conf(args, logger)
 
+    // Attempt to process the command line arguments. We also time how long it takes to
+    // process them (successfully or not).
+    val timeStarted = System.nanoTime
     processEntries(conf).compile.drain.redeem(
       err => {
         val duration = Duration.ofNanos(System.nanoTime - timeStarted)
@@ -82,6 +89,13 @@ object RoboCORD extends IOApp with LazyLogging {
     )
   }
 
+  /**
+   * Generate a FS2 Stream for processing the rows in the metadata file as described
+   * in the command line arguments.
+   *
+   * @param conf Parsed command line options
+   * @return An FS2 Stream for processing the rows in the metadata file. Use `.drain` to actually execute the stream.
+   */
   def processEntries(conf: RoboCORD.Conf): Stream[IO, Unit] = {
     // Set up Annotator.
     val annotator: Annotator = new Annotator(conf.neo4jLocation())
@@ -92,7 +106,7 @@ object RoboCORD extends IOApp with LazyLogging {
       csvReader.allWithOrderedHeaders()
     logger.info(s"Loaded ${allMetadata.size} articles from metadata file ${conf.metadata()}.")
 
-    // Let's make sure the loaded metadata is what we expect -- if not, fields might have changed unexpectedly!
+    // Let's make sure the loaded metadata is what we expect -- if not, fields might have changed unexpectedly.
     assert(
       headers == List(
         "cord_uid",
@@ -119,11 +133,18 @@ object RoboCORD extends IOApp with LazyLogging {
 
     // Which metadata entries do we actually need to process?
     val startIndex = conf.fromRow.toOption.get
-    val endIndex   = conf.untilRow.toOption.get
+    val untilIndex = conf.untilRow.toOption.get
+
+    // Divide allMetadata into chunks based on the startIndex and endIndex to process.
+    val metadata: Seq[Map[String, String]] = allMetadata.slice(startIndex, untilIndex)
+    val articlesTotal                      = metadata.size
+    logger.info(
+      s"Selected $articlesTotal articles for processing (from $startIndex until $untilIndex)"
+    )
 
     // Do we already have an output file? If so, we abort.
     val inProgressFilename = conf
-      .outputPrefix() + s"_from_${startIndex}_until_$endIndex.in-progress.txt"
+      .outputPrefix() + s"_from_${startIndex}_until_$untilIndex.in-progress.txt"
     val inProgressFile = new File(inProgressFilename)
     if (inProgressFile.exists()) {
       if (inProgressFile.delete())
@@ -138,18 +159,11 @@ object RoboCORD extends IOApp with LazyLogging {
       }
     }
 
-    val outputFilename = conf.outputPrefix() + s"_from_${startIndex}_until_$endIndex.tsv"
+    val outputFilename = conf.outputPrefix() + s"_from_${startIndex}_until_$untilIndex.tsv"
     if (new File(outputFilename).length > 0) {
       logger.info(s"Output file '${outputFilename}' already exists, skipping.")
       System.exit(0)
     }
-
-    // Divide allMetadata into chunks based on totalChunks.
-    val metadata: Seq[Map[String, String]] = allMetadata.slice(startIndex, endIndex)
-    val articlesTotal                      = metadata.size
-    logger.info(
-      s"Selected $articlesTotal articles for processing (from $startIndex until $endIndex)"
-    )
 
     // Use the FS2 Streams API to process the rows we need to.
     val metadataStream = Stream.emits(metadata.zipWithIndex)
