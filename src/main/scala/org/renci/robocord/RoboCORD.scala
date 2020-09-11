@@ -4,7 +4,7 @@ import java.io.File
 import java.nio.file.{Files, StandardCopyOption}
 import java.time.Duration
 
-import cats.effect.{Blocker, ContextShift, ExitCode, IO, IOApp}
+import cats.effect.{Blocker, ExitCode, IO, IOApp}
 import com.github.tototoshi.csv._
 import com.typesafe.scalalogging.{LazyLogging, Logger}
 import fs2.{Stream, io, text}
@@ -15,8 +15,8 @@ import org.rogach.scallop.exceptions._
 
 object RoboCORD extends IOApp with LazyLogging {
   /**
-   * Command line configuration for RoboCORD.
-   */
+    * Command line configuration for RoboCORD.
+    */
   class Conf(arguments: Seq[String], logger: Logger) extends ScallopConf(arguments) {
     override def onError(e: Throwable): Unit = e match {
       case ScallopException(message) =>
@@ -29,23 +29,23 @@ object RoboCORD extends IOApp with LazyLogging {
     val version: String = getClass.getPackage.getImplementationVersion
     version("RoboCORD: part of Omnicorp v" + version)
 
-    val data: ScallopOption[List[File]] = trailArg[List[File]](descr = "Data file(s) or directories to convert (in JSON-LD)")
+    val data: ScallopOption[List[File]] =
+      trailArg[List[File]](descr = "Data file(s) or directories to convert (in JSON-LD)")
     val metadata: ScallopOption[File] = opt[File](
       descr = "The CSV file containing metadata",
       default = Some(new File("robocord-data/all_sources_metadata_latest.csv"))
     )
     val outputPrefix: ScallopOption[String] = opt[String](
-      descr = "Prefix for the filename (we will add '_from_<start index>_until_<end index>.tsv' to the filename)",
+      descr =
+        "Prefix for the filename (we will add '_from_<start index>_until_<end index>.tsv' to the filename)",
       default = Some("robocord-output/result")
     )
     val neo4jLocation: ScallopOption[File] = opt[File](
       descr = "Location of the Neo4J database that SciGraph should use.",
       default = Some(new File("omnicorp-scigraph"))
     )
-    val fromRow: ScallopOption[Int] = opt[Int](
-      descr = "The row to start processing on",
-      required = true
-    )
+    val fromRow: ScallopOption[Int] =
+      opt[Int](descr = "The row to start processing on", required = true)
     val untilRow: ScallopOption[Int] = opt[Int](
       descr = "The row to end processing before (i.e. this row will not be processed)",
       required = true
@@ -64,17 +64,22 @@ object RoboCORD extends IOApp with LazyLogging {
     // Parse command line arguments.
     val conf = new Conf(args, logger)
 
-    processEntries(conf).compile.drain.redeem(err => {
-      val duration = Duration.ofNanos(System.nanoTime - timeStarted)
-      logger.error(s"Error occurred during processing in ${duration.getSeconds} seconds ($duration): $err")
-      ExitCode.Error
-    }, _ => {
-      val duration = Duration.ofNanos(System.nanoTime - timeStarted)
-      logger.info(
-        s"Completed generating results for articles in ${duration.getSeconds} seconds ($duration)"
-      )
-      ExitCode.Success
-    })
+    processEntries(conf).compile.drain.redeem(
+      err => {
+        val duration = Duration.ofNanos(System.nanoTime - timeStarted)
+        logger.error(
+          s"Error occurred during processing in ${duration.getSeconds} seconds ($duration): $err"
+        )
+        ExitCode.Error
+      },
+      _ => {
+        val duration = Duration.ofNanos(System.nanoTime - timeStarted)
+        logger.info(
+          s"Completed generating results for articles in ${duration.getSeconds} seconds ($duration)"
+        )
+        ExitCode.Success
+      }
+    )
   }
 
   def processEntries(conf: RoboCORD.Conf): Stream[IO, Unit] = {
@@ -83,44 +88,52 @@ object RoboCORD extends IOApp with LazyLogging {
 
     // Load the metadata file.
     val csvReader = CSVReader.open(conf.metadata())
-    val (headers: List[String], allMetadata: List[Map[String, String]]) = csvReader.allWithOrderedHeaders()
+    val (headers: List[String], allMetadata: List[Map[String, String]]) =
+      csvReader.allWithOrderedHeaders()
     logger.info(s"Loaded ${allMetadata.size} articles from metadata file ${conf.metadata()}.")
 
     // Let's make sure the loaded metadata is what we expect -- if not, fields might have changed unexpectedly!
-    assert(headers == List(
-      "cord_uid",
-      "sha",
-      "source_x",
-      "title",
-      "doi",
-      "pmcid",
-      "pubmed_id",
-      "license",
-      "abstract",
-      "publish_time",
-      "authors",
-      "journal",
-      "mag_id",
-      "who_covidence_id",
-      "arxiv_id",
-      "pdf_json_files",
-      "pmc_json_files",
-      "url",
-      "s2_id"
-    ))
+    assert(
+      headers == List(
+        "cord_uid",
+        "sha",
+        "source_x",
+        "title",
+        "doi",
+        "pmcid",
+        "pubmed_id",
+        "license",
+        "abstract",
+        "publish_time",
+        "authors",
+        "journal",
+        "mag_id",
+        "who_covidence_id",
+        "arxiv_id",
+        "pdf_json_files",
+        "pmc_json_files",
+        "url",
+        "s2_id"
+      )
+    )
 
     // Which metadata entries do we actually need to process?
     val startIndex = conf.fromRow.toOption.get
-    val endIndex = conf.untilRow.toOption.get
+    val endIndex   = conf.untilRow.toOption.get
 
     // Do we already have an output file? If so, we abort.
-    val inProgressFilename = conf.outputPrefix() + s"_from_${startIndex}_until_$endIndex.in-progress.txt"
+    val inProgressFilename = conf
+      .outputPrefix() + s"_from_${startIndex}_until_$endIndex.in-progress.txt"
     val inProgressFile = new File(inProgressFilename)
     if (inProgressFile.exists()) {
       if (inProgressFile.delete())
-        logger.info(s"In-progress output file '${inProgressFilename}' already exists and has been deleted.")
+        logger.info(
+          s"In-progress output file '${inProgressFilename}' already exists and has been deleted."
+        )
       else {
-        logger.info(s"In-progress output file '${inProgressFilename}' already exists but could not be deleted.")
+        logger.info(
+          s"In-progress output file '${inProgressFilename}' already exists but could not be deleted."
+        )
         System.exit(2)
       }
     }
@@ -133,8 +146,10 @@ object RoboCORD extends IOApp with LazyLogging {
 
     // Divide allMetadata into chunks based on totalChunks.
     val metadata: Seq[Map[String, String]] = allMetadata.slice(startIndex, endIndex)
-    val articlesTotal = metadata.size
-    logger.info(s"Selected $articlesTotal articles for processing (from $startIndex until $endIndex)")
+    val articlesTotal                      = metadata.size
+    logger.info(
+      s"Selected $articlesTotal articles for processing (from $startIndex until $endIndex)"
+    )
 
     // Use the FS2 Streams API to process the rows we need to.
     val metadataStream = Stream.emits(metadata.zipWithIndex)
@@ -145,24 +160,27 @@ object RoboCORD extends IOApp with LazyLogging {
         case (entry, index) =>
           // Find the ID of this article.
           // We have some duplicate CORD_UIDs (yes, really!). So we add the metadata row index to make it fully unique.
-          val id = s"${entry("cord_uid")}:${startIndex + index}"
+          val id   = s"${entry("cord_uid")}:${startIndex + index}"
           val pmid = entry.get("pubmed_id")
-          val doi = entry.get("doi")
+          val doi  = entry.get("doi")
 
           // It looks like there are no articles with multiple duplicate PMCIDs, but let's be paranoid
           // and use only the last one.
           val pmcids = entry.getOrElse("pmcid", "").split(';').map(_.trim).filter(_.nonEmpty)
           val pmcid = if (pmcids.length > 1) {
             val pmcidLast = pmcids.last
-            logger.info(s"Found multiple PMCIDs for $id, choosing the last one ($pmcidLast) out of: $pmcids")
+            logger.info(
+              s"Found multiple PMCIDs for $id, choosing the last one ($pmcidLast) out of: $pmcids"
+            )
             pmcidLast
           } else pmcids.headOption.getOrElse("")
 
           // Choose an "article ID", which is one of: (1) PubMed ID, (2) DOI, (3) PMCID or (4) CORD_UID.
-          val articleId = if (pmid.nonEmpty && pmid.get.nonEmpty) pmid.map("PMID:" + _).mkString("|")
-          else if (doi.nonEmpty && doi.get.nonEmpty) doi.map("DOI:" + _).mkString("|")
-          else if (pmcid.nonEmpty) s"PMCID:${pmcid}"
-          else s"CORD_UID:$id"
+          val articleId =
+            if (pmid.nonEmpty && pmid.get.nonEmpty) pmid.map("PMID:" + _).mkString("|")
+            else if (doi.nonEmpty && doi.get.nonEmpty) doi.map("DOI:" + _).mkString("|")
+            else if (pmcid.nonEmpty) s"PMCID:${pmcid}"
+            else s"CORD_UID:$id"
 
           // Full-text articles are stored by path. We might have multiple PMC or PDF parses; we prioritize PMC over PDF.
           val pmcJSONFiles = entry("pmc_json_files").split(';').map(_.trim).filter(_.nonEmpty)
@@ -171,29 +189,34 @@ object RoboCORD extends IOApp with LazyLogging {
             if (pmcJSONFiles.length == 1) pmcJSONFiles.head
             else {
               val pmcLast = pmcJSONFiles.last
-              logger.info(s"Found multiple PMC JSON files, choosing the last one ($pmcLast) out of $pmcJSONFiles")
+              logger.info(
+                s"Found multiple PMC JSON files, choosing the last one ($pmcLast) out of $pmcJSONFiles"
+              )
               pmcLast
             }
           } else if (pdfJSONFiles.nonEmpty) {
             if (pdfJSONFiles.length == 1) pdfJSONFiles.head
             else {
               val pdfLast = pdfJSONFiles.last
-              logger.info(s"Found multiple PDF JSON files, choosing the last one ($pdfLast) out of $pdfJSONFiles")
+              logger.info(
+                s"Found multiple PDF JSON files, choosing the last one ($pdfLast) out of $pdfJSONFiles"
+              )
               pdfLast
             }
           } else ""
 
           val (fullText, withFullText) = if (fullTextFilename.nonEmpty) {
-            val jsonReader = CORDJsonReader.wrapFile(new File(new File("robocord-data"), fullTextFilename), logger)
-            (jsonReader.map(_.fullText).mkString("\n===\n"), s"with full text from $fullTextFilename")
+            val jsonReader =
+              CORDJsonReader.wrapFile(new File(new File("robocord-data"), fullTextFilename), logger)
+            (
+              jsonReader.map(_.fullText).mkString("\n===\n"),
+              s"with full text from $fullTextFilename"
+            )
           } else {
             // We don't have full text, so just annotate the title and abstract.
             val title: String = entry.getOrElse("title", "")
-            val abstractText = entry.getOrElse("abstract", "")
-            (
-              s"$title\n$abstractText",
-              "without full text"
-            )
+            val abstractText  = entry.getOrElse("abstract", "")
+            (s"$title\n$abstractText", "without full text")
           }
 
           // We return a tuple: the preamble followed by the full text to annotate.
