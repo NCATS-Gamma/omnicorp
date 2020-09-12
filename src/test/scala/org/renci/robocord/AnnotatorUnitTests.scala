@@ -12,16 +12,17 @@ object AnnotatorUnitTests extends TestSuite {
     test("Annotator") {
       test("#removeStopCharacters") {
         val examples = Map(
-          "H1N1 virus infection\\:" -> "H1N1 virus infection",
-          "nephrotic syndrome." -> "nephrotic syndrome",
-          "\\(Figure" -> "Figure",
-          "\\(C\\)," -> "C",
+          "H1N1 virus infection\\:"    -> "H1N1 virus infection",
+          "nephrotic syndrome."        -> "nephrotic syndrome",
+          "\\(Figure"                  -> "Figure",
+          "\\(C\\),"                   -> "C",
           "pig\\-tailed macaques \\(a" -> "pig-tailed macaques"
         )
 
-        examples.foreach({ case (example, expected) =>
-          val obtained = Annotator.removeStopCharacters(example)
-          assert(expected == obtained)
+        examples.foreach({
+          case (example, expected) =>
+            val obtained = Annotator.removeStopCharacters(example)
+            assert(expected == obtained)
         })
       }
     }

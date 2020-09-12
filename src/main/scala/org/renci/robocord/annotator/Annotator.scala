@@ -38,8 +38,8 @@ class Annotator(neo4jLocation: File) extends LazyLogging {
   def extractAnnotations(str: String): (String, List[EntityAnnotation]) = {
     val parsedString = QueryParserBase.escape(str)
     val configBuilder = new EntityFormatConfiguration.Builder(new StringReader(""))
-        .longestOnly(true)
-        .minLength(3)
+      .longestOnly(true)
+      .minLength(3)
     (parsedString, processor.getAnnotations(parsedString, configBuilder.get).asScala.toList)
   }
 }
@@ -48,17 +48,17 @@ object Annotator {
   /** Remove stop characters from matched string. */
   def removeStopCharacters(matchedString: String): String = {
     matchedString
-      // TODO: we currently see "pig\-tailed macaques \(a" -> "pig-tailed macaques \(".
-      // Maybe unescape all "\x" to "x"?
-      .split("\\b+")                                   // Split at word boundaries.
-      .map(_.trim)                                            // Trim all strings.
-      .filter(!_.isEmpty)                                     // Remove all empty strings.
-      .filter(str => !StopAnalyzer.ENGLISH_STOP_WORDS_SET.contains(str.toLowerCase))    // Filter out stop words.
-      .mkString(" ")                                          // Recombine into a single string.
-      .replaceAll("^\\W+", "")              // Remove leading non-word characters.
-      .replaceAll("\\W+$", "")              // Remove trailing non-word characters.
-      .replaceAll("\\\\-", "-")             // Unescape dashes.
-      .replaceAll("\\s+-\\s+", "-")         // Remove spaces around dashes.
-      .trim                                                   // Make sure we don't have any leading/trailing spaces left over.
+    // TODO: we currently see "pig\-tailed macaques \(a" -> "pig-tailed macaques \(".
+    // Maybe unescape all "\x" to "x"?
+      .split("\\b+")                                                                 // Split at word boundaries.
+      .map(_.trim)                                                                   // Trim all strings.
+      .filter(!_.isEmpty)                                                            // Remove all empty strings.
+      .filter(str => !StopAnalyzer.ENGLISH_STOP_WORDS_SET.contains(str.toLowerCase)) // Filter out stop words.
+      .mkString(" ")                                                                 // Recombine into a single string.
+      .replaceAll("^\\W+", "")                                                       // Remove leading non-word characters.
+      .replaceAll("\\W+$", "")                                                       // Remove trailing non-word characters.
+      .replaceAll("\\\\-", "-")                                                      // Unescape dashes.
+      .replaceAll("\\s+-\\s+", "-")                                                  // Remove spaces around dashes.
+      .trim                                                                          // Make sure we don't have any leading/trailing spaces left over.
   }
 }
