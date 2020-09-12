@@ -33,8 +33,8 @@ testFrameworks += new TestFramework("utest.runner.Framework")
 
 // Dependency information.
 
-// I'm currently running into an issue when updating existing libraries in
-// running srun stalls for a long period of time. This should fix it temporarily.
+// Our cluster doesn't allow worker nodes to access the internet;
+// we therefore go into offline mode when running the code using `sbt`.
 offline in run := true
 
 resolvers += Resolver.mavenLocal
