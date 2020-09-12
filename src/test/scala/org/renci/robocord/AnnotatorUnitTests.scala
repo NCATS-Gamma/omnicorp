@@ -16,7 +16,12 @@ object AnnotatorUnitTests extends TestSuite {
           "nephrotic syndrome."        -> "nephrotic syndrome",
           "\\(Figure"                  -> "Figure",
           "\\(C\\),"                   -> "C",
-          "pig\\-tailed macaques \\(a" -> "pig-tailed macaques"
+          "pig\\-tailed macaques \\(a" -> "pig-tailed macaques",
+          ". And ACE2"                 -> "ACE2",
+          "ACE2. (A)"         -> "ACE2",
+          "HERC5 (the"-> "HERC5",
+          "Herc5 (the"-> "Herc5",
+          "(such as HERC5" -> "HERC5"
         )
 
         examples.foreach({
