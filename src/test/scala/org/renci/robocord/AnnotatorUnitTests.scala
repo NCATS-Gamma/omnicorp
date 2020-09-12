@@ -18,10 +18,11 @@ object AnnotatorUnitTests extends TestSuite {
           "\\(C\\),"                   -> "C",
           "pig\\-tailed macaques \\(a" -> "pig-tailed macaques",
           ". And ACE2"                 -> "ACE2",
-          "ACE2. (A)"         -> "ACE2",
-          "HERC5 (the"-> "HERC5",
-          "Herc5 (the"-> "Herc5",
-          "(such as HERC5" -> "HERC5"
+          "ACE2. (A)"                  -> "ACE2",
+          "HERC5 (the"                 -> "HERC5",
+          "Herc5 (the"                 -> "Herc5",
+          "(such as HERC5"             -> "HERC5",
+          "field's"                    -> "field's"
         )
 
         examples.foreach({
