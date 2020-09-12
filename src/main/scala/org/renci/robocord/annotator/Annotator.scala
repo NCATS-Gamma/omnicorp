@@ -48,17 +48,19 @@ object Annotator {
   /** Remove stop characters from matched string. */
   def removeStopCharacters(matchedString: String): String = {
     matchedString
-      .split("\\b+")                                                         // Split at word boundaries.
+      .split("\\b+")                                                                 // Split at word boundaries.
       .map(_.trim)                                                                   // Trim all strings.
       .filter(!_.isEmpty)                                                            // Remove all empty strings.
       .filter(str => !StopAnalyzer.ENGLISH_STOP_WORDS_SET.contains(str.toLowerCase)) // Filter out stop words.
-      .map(word => word
-        .replaceAll("\\\\(.)", "$1")                               // Unescape everything.
+      .map(
+        word =>
+          word
+            .replaceAll("\\\\(.)", "$1") // Unescape everything.
       )
-      .mkString(" ")                                                                 // Recombine into a single string.
-      .replaceAll("^\\W+", "")                                     // Remove leading non-word characters.
-      .replaceAll("\\W+$", "")                                     // Remove trailing non-word characters.
-      .replaceAll("\\s+(\\p{Punct})\\s+", "$1")                    // Remove spaces around punctuation.
-      .trim                                                                          // Make sure we don't have any leading/trailing spaces left over.
+      .mkString(" ")                            // Recombine into a single string.
+      .replaceAll("^\\W+", "")                  // Remove leading non-word characters.
+      .replaceAll("\\W+$", "")                  // Remove trailing non-word characters.
+      .replaceAll("\\s+(\\p{Punct})\\s+", "$1") // Remove spaces around punctuation.
+      .trim                                     // Make sure we don't have any leading/trailing spaces left over.
   }
 }
