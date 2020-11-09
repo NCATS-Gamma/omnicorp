@@ -8,8 +8,10 @@ jdk:
 # Cache Maven and SBT packages so we don't need to keep reinstalling them.
 cache:
   directories:
-  - $HOME/.m2
+  - $HOME/.cache/coursier
+  - $HOME/.ivy2/cache
   - $HOME/.sbt
+  - $HOME/.m2
 
 # We need to install SciGraph to run Omnicorp for testing.
 before_script:

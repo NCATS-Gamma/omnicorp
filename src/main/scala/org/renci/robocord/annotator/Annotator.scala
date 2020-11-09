@@ -12,6 +12,7 @@ import io.scigraph.annotation.{
 }
 import io.scigraph.neo4j.NodeTransformer
 import io.scigraph.vocabulary.{Vocabulary, VocabularyNeo4jImpl}
+import org.apache.lucene.analysis.core.StopAnalyzer
 import org.apache.lucene.queryparser.classic.QueryParserBase
 import org.neo4j.graphdb.GraphDatabaseService
 import org.neo4j.graphdb.factory.GraphDatabaseFactory
@@ -36,9 +37,30 @@ class Annotator(neo4jLocation: File) extends LazyLogging {
   /** Extract annotations from a particular string using SciGraph. */
   def extractAnnotations(str: String): (String, List[EntityAnnotation]) = {
     val parsedString = QueryParserBase.escape(str)
-    val configBuilder = new EntityFormatConfiguration.Builder(new StringReader(parsedString))
+    val configBuilder = new EntityFormatConfiguration.Builder(new StringReader(""))
       .longestOnly(true)
       .minLength(3)
-    (parsedString, processor.annotateEntities(configBuilder.get).asScala.toList)
+    (parsedString, processor.getAnnotations(parsedString, configBuilder.get).asScala.toList)
+  }
+}
+
+object Annotator {
+  /** Remove stop characters from matched string. */
+  def removeStopCharacters(matchedString: String): String = {
+    matchedString
+      .split("\\b+")                                                                 // Split at word boundaries.
+      .map(_.trim)                                                                   // Trim all strings.
+      .filter(!_.isEmpty)                                                            // Remove all empty strings.
+      .filter(str => !StopAnalyzer.ENGLISH_STOP_WORDS_SET.contains(str.toLowerCase)) // Filter out stop words.
+      .map(
+        word =>
+          word
+            .replaceAll("\\\\(.)", "$1") // Unescape everything.
+      )
+      .mkString(" ")                            // Recombine into a single string.
+      .replaceAll("^\\W+", "")                  // Remove leading non-word characters.
+      .replaceAll("\\W+$", "")                  // Remove trailing non-word characters.
+      .replaceAll("\\s+(\\p{Punct})\\s+", "$1") // Remove spaces around punctuation.
+      .trim                                     // Make sure we don't have any leading/trailing spaces left over.
   }
 }

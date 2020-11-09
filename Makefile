@@ -22,9 +22,9 @@ pubmed-annual-baseline/done:
 	touch pubmed-annual-baseline/done
 
 SciGraph:
-	git clone https://github.com/balhoff/SciGraph.git &&\
+	git clone https://github.com/gaurav/SciGraph.git &&\
 	cd SciGraph &&\
-	git checkout public-constructors &&\
+	git checkout public-constructors-and-methods &&\
 	mvn -B -DskipTests -DskipITs install
 
 robot.jar:
@@ -90,6 +90,7 @@ robocord-test: SciGraph
 		ln -s robocord-outputs/${ROBOCORD_DATE} robocord-output; \
 	fi
 
+	sbt test
 	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --from-row 512 --until-row 440 robocord-data"
 	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --from-row 640 --until-row 668  robocord-data"
 	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --from-row 768 --until-row 796  robocord-data"

@@ -33,6 +33,10 @@ testFrameworks += new TestFramework("utest.runner.Framework")
 
 // Dependency information.
 
+// Our cluster doesn't allow worker nodes to access the internet;
+// we therefore go into offline mode when running the code using `sbt`.
+offline in run := true
+
 resolvers += Resolver.mavenLocal
 
 libraryDependencies ++= {
@@ -41,8 +45,8 @@ libraryDependencies ++= {
     "org.backuity.clist"          %% "clist-macros"           % "3.2.2" % "provided",
     "com.typesafe.akka"           %% "akka-stream"            % "2.5.9",
     "org.scala-lang.modules"      %% "scala-xml"              % "1.0.6",
-    "io.scigraph"                 %  "scigraph-core"          % "2.1-SNAPSHOT",
-    "io.scigraph"                 %  "scigraph-entity"        % "2.1-SNAPSHOT",
+    "io.scigraph"                 %  "scigraph-core"          % "2.2-SNAPSHOT",
+    "io.scigraph"                 %  "scigraph-entity"        % "2.2-SNAPSHOT",
     "org.codehaus.groovy"         %  "groovy-all"             % "2.4.6",
     "org.apache.jena"             %  "apache-jena-libs"       % "3.13.1",
 

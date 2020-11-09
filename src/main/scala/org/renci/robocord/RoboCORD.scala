@@ -59,11 +59,11 @@ object RoboCORD extends IOApp with LazyLogging {
   }
 
   /**
-   * Main method for a FS2 IO App.
-   *
-   * @param args Command line arguments.
-   * @return Exit code.
-   */
+    * Main method for a FS2 IO App.
+    *
+    * @param args Command line arguments.
+    * @return Exit code.
+    */
   def run(args: List[String]): IO[ExitCode] = {
     // Parse command line arguments.
     val conf = new Conf(args, logger)
@@ -90,12 +90,12 @@ object RoboCORD extends IOApp with LazyLogging {
   }
 
   /**
-   * Generate a FS2 Stream for processing the rows in the metadata file as described
-   * in the command line arguments.
-   *
-   * @param conf Parsed command line options
-   * @return An FS2 Stream for processing the rows in the metadata file. Use `.drain` to actually execute the stream.
-   */
+    * Generate a FS2 Stream for processing the rows in the metadata file as described
+    * in the command line arguments.
+    *
+    * @param conf Parsed command line options
+    * @return An FS2 Stream for processing the rows in the metadata file. Use `.drain` to actually execute the stream.
+    */
   def processEntries(conf: RoboCORD.Conf): Stream[IO, Unit] = {
     // Set up Annotator.
     val annotator: Annotator = new Annotator(conf.neo4jLocation())
@@ -263,7 +263,9 @@ object RoboCORD extends IOApp with LazyLogging {
               .slice(annotation.getEnd, annotation.getEnd + conf.context())
               .replaceAll("\\s+", " ")
 
-            s"""$metadataString\t"$preText"\t"$matchedString"\t"$postText"\t${annotation.getToken.getId}\t${annotation.toString}"""
+            val cleanedString = Annotator.removeStopCharacters(matchedString)
+
+            s"""$metadataString\t"$preText"\t"$matchedString"\t"$cleanedString\"\t"$postText"\t${annotation.getToken.getId}\t${annotation.toString}"""
           }))
       })
 
