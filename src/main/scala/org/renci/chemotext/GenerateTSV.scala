@@ -10,32 +10,36 @@ import org.apache.jena.riot.RDFDataMgr
 import org.apache.jena.vocabulary.{DCTerms, RDF}
 
 /**
- * GenerateTSV generates tab-delimited files summarizing the results of the
- * Omnicorp processing.
- */
+  * GenerateTSV generates tab-delimited files summarizing the results of the
+  * Omnicorp processing.
+  */
 object GenerateTSV extends App with LazyLogging {
   // List of files to process and output directory.
   // TODO replace with command line argument.
   val files: Seq[File] = Seq(new File("output"))
-  val outputDir: File = new File("tsv-output")
+  val outputDir: File  = new File("tsv-output")
 
   /**
-   * Extract PubMed articles and results from the input file.
-   */
+    * Extract PubMed articles and results from the input file.
+    */
   def writeTSVToDir(inputFile: File, outputDir: File): Unit = {
     if (inputFile.isDirectory) {
       logger.info(s"Recursing into directory $inputFile")
-      inputFile.listFiles.filter(file =>
-        file.getName.toLowerCase.endsWith(".gz.ttl") ||
-        file.getName.toLowerCase.endsWith(".gz.completed.ttl")
-      ).par.foreach(writeTSVToDir(_, outputDir))
+      inputFile.listFiles
+        .filter(
+          file =>
+            file.getName.toLowerCase.endsWith(".gz.ttl") ||
+              file.getName.toLowerCase.endsWith(".gz.completed.ttl")
+        )
+        .par
+        .foreach(writeTSVToDir(_, outputDir))
     } else {
       logger.info(s"Processing file $inputFile")
 
       val startTime = System.nanoTime
 
       val dataModel = RDFDataMgr.loadModel(inputFile.toURI.toString)
-      val infModel = ModelFactory.createRDFSModel(dataModel)
+      val infModel  = ModelFactory.createRDFSModel(dataModel)
       val articles = infModel.listResourcesWithProperty(
         RDF.`type`,
         infModel.createResource("http://purl.org/spar/fabio/Article")
@@ -48,7 +52,7 @@ object GenerateTSV extends App with LazyLogging {
       } else {
         // Start creating an in-progress file.
         val outputFilename = new File(outputDir, inputFile.getName + ".in-progress.tsv")
-        val outputStream = new PrintWriter(new BufferedWriter(new FileWriter(outputFilename)))
+        val outputStream   = new PrintWriter(new BufferedWriter(new FileWriter(outputFilename)))
 
         var articleCount = 0
         articles.forEachRemaining(article => {
@@ -63,7 +67,9 @@ object GenerateTSV extends App with LazyLogging {
         val duration = Duration.ofNanos(System.nanoTime - startTime)
 
         val articlesPerSecond = (articleCount.toFloat / duration.getSeconds)
-        logger.info(f"Took ${duration.getSeconds} seconds ($duration) to process $articleCount articles ($articlesPerSecond%.2f articles/sec) from $inputFile to $outputFilename")
+        logger.info(
+          f"Took ${duration.getSeconds} seconds ($duration) to process $articleCount articles ($articlesPerSecond%.2f articles/sec) from $inputFile to $outputFilename"
+        )
 
         // Rename file to completed.
         Files.move(

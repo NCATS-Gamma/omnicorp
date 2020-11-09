@@ -4,7 +4,12 @@ import java.io.{File, StringReader}
 import java.util.HashMap
 
 import com.typesafe.scalalogging.LazyLogging
-import io.scigraph.annotation.{EntityAnnotation, EntityFormatConfiguration, EntityProcessorImpl, EntityRecognizer}
+import io.scigraph.annotation.{
+  EntityAnnotation,
+  EntityFormatConfiguration,
+  EntityProcessorImpl,
+  EntityRecognizer
+}
 import io.scigraph.neo4j.NodeTransformer
 import io.scigraph.vocabulary.{Vocabulary, VocabularyNeo4jImpl}
 import org.apache.lucene.queryparser.classic.QueryParserBase
@@ -18,8 +23,10 @@ import scala.collection.JavaConverters._
 class Annotator(neo4jLocation: File) extends LazyLogging {
   private val curieUtil: CurieUtil         = new CurieUtil(new HashMap())
   private val transformer: NodeTransformer = new NodeTransformer()
-  private val graphDB: GraphDatabaseService = new GraphDatabaseFactory().newEmbeddedDatabase(neo4jLocation)
-  private val vocabulary: Vocabulary = new VocabularyNeo4jImpl(graphDB, neo4jLocation.getAbsolutePath, curieUtil, transformer)
+  private val graphDB: GraphDatabaseService =
+    new GraphDatabaseFactory().newEmbeddedDatabase(neo4jLocation)
+  private val vocabulary: Vocabulary =
+    new VocabularyNeo4jImpl(graphDB, neo4jLocation.getAbsolutePath, curieUtil, transformer)
   private val recognizer = new EntityRecognizer(vocabulary, curieUtil)
 
   val processor = new EntityProcessorImpl(recognizer)
@@ -30,8 +37,8 @@ class Annotator(neo4jLocation: File) extends LazyLogging {
   def extractAnnotations(str: String): (String, List[EntityAnnotation]) = {
     val parsedString = QueryParserBase.escape(str)
     val configBuilder = new EntityFormatConfiguration.Builder(new StringReader(parsedString))
-        .longestOnly(true)
-        .minLength(3)
+      .longestOnly(true)
+      .minLength(3)
     (parsedString, processor.annotateEntities(configBuilder.get).asScala.toList)
   }
 }
