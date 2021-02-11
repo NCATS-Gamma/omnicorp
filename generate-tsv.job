@@ -4,13 +4,13 @@
 #SBATCH --output=tsv-output/log-output-%A.txt
 #SBATCH --error=tsv-output/log-error-%A.txt
 #SBATCH --cpus-per-task 32
-#SBATCH --mem=50000
+#SBATCH --mem=1000000
 #SBATCH --time=12:00:00
 #SBATCH --mail-user=gaurav@renci.org
 
 set -e # Exit immediately if a pipeline fails.
 
-export JAVA_OPTS="-Xmx50G"
+export JAVA_OPTS="-Xmx1000G"
 
 echo "Starting GenerateTSV, writing outputs to tsv-output/"
 sbt "runMain org.renci.chemotext.GenerateTSV"
