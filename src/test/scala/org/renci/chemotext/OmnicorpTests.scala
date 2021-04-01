@@ -34,7 +34,7 @@ object OmnicorpTests extends TestSuite {
 
   val tests: Tests = Tests {
     test("Make sure we can run Omnicorp and see runtime information") {
-      val (status, stdout, stderr) = exec(Seq("sbt", "run"))
+      val (status, stdout, _) = exec(Seq("sbt", "run"))
       assert(status == 1)
       assert(stdout contains "Omnicorp requires four arguments:")
       assert(stdout contains "Nonzero exit code returned from runner: 2")
@@ -45,7 +45,7 @@ object OmnicorpTests extends TestSuite {
       val tmpFolder        = Files.createTempDirectory("omnicorp-testing").toFile
 
       test("Make sure we can execute Omnicorp on the example file") {
-        val (status, stdout, stderr) =
+        val (status, stdout, _) =
           exec(Seq("sbt", s"""run none "$examplesForTests" "$tmpFolder" 1"""))
 
         // Clean up temporary folder.
@@ -68,7 +68,7 @@ object OmnicorpTests extends TestSuite {
       val tmpFolder       = Files.createTempDirectory("omnicorp-testing").toFile
 
       test("Make sure we get a warning message on executing Omnicorp on this example file") {
-        val (status, stdout, stderr) =
+        val (status, stdout, _) =
           exec(Seq("sbt", s"""run none "$failedExamples1" "$tmpFolder" 1"""))
 
         // Clean up temporary folder.
@@ -95,7 +95,7 @@ object OmnicorpTests extends TestSuite {
       val tmpFolder       = Files.createTempDirectory("omnicorp-testing").toFile
 
       test("Make sure we have all four versions") {
-        val (status, stdout, stderr) =
+        val (status, stdout, _) =
           exec(Seq("sbt", s"""run none "$failedExamples1" "$tmpFolder" 1"""))
 
         // Test output and errors.
@@ -103,10 +103,10 @@ object OmnicorpTests extends TestSuite {
         assert(stdout contains "Total time:")
         assert(stdout contains "completed")
 
-        assert(stderr contains "Begin processing")
-        assert(stderr contains "INFO org.renci.chemotext.Main$")
+        assert(stdout contains "Begin processing")
+        assert(stdout contains "INFO org.renci.chemotext.Main$")
         assert(
-          stderr matches """.*Took \d+ seconds \([\w\.]+\) to create approx \d+ triples from \d+ articles.*"""
+          stdout matches """.*Took \d+ seconds \([\w\.]+\) to create approx \d+ triples from \d+ articles.*"""
         )
 
         // Load temporary file and make sure we have all four versions.
