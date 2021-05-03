@@ -71,7 +71,7 @@ object GenerateTSV extends App with LazyLogging {
       )
 
       // Check to see if we've already completed processing this file.
-      val completedFilename = new File(outputDir, inputFile.getName + ".tsv")
+      val completedFilename = new File(outputDir, inputFile.getName + ".completed.tsv")
       if (completedFilename.exists) {
         logger.info(s"Skipping, since $completedFilename already exists.")
       } else {
