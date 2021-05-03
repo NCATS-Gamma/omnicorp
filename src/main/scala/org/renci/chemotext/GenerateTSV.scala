@@ -14,13 +14,38 @@ import org.apache.jena.vocabulary.{DCTerms, RDF}
   * Omnicorp processing.
   */
 object GenerateTSV extends App with LazyLogging {
-  // List of files to process and output directory.
-  // TODO replace with command line argument.
-  val files: Seq[File] = Seq(new File("output"))
-  val outputDir: File  = new File("tsv-output")
+  /**
+    * Command line configuration for GenerateTSV.
+    */
+  class Conf(arguments: Seq[String], logger: Logger) extends ScallopConf(arguments) {
+    override def onError(e: Throwable): Unit = e match {
+      case ScallopException(message) =>
+        printHelp
+        logger.error(message)
+        System.exit(1)
+      case ex => super.onError(ex)
+    }
+
+    val version: String = getClass.getPackage.getImplementationVersion
+    version("GenerateTSV: part of Omnicorp v" + version)
+
+    val files: ScallopOption[List[File]] =
+      trailArg[List[File]](descr = "Data file(s) or directories to convert from RDF to TSV")
+    val outputDir: ScallopOption[File] = opt[File](
+      descr = "Directory for output files",
+      default = Some(new File("tsv-output"))
+    )
+
+    verify()
+  }
+
+  val conf = new Conf(args, logger)
+
+  val files: Seq[File] = conf.files()
+  val outputDir: File  = conf.outputDir()
 
   /**
-    * Extract PubMed articles and results from the input file.
+    * Extract PubMed articles and results from the input file or directory.
     */
   def writeTSVToDir(inputFile: File, outputDir: File): Unit = {
     if (inputFile.isDirectory) {
@@ -82,6 +107,6 @@ object GenerateTSV extends App with LazyLogging {
     }
   }
 
-  // Process files.
+  // Process all input files or directories.
   files.foreach(writeTSVToDir(_, outputDir))
 }
