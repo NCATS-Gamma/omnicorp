@@ -4,10 +4,12 @@ import java.io.{BufferedWriter, File, FileWriter, PrintWriter}
 import java.nio.file.{Files, Paths, StandardCopyOption}
 import java.time.Duration
 
-import com.typesafe.scalalogging.LazyLogging
+import com.typesafe.scalalogging.{LazyLogging, Logger}
 import org.apache.jena.rdf.model.ModelFactory
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.jena.vocabulary.{DCTerms, RDF}
+import org.rogach.scallop.{ScallopConf, ScallopOption}
+import org.rogach.scallop.exceptions.ScallopException
 
 /**
   * GenerateTSV generates tab-delimited files summarizing the results of the
