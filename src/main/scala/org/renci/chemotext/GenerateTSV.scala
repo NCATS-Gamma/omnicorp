@@ -33,10 +33,8 @@ object GenerateTSV extends App with LazyLogging {
 
     val files: ScallopOption[List[File]] =
       trailArg[List[File]](descr = "Data file(s) or directories to convert from RDF to TSV")
-    val outputDir: ScallopOption[File] = opt[File](
-      descr = "Directory for output files",
-      default = Some(new File("tsv-output"))
-    )
+    val outputDir: ScallopOption[File] =
+      opt[File](descr = "Directory for output files", default = Some(new File("tsv-output")))
 
     verify()
   }
