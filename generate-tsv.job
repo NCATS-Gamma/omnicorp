@@ -1,17 +1,21 @@
 #!/bin/bash
 #
 #SBATCH --job-name=OmnicorpTSV
-#SBATCH --output=tsv-output/log-output-%A.txt
-#SBATCH --error=tsv-output/log-error-%A.txt
-#SBATCH --cpus-per-task 32
+#SBATCH --output=tsv-output/omnicorp-tsv-output-%a.txt
+#SBATCH --error=tsv-output/omnicorp-tsv-error-%a.txt
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=8
 #SBATCH --mem=50000
-#SBATCH --time=12:00:00
+#SBATCH --time=06:00:00
 #SBATCH --mail-user=gaurav@renci.org
 
 set -e # Exit immediately if a pipeline fails.
 
-export JAVA_OPTS="-Xmx50G"
+FILENUM=`printf "%04d" $SLURM_ARRAY_TASK_ID`
+FILENAME="output/pubmed21n$FILENUM.xml.gz.completed.ttl"
 
-echo "Starting GenerateTSV, writing outputs to tsv-output/"
-sbt "runMain org.renci.chemotext.GenerateTSV"
-echo "Processing complete."
+export JAVA_OPTS="-Xmx50G"
+if [ ! -f "${FILENAME}.completed.tsv" ]; then
+  sbt "runMain org.renci.chemotext.GenerateTSV ${FILENAME}"
+fi

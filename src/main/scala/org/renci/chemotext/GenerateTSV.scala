@@ -4,23 +4,48 @@ import java.io.{BufferedWriter, File, FileWriter, PrintWriter}
 import java.nio.file.{Files, Paths, StandardCopyOption}
 import java.time.Duration
 
-import com.typesafe.scalalogging.LazyLogging
+import com.typesafe.scalalogging.{LazyLogging, Logger}
 import org.apache.jena.rdf.model.ModelFactory
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.jena.vocabulary.{DCTerms, RDF}
+import org.rogach.scallop.{ScallopConf, ScallopOption}
+import org.rogach.scallop.exceptions.ScallopException
 
 /**
   * GenerateTSV generates tab-delimited files summarizing the results of the
   * Omnicorp processing.
   */
 object GenerateTSV extends App with LazyLogging {
-  // List of files to process and output directory.
-  // TODO replace with command line argument.
-  val files: Seq[File] = Seq(new File("output"))
-  val outputDir: File  = new File("tsv-output")
+  /**
+    * Command line configuration for GenerateTSV.
+    */
+  class Conf(arguments: Seq[String], logger: Logger) extends ScallopConf(arguments) {
+    override def onError(e: Throwable): Unit = e match {
+      case ScallopException(message) =>
+        printHelp
+        logger.error(message)
+        System.exit(1)
+      case ex => super.onError(ex)
+    }
+
+    val version: String = getClass.getPackage.getImplementationVersion
+    version("GenerateTSV: part of Omnicorp v" + version)
+
+    val files: ScallopOption[List[File]] =
+      trailArg[List[File]](descr = "Data file(s) or directories to convert from RDF to TSV")
+    val outputDir: ScallopOption[File] =
+      opt[File](descr = "Directory for output files", default = Some(new File("tsv-output")))
+
+    verify()
+  }
+
+  val conf = new Conf(args, logger)
+
+  val files: Seq[File] = conf.files()
+  val outputDir: File  = conf.outputDir()
 
   /**
-    * Extract PubMed articles and results from the input file.
+    * Extract PubMed articles and results from the input file or directory.
     */
   def writeTSVToDir(inputFile: File, outputDir: File): Unit = {
     if (inputFile.isDirectory) {
@@ -46,7 +71,7 @@ object GenerateTSV extends App with LazyLogging {
       )
 
       // Check to see if we've already completed processing this file.
-      val completedFilename = new File(outputDir, inputFile.getName + ".tsv")
+      val completedFilename = new File(outputDir, inputFile.getName + ".completed.tsv")
       if (completedFilename.exists) {
         logger.info(s"Skipping, since $completedFilename already exists.")
       } else {
@@ -82,6 +107,6 @@ object GenerateTSV extends App with LazyLogging {
     }
   }
 
-  // Process files.
+  // Process all input files or directories.
   files.foreach(writeTSVToDir(_, outputDir))
 }
