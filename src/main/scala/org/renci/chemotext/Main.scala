@@ -343,6 +343,11 @@ object Main extends App with LazyLogging {
   val outDir: String           = args(2)
   val parallelism: Int         = args(3).toInt
 
+  if (!dataDir.canRead) {
+    println(s"ERROR: Could not read input file ${dataDir}")
+    System.exit(2)
+  }
+
   val optAnnotator: Option[Annotator] =
     if (scigraphLocation == "none") None else Some(new Annotator(scigraphLocation))
 
