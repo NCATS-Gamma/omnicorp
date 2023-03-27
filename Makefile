@@ -2,14 +2,12 @@
 OMNICORP = ./target/universal/stage/bin/omnicorp
 
 # Maximum memory to use.
-MEMORY = 16G
+MEMORY = 200G
 
 # Number of parallel jobs to start.
 PARALLEL = 4
 
-# The date of CORD-19 data to download.
-ROBOCORD_DATE="2020-09-02"
-.PHONY: all
+#.PHONY: all
 all: output
 
 clean:
@@ -56,43 +54,3 @@ coursier:
 
 test: coursier output
 	JAVA_OPTS="-Xmx$(MEMORY)" ./coursier launch com.ggvaidya:shacli_2.12:0.1-SNAPSHOT -- validate shacl/omnicorp-shapes.ttl output/*.ttl
-
-# RoboCORD
-.PHONY: robocord-download robocord-output robocord-test
-robocord-download:
-	# robocord-data is intended to be a symlink to robocord-datas/${ROBOCORD_DATE}, so that it is updated automatically.
-	# If robocord-data doesn't exist or is a symlink, we update it
-	# automatically. Otherwise (i.e. if it's an existing directory),
-	# we only update the files already in it.
-	@if [ ! -e robocord-data ] || [ -L robocord-data ]; then \
-		rm robocord-data; \
-		mkdir -p robocord-datas/${ROBOCORD_DATE}; \
-		ln -s robocord-datas/${ROBOCORD_DATE} robocord-data; \
-	fi
-
-	# Download CORD-19 into robocord-data.
-	wget -N "https://ai2-semanticscholar-cord-19.s3-us-west-2.amazonaws.com/historical_releases/cord-19_${ROBOCORD_DATE}.tar.gz" -P robocord-data
-
-robocord-data: robocord-download
-	# Uncompress the main download file.
-	tar zxvf robocord-data/cord-19_${ROBOCORD_DATE}.tar.gz -C robocord-data --strip-components=1
-	# Uncompress the document_parses.
-	tar zxvf robocord-data/document_parses.tar.gz -C robocord-data
-	touch robocord-data
-
-robocord-output: robocord-data SciGraph
-	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv robocord-data"
-
-robocord-test: SciGraph
-	@if [ ! -e robocord-output ] || [ -L robocord-output ]; then \
-		rm robocord-output; \
-		mkdir -p robocord-outputs/${ROBOCORD_DATE}; \
-		ln -s robocord-outputs/${ROBOCORD_DATE} robocord-output; \
-	fi
-
-	sbt test
-	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --from-row 512 --until-row 440 robocord-data"
-	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --from-row 640 --until-row 668  robocord-data"
-	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --from-row 768 --until-row 796  robocord-data"
-	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --from-row 55966 --until-row 56000 robocord-data"
-	JAVA_OPTS="-Xmx$(MEMORY)" sbt "runMain org.renci.robocord.RoboCORD --metadata robocord-data/metadata.csv --from-row 15000000 --until-row 16000000 robocord-data"

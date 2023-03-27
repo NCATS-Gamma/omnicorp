@@ -8,13 +8,14 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=50000
 #SBATCH --time=06:00:00
-#SBATCH --mail-user=gaurav@renci.org
+#SBATCH --mail-user=bizon@renci.org
 
 set -e # Exit immediately if a pipeline fails.
+set -x
 
 PARALLEL=8
 FILENUM=`printf "%04d" $SLURM_ARRAY_TASK_ID`
-FILENAME="pubmed21n$FILENUM.xml.gz"
+FILENAME="pubmed23n$FILENUM.xml.gz"
 
 export JAVA_OPTS="-Xmx50G"
 if [ ! -f "output/${FILENAME}.completed.ttl" ]; then

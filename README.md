@@ -23,29 +23,13 @@ To install this version locally, run `make SciGraph`. This will download, compil
 
 You will then need to run `make omnicorp-scigraph` to generate the SciGraph instance for the ontologies specified in ontologies.ofn.
 
-# OmniCORD
+## Retrieving data and running OmniCorp
 
-Extract ontology terms used in the [COVID-19 Open Research Dataset (CORD)](https://www.semanticscholar.org/cord19) as tab-delimited files for further processing in [COVID-KOP](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7316095/).
+`make pubmed-annual-baseline/done` will retrieve the pubmed abstracts.   
 
-In order to generate OmniCORD output files, you should:
-1. Update the `ROBOCORD_DATE` variable in `Makefile`. You can look up the [latest CORD-19](https://www.semanticscholar.org/cord19/download)
-   release date on their website.
-2. Download the CORD-19 dataset by running `make robocord-download`. This will
-   automatically create a directory in the `robocord-datas` directory and download
-   the CORD-19 dataset for `$ROBOCORD_DATE` into that directory.
-3. Uncompress the dataset by running `make robocord-data`.
-4. Test the extraction program by running `make robocord-test`. This will extract data from some articles
-   in order to ensure that the program is working correctly. It will also create a directory in the
-   `robocord-outputs` directory to store the results in. It's usually a good idea to clear the `robocord-output`
-   directory after running the test and ensuring that the output files look correct.
-5. Use `robocord.job` to attempt to run all the jobs on a SLURM cluster.
-   Any number of jobs can be specified, but values of around 4000 seem
-   to work with. Example: `sbatch --array=0-3999 robocord.job`.
-6. Use RoboCORDManager to re-run any jobs that failed to complete. You can
-   use the `--dry-run` option to see what jobs will be executed before they
-   are run. Jobs are executed using the `robocord-sbatch.sh` script, so
-   modify that if necessary.
-   Example: `srun sbt "runMain org.renci.robocord.RoboCORDManager --job-size 20`
+Running the annotation does not use the makefile.  Instead, take a look at the number of ttl files downloaded into pubmed-annual-baseline, and submit annotation jobs using slurm:
+
+`sbatch --array=1-N omnicorp.job`  where N is the number of ttl files.
 
 # Ontologies used
 Currently, we look for terms from the following ontologies:
