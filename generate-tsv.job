@@ -13,7 +13,7 @@
 set -e # Exit immediately if a pipeline fails.
 
 FILENUM=`printf "%04d" $SLURM_ARRAY_TASK_ID`
-FILENAME="output/pubmed21n$FILENUM.xml.gz.completed.ttl"
+FILENAME="output/pubmed23n$FILENUM.xml.gz.completed.ttl"
 
 export JAVA_OPTS="-Xmx50G"
 if [ ! -f "${FILENAME}.completed.tsv" ]; then
