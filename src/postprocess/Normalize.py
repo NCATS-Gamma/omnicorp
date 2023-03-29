@@ -364,6 +364,8 @@ def normalize(indir,outdir,pmidcol=1,termcol=8,labelcol=9,cleanmatchcol=6):
     normy = Normalizer()
     rfiles = os.listdir(indir)
     for rf in rfiles:
+        if not rf.endswith("tsv"):
+            continue
         with open(f'{indir}/{rf}','r') as inf:
             for line in inf:
                 x = line.strip().split('\t')
