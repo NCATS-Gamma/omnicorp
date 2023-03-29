@@ -31,6 +31,14 @@ Running the annotation does not use the makefile.  Instead, take a look at the n
 
 `sbatch --array=1-N omnicorp.job`  where N is the number of ttl files.
 
+## Postprocess OmniCorp
+
+To prepare the data for loading, do the following on a machine with at least 256G of memory:
+
+`export PYTHONPATH=.`
+`mkdir omnicorp_output`
+`python src/postprocess/run_omni.py`
+
 # Ontologies used
 Currently, we look for terms from the following ontologies:
 * [Uberon (base)](http://uberon.org) ([OWL](http://purl.obolibrary.org/obo/uberon/uberon-base.owl))
