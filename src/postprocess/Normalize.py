@@ -363,30 +363,33 @@ def read_accepted():
 def normalize(indir,outdir,pmidcol=1,termcol=8,labelcol=9,cleanmatchcol=6):
     normy = Normalizer()
     rfiles = os.listdir(indir)
-    for rf in rfiles:
-        if not rf.endswith("tsv"):
-            continue
-        with open(f'{indir}/{rf}','r') as inf:
-            for line in inf:
-                x = line.strip().split('\t')
-                pmid = x[pmidcol]
-                term = x[termcol]
-                if labelcol is not None:
-                    try:
-                        label = x[labelcol].split(']')[0][1:]
-                    except:
-                        print('bonk')
-                        print(line)
-                        print(x)
-                        exit()
-                else:
-                    label=None
-                normy.add(term,label)
-    normy.normalize_all()
-    normy.write(f'{outdir}/normalized.txt')
+    if not os.path.exists(f'{outdir}/normalized.txt'):
+        for rf in rfiles:
+            if not rf.endswith("tsv"):
+                continue
+            with open(f'{indir}/{rf}','r') as inf:
+                for line in inf:
+                    x = line.strip().split('\t')
+                    pmid = x[pmidcol]
+                    term = x[termcol]
+                    if labelcol is not None:
+                        try:
+                            label = x[labelcol].split(']')[0][1:]
+                        except:
+                            print('bonk')
+                            print(line)
+                            print(x)
+                            exit()
+                    else:
+                        label=None
+                    normy.add(term,label)
+        normy.normalize_all()
+        normy.write(f'{outdir}/normalized.txt')
     papers = set()
     accepted_genes = read_accepted()
     for i,rf in enumerate(rfiles):
+        if not rf.endswith("tsv"):
+            continue
         with open(f'{indir}/{rf}','r') as inf, open(f'{outdir}/annotation_{i}.txt','w') as outf:
             outf.write('Curie\tPaper\n')
             for line in inf:
