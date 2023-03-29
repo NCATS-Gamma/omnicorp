@@ -197,7 +197,7 @@ class Normalizer():
     def normalize_all(self):
         """Call node normalization on batches of curies, and convert into their
         translator-preferred forms"""
-        batchsize=20
+        batchsize=5000
         unnormalized_curies = self.iri_to_curie.values()
         print(len(unnormalized_curies))
         print(len(unnormalized_curies)/batchsize)
