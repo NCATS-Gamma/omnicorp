@@ -342,7 +342,7 @@ def read_accepted():
     # something else.  There are a few cases where particular cased versions of the symbol should
     # be accepted, and the others rejected.
     accepted_forms = defaultdict(set)
-    with open('gene_filters.txt','r') as inf:
+    with open('src/postprocess/gene_filters.txt','r') as inf:
         h = inf.readline()
         for line in inf:
             x = line[:-1].split('\t')
