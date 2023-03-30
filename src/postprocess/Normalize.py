@@ -117,7 +117,7 @@ unused_prefixes = ['DDANAT', 'UO', 'SO', 'RO', 'EFO', 'PR', 'MF', 'OBI', 'VO',
                    'MGI', 'REO', 'OMIABIS', 'GENE', 'WBLS','DEPICTED','UPHENO','LOCUS']
 
 class Normalizer():
-    def __init__(self):
+    def __init__(self,indir,pmidcol=0,termcol=1):
         """Class for converting ontology / vocabulary terms from scigraph into Translator-compliant entities.
             Input terms are added to the normalizer using 'add'.  Once all terms are added, 'normalize_all' calls
             the Translator node-normalization service in batches (for efficiency).   Additionally, there are some
@@ -126,10 +126,29 @@ class Normalizer():
         self.url = 'https://nodenormalization-sri.renci.org/get_normalized_nodes'
         self.curie_to_iri = {}
         self.iri_to_curie = {}
-        self.iri_to_label = {}
+        #self.iri_to_label = {}
         self.curie_to_normalized = {}
-        self.curie_to_type = {}
+        #self.curie_to_type = {}
         self.curie_to_label = {}
+        self.normfile=(f"{indir}/normalization_map")
+        if os.path.exists(self.normfile):
+            self.load()
+        else:
+            self.create_map(indir,pmidcol,termcol)
+    def create_map(self,indir,pmidcol,termcol):
+        rfiles = os.listdir(indir)
+        # TODO: write out an actual iri->normcurie map.
+        for rf in rfiles:
+            if not rf.endswith("tsv"):
+                continue
+            with open(f'{indir}/{rf}', 'r') as inf:
+                for line in inf:
+                    x = line.strip().split('\t')
+                    pmid = x[pmidcol]
+                    term = x[termcol]
+                    self.add(term)
+        self.normalize_all()
+        self.write(f'{indir}/normalization_map')
     def add(self,iri,label):
         """Add a new IRI and label to the normalizer"""
         useless_iri = set()
@@ -207,20 +226,20 @@ class Normalizer():
             if len(batch) >= batchsize:
                 batchmap,typemap,labelmap = self._normalize_batch(batch)
                 self.curie_to_normalized.update(batchmap)
-                self.curie_to_type.update(typemap)
+                #self.curie_to_type.update(typemap)
                 self.curie_to_label.update(labelmap)
                 batch= []
         if len(batch) > 0:
             batchmap,typemap,labelmap = self._normalize_batch(batch)
             self.curie_to_normalized.update(batchmap)
-            self.curie_to_type.update(typemap)
+            #self.curie_to_type.update(typemap)
             self.curie_to_label.update(labelmap)
         self._remove_obsolete_terms()
         self._remove_garbage()
         #It's possible here that we have an iri that got turned into a curie,
         # and we sent it to normalization, and it didn't normalize, and we end
         # up with no type labels.  Need to fix that
-        self._fix_type_labels()
+        #self._fix_type_labels()
     def _fix_type_labels(self):
         prefix_to_types = {'MONDO':[btypes.disease, btypes.named_thing, btypes.biological_entity, btypes.disease_or_phenotypic_feature],
         'EFO': [btypes.phenotypic_feature, btypes.named_thing, btypes.biological_entity, btypes.disease_or_phenotypic_feature],
@@ -280,7 +299,6 @@ class Normalizer():
                 bad_curies.add(curie)
         for bc in bad_curies:
             del self.curie_to_normalized[bc]
-            del self.curie_to_type[bc]
             del self.curie_to_label[bc]
     def _remove_garbage(self):
         #The garbage curies are normalized, so I need to swap
@@ -290,7 +308,6 @@ class Normalizer():
         for gc in garbage_curies:
             for c in n2c[gc]:
                 del self.curie_to_normalized[c]
-                del self.curie_to_type[c]
                 try:
                     del self.curie_to_label[c]
                 except KeyError:
@@ -320,20 +337,14 @@ class Normalizer():
     def write(self,ofile):
         """Write normalized entities to a file"""
         print(f'writing to {ofile}')
-        with open(ofile, 'w') as outf, open('translation','w') as otheroutf:
-            outf.write('normalized_curie\tsemantic_type\tlabel\n')
+        with open(ofile,'w') as outf:
+            outf.write('iri\tcurie\tnormalized_curie\n')
             for iri,curie in self.iri_to_curie.items():
                 try:
                     normcurie = self.curie_to_normalized[curie]
-                    normtype = self.curie_to_type[curie]
-                    if curie in self.curie_to_label:
-                        label = self.curie_to_label[curie]
-                    else:
-                        label = self.iri_to_label[iri]
-                    outf.write(f'{normcurie}\t{normtype}\t{label}\n')
-                    otheroutf.write(f'{iri}\t{curie}\t{normcurie}\n')
+                    outf.write(f'{iri}\t{curie}\t{normcurie}\n')
                 except KeyError:
-                    continue
+                    outf.write(f'{iri}\t{curie}\t\n')
 
 def read_accepted():
     #We look at gene matches more critically.  There are genes where ALL CAPS gene symbols should
@@ -361,30 +372,8 @@ def read_accepted():
     return accepted_forms
 
 def normalize(indir,outdir,pmidcol=1,termcol=8,labelcol=9,cleanmatchcol=6):
-    normy = Normalizer()
-    rfiles = os.listdir(indir)
-    if not os.path.exists(f'{outdir}/normalized.txt'):
-        for rf in rfiles:
-            if not rf.endswith("tsv"):
-                continue
-            with open(f'{indir}/{rf}','r') as inf:
-                for line in inf:
-                    x = line.strip().split('\t')
-                    pmid = x[pmidcol]
-                    term = x[termcol]
-                    if labelcol is not None:
-                        try:
-                            label = x[labelcol].split(']')[0][1:]
-                        except:
-                            print('bonk')
-                            print(line)
-                            print(x)
-                            exit()
-                    else:
-                        label=None
-                    normy.add(term,label)
-        normy.normalize_all()
-        normy.write(f'{outdir}/normalized.txt')
+    normy = Normalizer(indir)
+
     papers = set()
     accepted_genes = read_accepted()
     for i,rf in enumerate(rfiles):
