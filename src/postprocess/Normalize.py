@@ -381,9 +381,9 @@ def read_accepted():
 
 def normalize(indir,outdir,pmidcol=1,termcol=8,labelcol=9,cleanmatchcol=6):
     normy = Normalizer(indir)
-
     papers = set()
     accepted_genes = read_accepted()
+    rfiles = os.listdir(indir)
     for i,rf in enumerate(rfiles):
         if not rf.endswith("tsv"):
             continue
