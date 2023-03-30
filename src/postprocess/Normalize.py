@@ -124,7 +124,7 @@ class Normalizer():
             special cases to handle identifiers that are not found in nodenorm, and to remove some identifiers that
             are often false positives."""
         self.url = 'https://nodenormalization-sri.renci.org/get_normalized_nodes'
-        self.curie_to_iri = {}
+        #self.curie_to_iri = {}
         self.iri_to_curie = {}
         #self.iri_to_label = {}
         self.curie_to_normalized = {}
@@ -132,9 +132,17 @@ class Normalizer():
         self.curie_to_label = {}
         self.normfile=(f"{indir}/normalization_map")
         if os.path.exists(self.normfile):
-            self.load()
+            self.load(indir)
         else:
             self.create_map(indir,pmidcol,termcol)
+    def load(self):
+        with open(self.normfile,"r") as inf:
+            h = inf.readline()
+            #h='iri\tcurie\tnormalized_curie\n'
+            for line in inf:
+                x = line.strip('\n').split('\t')
+                self.iri_to_curie[x[0]] = x[1]
+                self.curie_to_normalized[x[1]] = x[2]
     def create_map(self,indir,pmidcol,termcol):
         rfiles = os.listdir(indir)
         # TODO: write out an actual iri->normcurie map.
