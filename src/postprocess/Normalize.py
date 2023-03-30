@@ -149,7 +149,7 @@ class Normalizer():
                     self.add(term)
         self.normalize_all()
         self.write(f'{indir}/normalization_map')
-    def add(self,iri,label):
+    def add(self,iri,label=None):
         """Add a new IRI and label to the normalizer"""
         useless_iri = set()
         if iri in self.iri_to_curie:
@@ -165,7 +165,7 @@ class Normalizer():
             print(iri)
             exit()
         self.iri_to_curie[iri] = newcurie
-        self.iri_to_label[iri] = label
+        #self.iri_to_label[iri] = label
         self.curie_to_iri[newcurie] = iri
     def _curify(self,iri):
         """Convert IRI to curie"""
