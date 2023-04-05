@@ -132,7 +132,7 @@ class Normalizer():
         self.curie_to_label = {}
         self.normfile=(f"{indir}/normalization_map")
         if os.path.exists(self.normfile):
-            self.load(indir)
+            self.load()
         else:
             self.create_map(indir,pmidcol,termcol)
     def load(self):
