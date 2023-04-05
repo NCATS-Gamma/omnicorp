@@ -224,23 +224,14 @@ class Normalizer():
     def normalize_all(self):
         """Call node normalization on batches of curies, and convert into their
         translator-preferred forms"""
-        batchsize=5000
+        batchsize=1000
         unnormalized_curies = self.iri_to_curie.values()
         print(len(unnormalized_curies))
         print(len(unnormalized_curies)/batchsize)
-        batch = []
-        for x in unnormalized_curies:
-            batch.append(x)
-            if len(batch) >= batchsize:
-                batchmap,typemap,labelmap = self._normalize_batch(batch)
-                self.curie_to_normalized.update(batchmap)
-                #self.curie_to_type.update(typemap)
-                self.curie_to_label.update(labelmap)
-                batch= []
-        if len(batch) > 0:
-            batchmap,typemap,labelmap = self._normalize_batch(batch)
+        for i in range(0, len(unnormalized_curies), batchsize):
+            batch = unnormalized_curies[i:i + batchsize]
+            batchmap, typemap, labelmap = self._normalize_batch(batch)
             self.curie_to_normalized.update(batchmap)
-            #self.curie_to_type.update(typemap)
             self.curie_to_label.update(labelmap)
         self._remove_obsolete_terms()
         self._remove_garbage()
