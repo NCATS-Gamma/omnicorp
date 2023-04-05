@@ -375,10 +375,11 @@ def normalize(indir,outdir,pmidcol=1,termcol=8,labelcol=9,cleanmatchcol=6):
     papers = set()
     accepted_genes = read_accepted()
     rfiles = os.listdir(indir)
-    for i,rf in enumerate(rfiles):
+    for rf in rfiles:
         if not rf.endswith("tsv"):
             continue
-        with open(f'{indir}/{rf}','r') as inf, open(f'{outdir}/annotation_{i}.txt','w') as outf:
+        n = rf.split(".")[0][:-4]
+        with open(f'{indir}/{rf}','r') as inf, open(f'{outdir}/normed_{n}.txt','w') as outf:
             outf.write('Curie\tPaper\n')
             for line in inf:
                 x = line.strip().split('\t')
