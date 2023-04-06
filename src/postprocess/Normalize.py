@@ -412,7 +412,7 @@ def normalize(indir,outdir,pmidcol=1,termcol=8,labelcol=9,cleanmatchcol=6):
                                 continue
                     #if we made it this far, it's either not a gene, or it's a gene that is really a gene.
                     curie = normy.normalize(term)
-                    if curie is not None:
+                    if (curie is not None) and (curie != ""):
                         outf.write(f'{curie}\t{pmid}\n')
                     else:
                         bad_iris.add(term)
