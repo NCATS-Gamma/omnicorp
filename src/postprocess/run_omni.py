@@ -3,18 +3,11 @@ from subprocess import call
 
 def go():
     normalize('tsv-output','omnicorp_output',pmidcol=0,termcol=1,labelcol=None)
-    call('sort -T . omnicorp_output/annotation_0.txt | uniq > omnicorp_output/annotation_1.txt', shell=True)
-    curify('omnicorp_output/annotation_1.txt', 'omnicorp_output/annotation_2.txt')
-    make_final('omnicorp_output','omnicorp_final')
+    #call('sort -T . omnicorp_output/annotation_0.txt | uniq > omnicorp_output/annotation_1.txt', shell=True)
+    #separate_by_prefix('omnicorp_output','omnicorp_final')
 
-def curify(infname,outfname):
-    with open(infname,'r') as inf, open(outfname,'w') as outf:
-        for line in inf:
-            x = line.strip().split('\t')
-            pmid = x[1].split('/')[-1]
-            outf.write(f'{x[0]}\tPMID:{pmid}\n')
-
-def make_final(indir,outdir):
+def separate_by_prefix(indir,outdir):
+    """Separate annotations by prefix."""
     prefix=''
     ofile = None
     with open(f'{indir}/annotation_3.txt','r') as inf:

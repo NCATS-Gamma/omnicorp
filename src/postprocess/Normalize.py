@@ -372,48 +372,54 @@ def read_accepted():
 
 def normalize(indir,outdir,pmidcol=1,termcol=8,labelcol=9,cleanmatchcol=6):
     normy = Normalizer(indir)
-    papers = set()
     accepted_genes = read_accepted()
     rfiles = os.listdir(indir)
+    bad_iris = set()
     for rf in rfiles:
         if not rf.endswith("tsv"):
             continue
         n = rf.split(".")[0][-4:]
-        with open(f'{indir}/{rf}','r') as inf, open(f'{outdir}/normed_{n}.txt','w') as outf:
+        with open(f'{outdir}/annotation_0.txt','w') as outf:
             outf.write('Curie\tPaper\n')
-            for line in inf:
-                x = line.strip().split('\t')
-                #If this is a gene, we need to decide if this is a good annotation, or garbage
-                term = x[termcol]
-                if term.startswith('https://www.genenames.org/data/gene-symbol-report/'):
-                    #It's a gene
-                    if labelcol is not None:
-                        try:
-                            label = x[labelcol].split(']')[0][1:]
-                        except:
-                            print('bonk')
-                            print(line)
-                            print(x)
-                            exit()
-                        text = x[cleanmatchcol][1:-1]
-                        if text.upper() != label:
-                            #this is stuff like 'setting' for SET.
-                            #print(f'Skipping {text} {label}')
-                            continue
-                        if text == label and label not in accepted_genes[label]:
-                            #The annotation is all caps, but all caps is not accepted for this gene.
-                            #print(f'Skipping {text}')
-                            continue
-                        if text not in accepted_genes[label] and '..any..' not in accepted_genes[label]:
-                            #print(f'Skipping {text}')
-                            continue
-                #if we made it this far, it's either not a gene, or it's a gene that is really a gene.
-                pmid = x[pmidcol]
-                papers.add(pmid)
-                curie = normy.normalize(term)
-                if curie is not None:
-                    outf.write(f'{curie}\t{pmid}\n')
-    return len(papers)
+            with open(f'{indir}/{rf}','r') as inf:
+                for line in inf:
+                    x = line.strip().split('\t')
+                    #If this is a gene, we need to decide if this is a good annotation, or garbage
+                    term = x[termcol]
+                    pm_iri = x[pmidcol]
+                    pmid = f"PMID:{pm_iri.split('/')[-1]}"
+                    if term.startswith('https://www.genenames.org/data/gene-symbol-report/'):
+                        #It's a gene
+                        if labelcol is not None:
+                            try:
+                                label = x[labelcol].split(']')[0][1:]
+                            except:
+                                print('bonk')
+                                print(line)
+                                print(x)
+                                exit()
+                            text = x[cleanmatchcol][1:-1]
+                            if text.upper() != label:
+                                #this is stuff like 'setting' for SET.
+                                #print(f'Skipping {text} {label}')
+                                continue
+                            if text == label and label not in accepted_genes[label]:
+                                #The annotation is all caps, but all caps is not accepted for this gene.
+                                #print(f'Skipping {text}')
+                                continue
+                            if text not in accepted_genes[label] and '..any..' not in accepted_genes[label]:
+                                #print(f'Skipping {text}')
+                                continue
+                    #if we made it this far, it's either not a gene, or it's a gene that is really a gene.
+                    curie = normy.normalize(term)
+                    if curie is not None:
+                        outf.write(f'{curie}\t{pmid}\n')
+                    else:
+                        bad_iris.add(term)
+            break
+    with open(f'{outdir}/bad_iris.txt','w') as outf:
+        for bi in bad_iris:
+            outf.write(f'{bi}\n')
 
 if __name__ == '__main__':
     normalize('input','output')
