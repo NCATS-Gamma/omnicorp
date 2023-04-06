@@ -416,7 +416,6 @@ def normalize(indir,outdir,pmidcol=1,termcol=8,labelcol=9,cleanmatchcol=6):
                         outf.write(f'{curie}\t{pmid}\n')
                     else:
                         bad_iris.add(term)
-            break
     with open(f'{outdir}/bad_iris.txt','w') as outf:
         for bi in bad_iris:
             outf.write(f'{bi}\n')
