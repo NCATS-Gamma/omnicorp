@@ -31,10 +31,14 @@ def run(infilename):
     with open("pmid_to_curies.txt", "w") as outf:
         for pmid, curies in pmid_to_curies.items():
             outf.write(f"{pmid}\t{len(curies)}\n")
-    curie_pairs = set()
+    curie_pairs = defaultdict(int)
     for pmid, curies in pmid_to_curies.items():
-        for curie1, curie2 in itertools.combinations(sorted(curies), 2):
-            curie_pairs.add((curie1, curie2))
+        for curie1, curie2 in itertools.combinations(curies, 2):
+            curie_pairs[(curie1, curie2)] += 1
+    with open("curie_pairs.txt", "w") as outf:
+        outf.write("src_concept\tdest_concept\tpublication_count\n")
+        for (curie1, curie2), count in curie_pairs.items():
+            outf.write(f"{curie1}\t{curie2}\t{count}\n")
     print(f"number of unique curie pairs: {len(curie_pairs)}")
 
 if __name__ == '__main__':
