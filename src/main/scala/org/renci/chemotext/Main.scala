@@ -1,21 +1,15 @@
 package org.renci.chemotext
 
-import java.io.{File, FileInputStream, FileOutputStream, StringReader}
+import java.io.{File, FileInputStream, FileOutputStream, PrintWriter, StringReader}
 import java.time._
 import java.time.temporal.TemporalAccessor
 import java.util.HashMap
 import java.util.zip.GZIPInputStream
-
 import akka.actor.ActorSystem
 import akka.stream._
 import akka.stream.scaladsl._
 import com.typesafe.scalalogging.LazyLogging
-import io.scigraph.annotation.{
-  EntityAnnotation,
-  EntityFormatConfiguration,
-  EntityProcessorImpl,
-  EntityRecognizer
-}
+import io.scigraph.annotation.{EntityAnnotation, EntityFormatConfiguration, EntityProcessorImpl, EntityRecognizer}
 import io.scigraph.neo4j.NodeTransformer
 import io.scigraph.vocabulary.{Vocabulary, VocabularyNeo4jImpl}
 import org.apache.jena.datatypes.xsd.XSDDatatype
@@ -50,12 +44,13 @@ class Annotator(neo4jLocation: String) {
   def dispose(): Unit = graphDB.shutdown()
 
   /** Extract annotations from a particular string using SciGraph. */
-  def extractAnnotations(str: String): List[EntityAnnotation] = {
+  def extractAnnotations(str: String): (String, List[EntityAnnotation]) = {
+    val escapedString = QueryParserBase.escape(str)
     val configBuilder =
-      new EntityFormatConfiguration.Builder(new StringReader(QueryParserBase.escape(str)))
+      new EntityFormatConfiguration.Builder(new StringReader(escapedString))
         .longestOnly(true)
         .minLength(3)
-    processor.annotateEntities(configBuilder.get).asScala.toList
+    (escapedString, processor.annotateEntities(configBuilder.get).asScala.toList)
   }
 }
 
@@ -95,8 +90,22 @@ object PubMedTripleGenerator extends LazyLogging {
   /** Generate the triples for a particular PubMed article. */
   def generateTriples(
     pubMedArticleWrapped: PubMedArticleWrapper,
+    outSpanStream: FileOutputStream,
     optAnnotator: Option[Annotator]
   ): Set[graph.Triple] = {
+    // Set up a span writer where we can write out spans.
+    val outSpanWriter = new PrintWriter(outSpanStream)
+    val header = Seq(
+      "pmid",
+      "start",
+      "end",
+      "text",
+      "id",
+      "label",
+      "categories"
+    )
+    outSpanWriter.println(header.mkString("\t"))
+
     // Generate an IRI for this PubMed article.
     val pmidIRI = ResourceFactory.createResource(pubMedArticleWrapped.iriAsString)
 
@@ -310,13 +319,30 @@ object PubMedTripleGenerator extends LazyLogging {
     }
 
     // Extract annotations using SciGraph and convert into RDF statements.
+    val articleAsString = pubMedArticleWrapped.asString
     val annotationStatements = optAnnotator
-      .map(_.extractAnnotations(pubMedArticleWrapped.asString) map { annotation =>
-        ResourceFactory.createStatement(
-          pmidIRI,
-          DCTerms.references,
-          ResourceFactory.createResource(annotation.getToken.getId)
-        )
+      .map(optAnnotator => {
+        val (escapedText, annotations) = optAnnotator.extractAnnotations(articleAsString)
+
+        annotations.map(annotation => {
+          val tsvOutput = Seq(
+            pubMedArticleWrapped.pmid,
+            annotation.getStart,
+            annotation.getEnd,
+            escapedText.substring(annotation.getStart, annotation.getEnd).replace("\t", "<tab>"),
+            annotation.getToken.getId,
+            annotation.getToken.getTerms.toString,
+            annotation.getToken.getCategories.toString
+          )
+          outSpanWriter.println(tsvOutput.mkString("\t"))
+          outSpanWriter.flush()
+
+          ResourceFactory.createStatement(
+            pmidIRI,
+            DCTerms.references,
+            ResourceFactory.createResource(annotation.getToken.getId)
+          )
+        })
       })
       .getOrElse(Seq())
 
@@ -387,6 +413,9 @@ object Main extends App with LazyLogging {
     logger.info(s"Begin processing $file")
     logger.info(s"Will process total articles: ${wrappedArticles.size}")
 
+    // Prepare to write out span annotations as a TSV.
+    val outSpanStream = new FileOutputStream(new File(s"$outDir/${file.getName}.tsv"))
+
     // Prepare to write out triples in RDF/Turtle.
     val outStream = new FileOutputStream(new File(s"$outDir/${file.getName}.ttl"))
     val rdfStream = StreamRDFWriter.getWriterStream(outStream, RDFFormat.TURTLE_BLOCKS)
@@ -400,7 +429,7 @@ object Main extends App with LazyLogging {
     val done = Source(wrappedArticles)
       .mapAsyncUnordered(parallelism) { article: PubMedArticleWrapper =>
         Future {
-          PubMedTripleGenerator.generateTriples(article, optAnnotator)
+          PubMedTripleGenerator.generateTriples(article, outSpanStream, optAnnotator)
         }
       }
       .runForeach { triples =>
