@@ -90,22 +90,9 @@ object PubMedTripleGenerator extends LazyLogging {
   /** Generate the triples for a particular PubMed article. */
   def generateTriples(
     pubMedArticleWrapped: PubMedArticleWrapper,
-    outSpanStream: FileOutputStream,
+    outSpanWriter: PrintWriter,
     optAnnotator: Option[Annotator]
   ): Set[graph.Triple] = {
-    // Set up a span writer where we can write out spans.
-    val outSpanWriter = new PrintWriter(outSpanStream)
-    val header = Seq(
-      "pmid",
-      "start",
-      "end",
-      "text",
-      "id",
-      "label",
-      "categories"
-    )
-    outSpanWriter.println(header.mkString("\t"))
-
     // Generate an IRI for this PubMed article.
     val pmidIRI = ResourceFactory.createResource(pubMedArticleWrapped.iriAsString)
 
@@ -415,6 +402,17 @@ object Main extends App with LazyLogging {
 
     // Prepare to write out span annotations as a TSV.
     val outSpanStream = new FileOutputStream(new File(s"$outDir/${file.getName}.tsv"))
+    val outSpanWriter = new PrintWriter(outSpanStream)
+    val header = Seq(
+      "pmid",
+      "start",
+      "end",
+      "text",
+      "id",
+      "label",
+      "categories"
+    )
+    outSpanWriter.println(header.mkString("\t"))
 
     // Prepare to write out triples in RDF/Turtle.
     val outStream = new FileOutputStream(new File(s"$outDir/${file.getName}.ttl"))
@@ -429,7 +427,7 @@ object Main extends App with LazyLogging {
     val done = Source(wrappedArticles)
       .mapAsyncUnordered(parallelism) { article: PubMedArticleWrapper =>
         Future {
-          PubMedTripleGenerator.generateTriples(article, outSpanStream, optAnnotator)
+          PubMedTripleGenerator.generateTriples(article, outSpanWriter, optAnnotator)
         }
       }
       .runForeach { triples =>
