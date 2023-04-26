@@ -26,6 +26,7 @@ def run(infilename):
             curie_to_pmids[curie].add(pmid)
             pmid_to_curies[pmid].add(curie)
     with open("curie_to_pmids.txt", "w") as outf:
+        outf.write("curie\tpublication_count\n")
         for curie, pmids in curie_to_pmids.items():
             outf.write(f"{curie}\t{len(pmids)}\n")
     with open("pmid_to_curies.txt", "w") as outf:
@@ -34,7 +35,7 @@ def run(infilename):
     curie_pairs = defaultdict(int)
     for pmid, curies in pmid_to_curies.items():
         for curie1, curie2 in itertools.combinations(curies, 2):
-            curie_pairs[(curie1, curie2)] += 1
+            curie_pairs[frozenset([curie1, curie2])] += 1
     with open("curie_pairs.txt", "w") as outf:
         outf.write("src_concept\tdest_concept\tpublication_count\n")
         for (curie1, curie2), count in curie_pairs.items():
@@ -42,4 +43,5 @@ def run(infilename):
     print(f"number of unique curie pairs: {len(curie_pairs)}")
 
 if __name__ == '__main__':
-    run("omnicorp_output/annotation.txt")
+    #run("omnicorp_output/annotation.txt")
+    run("/Users/bizon/Projects/ranking-agent/aragorn-ranker/tests/OmnicorpTestData/all.tsv")
