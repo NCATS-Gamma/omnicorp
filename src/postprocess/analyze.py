@@ -26,7 +26,7 @@ def run(infilename):
             curie_to_pmids[curie].add(pmid)
             pmid_to_curies[pmid].add(curie)
     with open("curie_to_pmids.txt", "w") as outf:
-        outf.write("curie\tpublication_count\n")
+        outf.write("concept\tpublication_count\n")
         for curie, pmids in curie_to_pmids.items():
             outf.write(f"{curie}\t{len(pmids)}\n")
     with open("pmid_to_curies.txt", "w") as outf:
