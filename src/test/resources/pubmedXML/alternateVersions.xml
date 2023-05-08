@@ -1,0 +1,553 @@
+<?xml version="1.0"?>
+<!DOCTYPE PubmedArticleSet PUBLIC "-//NLM//DTD PubMedArticle, 1st January 2019//EN"
+        "https://dtd.nlm.nih.gov/ncbi/pubmed/out/pubmed_190101.dtd">
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="In-Data-Review" Owner="NLM">
+      <PMID Version="1">31431825</PMID>
+      <DateRevised>
+        <Year>2019</Year>
+        <Month>08</Month>
+        <Day>21</Day>
+      </DateRevised>
+      <Article PubModel="Electronic-eCollection">
+        <Journal>
+          <ISSN IssnType="Electronic">2046-1402</ISSN>
+          <JournalIssue CitedMedium="Internet">
+            <Volume>8</Volume>
+            <PubDate>
+              <Year>2019</Year>
+            </PubDate>
+          </JournalIssue>
+          <Title>F1000Research</Title>
+          <ISOAbbreviation>F1000Res</ISOAbbreviation>
+        </Journal>
+        <ArticleTitle>Introducing high school students to the Gene Ontology classification system.</ArticleTitle>
+        <Pagination>
+          <MedlinePgn>241</MedlinePgn>
+        </Pagination>
+        <ELocationID EIdType="doi" ValidYN="Y">10.12688/f1000research.18061.1</ELocationID>
+        <Abstract>
+          <AbstractText>We present an activity that introduces high school students to the Gene Ontology classification system which is widely used in genomics and systems biology studies to characterize large sets of genes based on functional and structural information. This is a valuable and standardized method used to identify genes that act in similar processes and pathways and also to gain insight into the overall architecture and distribution of genes and gene families associated with a particular tissue or disease. Through this exercise, students will learn how the classification system works by analyzing a list of genes using DAVID the Database for Annotation, Visualization and Integrated Discovery that incorporates the Gene Ontology system into its suite of analysis tools. This method of profiling genes is used by our high school student interns to categorize gene expression data related to behavioral neuroscience. Students will get a feel for working with genes and gene sets, gain vocabulary, obtain an understanding of how a database is structured and gain an awareness of the vast amount of information that is known about genes as well as the online analysis tools that are available.</AbstractText>
+        </Abstract>
+        <AuthorList CompleteYN="Y">
+          <Author ValidYN="Y">
+            <LastName>Dedhia</LastName>
+            <ForeName>Mehek</ForeName>
+            <Initials>M</Initials>
+            <AffiliationInfo>
+              <Affiliation>BioScience Project, Wakefield, MA, 01880, USA.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+          <Author ValidYN="Y">
+            <LastName>Kohetuk</LastName>
+            <ForeName>Kenneth</ForeName>
+            <Initials>K</Initials>
+            <Identifier Source="ORCID">https://orcid.org/0000-0003-1503-5735</Identifier>
+            <AffiliationInfo>
+              <Affiliation>Saint Dominic Savio Catholic High School, Austin, TX, 78717, USA.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+          <Author ValidYN="Y">
+            <LastName>Crusio</LastName>
+            <ForeName>Wim E</ForeName>
+            <Initials>WE</Initials>
+            <Identifier Source="ORCID">https://orcid.org/0000-0001-6638-202X</Identifier>
+            <AffiliationInfo>
+              <Affiliation>Institut de Neurosciences Cognitives et Intégratives d'Aquitaine (UMR 5287), Pessac, France.</Affiliation>
+            </AffiliationInfo>
+            <AffiliationInfo>
+              <Affiliation>University of Bordeaux (UMR 5287), Pessac, France.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+          <Author ValidYN="Y">
+            <LastName>Delprato</LastName>
+            <ForeName>Anna</ForeName>
+            <Initials>A</Initials>
+            <Identifier Source="ORCID">https://orcid.org/0000-0002-6134-2560</Identifier>
+            <AffiliationInfo>
+              <Affiliation>BioScience Project, Wakefield, MA, 01880, USA.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+        </AuthorList>
+        <Language>eng</Language>
+        <DataBankList CompleteYN="Y">
+          <DataBank>
+            <DataBankName>figshare</DataBankName>
+            <AccessionNumberList>
+              <AccessionNumber>10.6084/m9.figshare.7649225.v1</AccessionNumber>
+            </AccessionNumberList>
+          </DataBank>
+        </DataBankList>
+        <PublicationTypeList>
+          <PublicationType UI="D016428">Journal Article</PublicationType>
+        </PublicationTypeList>
+        <ArticleDate DateType="Electronic">
+          <Year>2019</Year>
+          <Month>03</Month>
+          <Day>01</Day>
+        </ArticleDate>
+      </Article>
+      <MedlineJournalInfo>
+        <Country>England</Country>
+        <MedlineTA>F1000Res</MedlineTA>
+        <NlmUniqueID>101594320</NlmUniqueID>
+        <ISSNLinking>2046-1402</ISSNLinking>
+      </MedlineJournalInfo>
+      <CitationSubset>IM</CitationSubset>
+      <KeywordList Owner="NOTNLM">
+        <Keyword MajorTopicYN="N">gene ontology</Keyword>
+        <Keyword MajorTopicYN="N">genomics</Keyword>
+        <Keyword MajorTopicYN="N">high school students</Keyword>
+      </KeywordList>
+      <CoiStatement>No competing interests were disclosed.</CoiStatement>
+    </MedlineCitation>
+    <PubmedData>
+      <History>
+        <PubMedPubDate PubStatus="accepted">
+          <Year>2019</Year>
+          <Month>02</Month>
+          <Day>11</Day>
+        </PubMedPubDate>
+        <PubMedPubDate PubStatus="entrez">
+          <Year>2019</Year>
+          <Month>8</Month>
+          <Day>22</Day>
+          <Hour>6</Hour>
+          <Minute>0</Minute>
+        </PubMedPubDate>
+        <PubMedPubDate PubStatus="pubmed">
+          <Year>2019</Year>
+          <Month>8</Month>
+          <Day>23</Day>
+          <Hour>6</Hour>
+          <Minute>0</Minute>
+        </PubMedPubDate>
+        <PubMedPubDate PubStatus="medline">
+          <Year>2019</Year>
+          <Month>8</Month>
+          <Day>23</Day>
+          <Hour>6</Hour>
+          <Minute>0</Minute>
+        </PubMedPubDate>
+      </History>
+      <PublicationStatus>epublish</PublicationStatus>
+      <ArticleIdList>
+        <ArticleId IdType="pubmed">31431825</ArticleId>
+        <ArticleId IdType="doi">10.12688/f1000research.18061.1</ArticleId>
+        <ArticleId IdType="pmc">PMC6619382</ArticleId>
+      </ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+  <PubmedArticle>
+    <MedlineCitation Status="In-Data-Review" VersionID="2" VersionDate="2019/04/15" Owner="NLM">
+      <PMID Version="2">31431825</PMID>
+      <DateRevised>
+        <Year>2019</Year>
+        <Month>08</Month>
+        <Day>23</Day>
+      </DateRevised>
+      <Article PubModel="Electronic-eCollection">
+        <Journal>
+          <ISSN IssnType="Electronic">2046-1402</ISSN>
+          <JournalIssue CitedMedium="Internet">
+            <Volume>8</Volume>
+            <PubDate>
+              <Year>2019</Year>
+            </PubDate>
+          </JournalIssue>
+          <Title>F1000Research</Title>
+          <ISOAbbreviation>F1000Res</ISOAbbreviation>
+        </Journal>
+        <ArticleTitle>Introducing high school students to the Gene Ontology classification system.</ArticleTitle>
+        <Pagination>
+          <MedlinePgn>241</MedlinePgn>
+        </Pagination>
+        <ELocationID EIdType="doi" ValidYN="Y">10.12688/f1000research.18061.2</ELocationID>
+        <Abstract>
+          <AbstractText>We present a tutorial that introduces high school students to the Gene Ontology classification system which is widely used in genomics and systems biology studies to characterize large sets of genes based on functional and structural information. This classification system is a valuable and standardized method used to identify genes that act in similar processes and pathways and also provides insight into the overall architecture and distribution of genes and gene families associated with a particular tissue or disease. By means of this tutorial, students learn how the classification system works through analyzing a gene set using DAVID the Database for Annotation, Visualization and Integrated Discovery that incorporates the Gene Ontology system into its suite of analysis tools. This method of profiling genes is used by our high school student interns to categorize gene expression data related to behavioral neuroscience. Students will get a feel for working with genes and gene sets, acquire vocabulary, obtain an understanding of how a database is structured and gain an awareness of the vast amount of information that is known about genes as well as the online analysis tools to manage this information that is nowadays available. Based on survey responses, students intellectually benefit from learning about the Gene Ontology System and using the DAVID tools, they are better prepared for future database use and they also find it enjoyable.</AbstractText>
+        </Abstract>
+        <AuthorList CompleteYN="Y">
+          <Author ValidYN="Y">
+            <LastName>Dedhia</LastName>
+            <ForeName>Mehek</ForeName>
+            <Initials>M</Initials>
+            <AffiliationInfo>
+              <Affiliation>BioScience Project, Wakefield, MA, 01880, USA.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+          <Author ValidYN="Y">
+            <LastName>Kohetuk</LastName>
+            <ForeName>Kenneth</ForeName>
+            <Initials>K</Initials>
+            <Identifier Source="ORCID">https://orcid.org/0000-0003-1503-5735</Identifier>
+            <AffiliationInfo>
+              <Affiliation>Saint Dominic Savio Catholic High School, Austin, TX, 78717, USA.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+          <Author ValidYN="Y">
+            <LastName>Crusio</LastName>
+            <ForeName>Wim E</ForeName>
+            <Initials>WE</Initials>
+            <Identifier Source="ORCID">https://orcid.org/0000-0001-6638-202X</Identifier>
+            <AffiliationInfo>
+              <Affiliation>Institut de Neurosciences Cognitives et Intégratives d'Aquitaine (UMR 5287), Pessac, France.</Affiliation>
+            </AffiliationInfo>
+            <AffiliationInfo>
+              <Affiliation>University of Bordeaux (UMR 5287), Pessac, France.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+          <Author ValidYN="Y">
+            <LastName>Delprato</LastName>
+            <ForeName>Anna</ForeName>
+            <Initials>A</Initials>
+            <Identifier Source="ORCID">https://orcid.org/0000-0002-6134-2560</Identifier>
+            <AffiliationInfo>
+              <Affiliation>BioScience Project, Wakefield, MA, 01880, USA.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+        </AuthorList>
+        <Language>eng</Language>
+        <DataBankList CompleteYN="Y">
+          <DataBank>
+            <DataBankName>figshare</DataBankName>
+            <AccessionNumberList>
+              <AccessionNumber>10.6084/m9.figshare.7649225.v1</AccessionNumber>
+            </AccessionNumberList>
+          </DataBank>
+        </DataBankList>
+        <PublicationTypeList>
+          <PublicationType UI="D016428">Journal Article</PublicationType>
+        </PublicationTypeList>
+        <ArticleDate DateType="Electronic">
+          <Year>2019</Year>
+          <Month>03</Month>
+          <Day>01</Day>
+        </ArticleDate>
+      </Article>
+      <MedlineJournalInfo>
+        <Country>England</Country>
+        <MedlineTA>F1000Res</MedlineTA>
+        <NlmUniqueID>101594320</NlmUniqueID>
+        <ISSNLinking>2046-1402</ISSNLinking>
+      </MedlineJournalInfo>
+      <CitationSubset>IM</CitationSubset>
+      <KeywordList Owner="NOTNLM">
+        <Keyword MajorTopicYN="N">gene ontology</Keyword>
+        <Keyword MajorTopicYN="N">genomics</Keyword>
+        <Keyword MajorTopicYN="N">high school students</Keyword>
+      </KeywordList>
+      <CoiStatement>No competing interests were disclosed.</CoiStatement>
+    </MedlineCitation>
+    <PubmedData>
+      <History>
+        <PubMedPubDate PubStatus="accepted">
+          <Year>2019</Year>
+          <Month>04</Month>
+          <Day>08</Day>
+        </PubMedPubDate>
+        <PubMedPubDate PubStatus="entrez">
+          <Year>2019</Year>
+          <Month>8</Month>
+          <Day>24</Day>
+          <Hour>6</Hour>
+          <Minute>0</Minute>
+        </PubMedPubDate>
+        <PubMedPubDate PubStatus="pubmed">
+          <Year>2019</Year>
+          <Month>8</Month>
+          <Day>24</Day>
+          <Hour>6</Hour>
+          <Minute>0</Minute>
+        </PubMedPubDate>
+        <PubMedPubDate PubStatus="medline">
+          <Year>2019</Year>
+          <Month>8</Month>
+          <Day>24</Day>
+          <Hour>6</Hour>
+          <Minute>0</Minute>
+        </PubMedPubDate>
+      </History>
+      <PublicationStatus>epublish</PublicationStatus>
+      <ArticleIdList>
+        <ArticleId IdType="pubmed">31431825</ArticleId>
+        <ArticleId IdType="doi">10.12688/f1000research.18061.2</ArticleId>
+        <ArticleId IdType="pmc">PMC6619382.2</ArticleId>
+      </ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+  <PubmedArticle>
+    <MedlineCitation Status="In-Data-Review" VersionID="3" VersionDate="2019/05/24" Owner="NLM">
+      <PMID Version="3">31431825</PMID>
+      <DateRevised>
+        <Year>2019</Year>
+        <Month>08</Month>
+        <Day>23</Day>
+      </DateRevised>
+      <Article PubModel="Electronic-eCollection">
+        <Journal>
+          <ISSN IssnType="Electronic">2046-1402</ISSN>
+          <JournalIssue CitedMedium="Internet">
+            <Volume>8</Volume>
+            <PubDate>
+              <Year>2019</Year>
+            </PubDate>
+          </JournalIssue>
+          <Title>F1000Research</Title>
+          <ISOAbbreviation>F1000Res</ISOAbbreviation>
+        </Journal>
+        <ArticleTitle>Introducing high school students to the Gene Ontology classification system.</ArticleTitle>
+        <Pagination>
+          <MedlinePgn>241</MedlinePgn>
+        </Pagination>
+        <ELocationID EIdType="doi" ValidYN="Y">10.12688/f1000research.18061.3</ELocationID>
+        <Abstract>
+          <AbstractText>We present a tutorial that introduces high school students to the Gene Ontology classification system which is widely used in genomics and systems biology studies to characterize large sets of genes based on functional and structural information. This classification system is a valuable and standardized method used to identify genes that act in similar processes and pathways and also provides insight into the overall architecture and distribution of genes and gene families associated with a particular tissue or disease. By means of this tutorial, students learn how the classification system works through analyzing a gene set using DAVID the Database for Annotation, Visualization and Integrated Discovery that incorporates the Gene Ontology system into its suite of analysis tools. This method of profiling genes is used by our high school student interns to categorize gene expression data related to behavioral neuroscience. Students will get a feel for working with genes and gene sets, acquire vocabulary, obtain an understanding of how a database is structured and gain an awareness of the vast amount of information that is known about genes as well as the online analysis tools to manage this information that is nowadays available. Based on survey responses, students intellectually benefit from learning about the Gene Ontology System and using the DAVID tools, they are better prepared for future database use and they also find it enjoyable.</AbstractText>
+        </Abstract>
+        <AuthorList CompleteYN="Y">
+          <Author ValidYN="Y">
+            <LastName>Dedhia</LastName>
+            <ForeName>Mehek</ForeName>
+            <Initials>M</Initials>
+            <AffiliationInfo>
+              <Affiliation>BioScience Project, Wakefield, MA, 01880, USA.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+          <Author ValidYN="Y">
+            <LastName>Kohetuk</LastName>
+            <ForeName>Kenneth</ForeName>
+            <Initials>K</Initials>
+            <Identifier Source="ORCID">https://orcid.org/0000-0003-1503-5735</Identifier>
+            <AffiliationInfo>
+              <Affiliation>Saint Dominic Savio Catholic High School, Austin, TX, 78717, USA.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+          <Author ValidYN="Y">
+            <LastName>Crusio</LastName>
+            <ForeName>Wim E</ForeName>
+            <Initials>WE</Initials>
+            <Identifier Source="ORCID">https://orcid.org/0000-0001-6638-202X</Identifier>
+            <AffiliationInfo>
+              <Affiliation>Institut de Neurosciences Cognitives et Intégratives d'Aquitaine (UMR 5287), Pessac, France.</Affiliation>
+            </AffiliationInfo>
+            <AffiliationInfo>
+              <Affiliation>University of Bordeaux (UMR 5287), Pessac, France.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+          <Author ValidYN="Y">
+            <LastName>Delprato</LastName>
+            <ForeName>Anna</ForeName>
+            <Initials>A</Initials>
+            <Identifier Source="ORCID">https://orcid.org/0000-0002-6134-2560</Identifier>
+            <AffiliationInfo>
+              <Affiliation>BioScience Project, Wakefield, MA, 01880, USA.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+        </AuthorList>
+        <Language>eng</Language>
+        <DataBankList CompleteYN="Y">
+          <DataBank>
+            <DataBankName>figshare</DataBankName>
+            <AccessionNumberList>
+              <AccessionNumber>10.6084/m9.figshare.8166611.v1</AccessionNumber>
+            </AccessionNumberList>
+          </DataBank>
+        </DataBankList>
+        <PublicationTypeList>
+          <PublicationType UI="D016428">Journal Article</PublicationType>
+        </PublicationTypeList>
+        <ArticleDate DateType="Electronic">
+          <Year>2019</Year>
+          <Month>03</Month>
+          <Day>01</Day>
+        </ArticleDate>
+      </Article>
+      <MedlineJournalInfo>
+        <Country>England</Country>
+        <MedlineTA>F1000Res</MedlineTA>
+        <NlmUniqueID>101594320</NlmUniqueID>
+        <ISSNLinking>2046-1402</ISSNLinking>
+      </MedlineJournalInfo>
+      <CitationSubset>IM</CitationSubset>
+      <KeywordList Owner="NOTNLM">
+        <Keyword MajorTopicYN="N">gene ontology</Keyword>
+        <Keyword MajorTopicYN="N">genomics</Keyword>
+        <Keyword MajorTopicYN="N">high school students</Keyword>
+      </KeywordList>
+      <CoiStatement>No competing interests were disclosed.</CoiStatement>
+    </MedlineCitation>
+    <PubmedData>
+      <History>
+        <PubMedPubDate PubStatus="accepted">
+          <Year>2019</Year>
+          <Month>05</Month>
+          <Day>22</Day>
+        </PubMedPubDate>
+        <PubMedPubDate PubStatus="entrez">
+          <Year>2019</Year>
+          <Month>8</Month>
+          <Day>24</Day>
+          <Hour>6</Hour>
+          <Minute>0</Minute>
+        </PubMedPubDate>
+        <PubMedPubDate PubStatus="pubmed">
+          <Year>2019</Year>
+          <Month>8</Month>
+          <Day>24</Day>
+          <Hour>6</Hour>
+          <Minute>0</Minute>
+        </PubMedPubDate>
+        <PubMedPubDate PubStatus="medline">
+          <Year>2019</Year>
+          <Month>8</Month>
+          <Day>24</Day>
+          <Hour>6</Hour>
+          <Minute>0</Minute>
+        </PubMedPubDate>
+      </History>
+      <PublicationStatus>epublish</PublicationStatus>
+      <ArticleIdList>
+        <ArticleId IdType="pubmed">31431825</ArticleId>
+        <ArticleId IdType="doi">10.12688/f1000research.18061.3</ArticleId>
+        <ArticleId IdType="pmc">PMC6619382.3</ArticleId>
+      </ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+  <PubmedArticle>
+    <MedlineCitation Status="In-Data-Review" VersionID="4" VersionDate="2019/08/06" Owner="NLM">
+      <PMID Version="4">31431825</PMID>
+      <DateRevised>
+        <Year>2019</Year>
+        <Month>08</Month>
+        <Day>23</Day>
+      </DateRevised>
+      <Article PubModel="Electronic-eCollection">
+        <Journal>
+          <ISSN IssnType="Electronic">2046-1402</ISSN>
+          <JournalIssue CitedMedium="Internet">
+            <Volume>8</Volume>
+            <PubDate>
+              <Year>2019</Year>
+            </PubDate>
+          </JournalIssue>
+          <Title>F1000Research</Title>
+          <ISOAbbreviation>F1000Res</ISOAbbreviation>
+        </Journal>
+        <ArticleTitle>Introducing high school students to the Gene Ontology classification system.</ArticleTitle>
+        <Pagination>
+          <MedlinePgn>241</MedlinePgn>
+        </Pagination>
+        <ELocationID EIdType="doi" ValidYN="Y">10.12688/f1000research.18061.4</ELocationID>
+        <Abstract>
+          <AbstractText>We present a tutorial that introduces high school students to the Gene Ontology classification system which is widely used in genomics and systems biology studies to characterize large sets of genes based on functional and structural information. This classification system is a valuable and standardized method used to identify genes that act in similar processes and pathways and also provides insight into the overall architecture and distribution of genes and gene families associated with a particular tissue or disease. By means of this tutorial, students learn how the classification system works through analyzing a gene set using DAVID the Database for Annotation, Visualization and Integrated Discovery that incorporates the Gene Ontology system into its suite of analysis tools. This method of analyzing genes is used by our high school student interns to categorize gene expression data related to behavioral neuroscience. Students will get a feel for working with genes and gene sets, acquire vocabulary, obtain an understanding of how a database is structured and gain an awareness of the vast amount of information that is known about genes as well as the online analysis tools to manage this information that is nowadays available. Based on survey responses, students intellectually benefit from learning about the Gene Ontology System and using the DAVID tools, they are better prepared for future database use and they also find it enjoyable.</AbstractText>
+        </Abstract>
+        <AuthorList CompleteYN="Y">
+          <Author ValidYN="Y">
+            <LastName>Dedhia</LastName>
+            <ForeName>Mehek</ForeName>
+            <Initials>M</Initials>
+            <AffiliationInfo>
+              <Affiliation>BioScience Project, Wakefield, MA, 01880, USA.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+          <Author ValidYN="Y">
+            <LastName>Kohetuk</LastName>
+            <ForeName>Kenneth</ForeName>
+            <Initials>K</Initials>
+            <Identifier Source="ORCID">https://orcid.org/0000-0003-1503-5735</Identifier>
+            <AffiliationInfo>
+              <Affiliation>Saint Dominic Savio Catholic High School, Austin, TX, 78717, USA.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+          <Author ValidYN="Y">
+            <LastName>Crusio</LastName>
+            <ForeName>Wim E</ForeName>
+            <Initials>WE</Initials>
+            <Identifier Source="ORCID">https://orcid.org/0000-0001-6638-202X</Identifier>
+            <AffiliationInfo>
+              <Affiliation>Institut de Neurosciences Cognitives et Intégratives d'Aquitaine (UMR 5287), Pessac, France.</Affiliation>
+            </AffiliationInfo>
+            <AffiliationInfo>
+              <Affiliation>University of Bordeaux (UMR 5287), Pessac, France.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+          <Author ValidYN="Y">
+            <LastName>Delprato</LastName>
+            <ForeName>Anna</ForeName>
+            <Initials>A</Initials>
+            <Identifier Source="ORCID">https://orcid.org/0000-0002-6134-2560</Identifier>
+            <AffiliationInfo>
+              <Affiliation>BioScience Project, Wakefield, MA, 01880, USA.</Affiliation>
+            </AffiliationInfo>
+          </Author>
+        </AuthorList>
+        <Language>eng</Language>
+        <DataBankList CompleteYN="Y">
+          <DataBank>
+            <DataBankName>figshare</DataBankName>
+            <AccessionNumberList>
+              <AccessionNumber>10.6084/m9.figshare.8166611.v1</AccessionNumber>
+            </AccessionNumberList>
+          </DataBank>
+        </DataBankList>
+        <PublicationTypeList>
+          <PublicationType UI="D016428">Journal Article</PublicationType>
+        </PublicationTypeList>
+        <ArticleDate DateType="Electronic">
+          <Year>2019</Year>
+          <Month>03</Month>
+          <Day>01</Day>
+        </ArticleDate>
+      </Article>
+      <MedlineJournalInfo>
+        <Country>England</Country>
+        <MedlineTA>F1000Res</MedlineTA>
+        <NlmUniqueID>101594320</NlmUniqueID>
+        <ISSNLinking>2046-1402</ISSNLinking>
+      </MedlineJournalInfo>
+      <CitationSubset>IM</CitationSubset>
+      <KeywordList Owner="NOTNLM">
+        <Keyword MajorTopicYN="N">gene ontology</Keyword>
+        <Keyword MajorTopicYN="N">genomics</Keyword>
+        <Keyword MajorTopicYN="N">high school students</Keyword>
+      </KeywordList>
+      <CoiStatement>No competing interests were disclosed.</CoiStatement>
+    </MedlineCitation>
+    <PubmedData>
+      <History>
+        <PubMedPubDate PubStatus="accepted">
+          <Year>2019</Year>
+          <Month>07</Month>
+          <Day>31</Day>
+        </PubMedPubDate>
+        <PubMedPubDate PubStatus="entrez">
+          <Year>2019</Year>
+          <Month>8</Month>
+          <Day>24</Day>
+          <Hour>6</Hour>
+          <Minute>0</Minute>
+        </PubMedPubDate>
+        <PubMedPubDate PubStatus="pubmed">
+          <Year>2019</Year>
+          <Month>8</Month>
+          <Day>24</Day>
+          <Hour>6</Hour>
+          <Minute>0</Minute>
+        </PubMedPubDate>
+        <PubMedPubDate PubStatus="medline">
+          <Year>2019</Year>
+          <Month>8</Month>
+          <Day>24</Day>
+          <Hour>6</Hour>
+          <Minute>0</Minute>
+        </PubMedPubDate>
+      </History>
+      <PublicationStatus>epublish</PublicationStatus>
+      <ArticleIdList>
+        <ArticleId IdType="pubmed">31431825</ArticleId>
+        <ArticleId IdType="doi">10.12688/f1000research.18061.4</ArticleId>
+        <ArticleId IdType="pmc">PMC6619382</ArticleId>
+      </ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>
