@@ -59,7 +59,7 @@ def pubtator3_loader():
 @click.option("--to", "to_dir", type=click.Path(dir_okay=True, file_okay=False), default=".",
               help="Directory to download PubTator3 files to.")
 @click.option("--pubtator3-ftp-url", type=str, default="ftp://anonymous:@ftp.ncbi.nlm.nih.gov/pub/lu/PubTator3/",)
-def download(to_dir, pubtator3_ftp_url, ftp_username, ftp_password):
+def download(to_dir, pubtator3_ftp_url):
     """
     Download PubTator3 files from pubtator3_ftp_url to to_dir.
     """
