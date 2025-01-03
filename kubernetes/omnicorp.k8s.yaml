@@ -1,0 +1,48 @@
+# Kubernetes file for running Omnicorp on the RENCI Sterling cluster
+
+# Create a single Pod to run Babel. At the moment, that's all we need,
+# so that's all we provide instructions for. Eventually, it'd be nice
+# to set this up as a proper Job that can be restarted until it completes
+# executing, notifies you once it's done, and so on.
+#
+# Memory requirements: not sure, since we should be network-bound; I'm going to go with 64G and adjust it.
+# CPU requirements: Let's go with 4 CPUs for now, but we can adjust as needed.
+# Ephemeral storage: I'm going to request 20G for now, but we shouldn't really need anything since everything should
+#   go into the downloads and output directory.
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: omnicorp
+  labels:
+    app: omnicorp
+spec:
+  restartPolicy: Never
+  containers:
+    - name: omnicorp
+      image: alpine:latest
+      # image: ghcr.io/translatorsri/babel:latest
+      # I just need something to run while I figure out how to make this work
+      command: [ "/bin/bash", "-c", "--" ]
+      args: [ "while true; echo Running; do sleep 30; done;" ]
+      volumeMounts:
+        - mountPath: "/code/omnicorp/downloads"
+          name: omnicorp-downloads
+        - mountPath: "/code/omnicorp/outputs"
+          name: omnicorp-outputs
+      resources:
+        requests:
+          memory: "64G"
+          cpu: "4"
+          ephemeral-storage: "20G"
+        limits:
+          memory: "64G"
+          cpu: "4"
+          ephemeral-storage: "20G"
+  volumes:
+    - name: omnicorp-downloads
+      persistentVolumeClaim:
+        claimName: omnicorp-downloads
+    - name: omnicorp-outputs
+      persistentVolumeClaim:
+        claimName: omnicorp-outputs

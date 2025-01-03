@@ -1,0 +1,18 @@
+# Kubernetes file for setting up a volume to use for Omnicorp outputs.
+#
+# Back in 2020, this came to approx 300G uncompressed, so let's go with 350G for now.
+# TODO: compress the files on the fly so we don't need as much output space.
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: omnicorp-outputs
+  labels:
+    app: omnicorp
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 350G
+  storageClassName: basic

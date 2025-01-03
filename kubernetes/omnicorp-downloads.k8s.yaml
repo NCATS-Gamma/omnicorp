@@ -1,0 +1,16 @@
+# Kubernetes file for setting up a download volume to use for Omnicorp.
+# As of 2024oct20, this is about 43G of baseline files and 15G of updatefiles, so 80G should be plenty.
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: omnicorp-downloads
+  labels:
+    app: omnicorp
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 80G
+  storageClassName: basic

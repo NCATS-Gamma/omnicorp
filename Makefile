@@ -2,13 +2,12 @@
 OMNICORP = ./target/universal/stage/bin/omnicorp
 
 # Maximum memory to use.
-MEMORY = 16G
+MEMORY = 64G
 
 # Number of parallel jobs to start.
 PARALLEL = 4
 
 # The date of CORD-19 data to download.
-ROBOCORD_DATE="2020-09-02"
 .PHONY: all
 all: output
 
@@ -22,9 +21,8 @@ pubmed-annual-baseline/done:
 	touch pubmed-annual-baseline/done
 
 SciGraph:
-	git clone https://github.com/gaurav/SciGraph.git &&\
+	git clone https://github.com/SciGraph/SciGraph.git &&\
 	cd SciGraph &&\
-	git checkout public-constructors-and-methods &&\
 	mvn -B -DskipTests -DskipITs install
 
 robot.jar:
