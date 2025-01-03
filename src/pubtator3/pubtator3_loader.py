@@ -7,6 +7,7 @@
 
 import os
 import urllib.parse
+import subprocess
 import logging
 
 import click
