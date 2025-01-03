@@ -33,6 +33,7 @@ def download_pubtator3(to_dir: str = ".",
     wget_command_line = [
         'wget',
         '--progress=bar:force:noscroll',
+        '-c',           # Continue incomplete downloads.
         '-r',           # Turn on recursion.
         '-l1',          # Recurse one level.
         '-nd',          # No directories -- only save files.
