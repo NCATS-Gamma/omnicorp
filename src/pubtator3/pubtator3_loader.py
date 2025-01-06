@@ -9,6 +9,7 @@
 
 import re
 import tarfile
+import time
 import urllib.parse
 import subprocess
 import logging
@@ -142,6 +143,7 @@ def load(biocxml_tar_gz_filename: str, duckdb_filename: str, check_only=False, s
                 if member.name.lower().endswith(".bioc.xml"):
                     with tf.extractfile(member) as biocxmlf:
                         biocxml_count += 1
+                        time_started = time.time_ns()
 
                         with biocxml.iterparse(biocxmlf) as reader:
                             collection_info = reader.get_collection_info()
@@ -199,9 +201,11 @@ def load(biocxml_tar_gz_filename: str, duckdb_filename: str, check_only=False, s
                                                 concept_type,
                                             ])
 
-                            # After every file in the tar.gz file, write everything to the DuckDB database.
-                            db.commit()
-                            logging.info(f"Loaded {annotation_count} annotations from BioCXML file {member.name}.")
+                        # After every file in the tar.gz file, write everything to the DuckDB database.
+                        db.commit()
+                        time_ended = time.time_ns()
+                        time_taken_in_secs = (time_ended - time_started) / 1e9
+                        logging.info(f"Loaded {annotation_count:,} annotations from BioCXML file {member.name} in {time_taken_in_secs:.2f} seconds.")
 
     logging.info(f"Loaded {document_count} documents in {biocxml_count} BioCXML files from {biocxmlgz_count} BioCXML.tar.gz files.")
     db.close()
