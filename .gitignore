@@ -1,3 +1,7 @@
+# Add /data so we can store outputs there.
+/data
+
+# Old Omnicorp ignores.
 .cache-main
 .classpath
 .project
