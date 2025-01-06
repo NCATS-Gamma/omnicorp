@@ -14,9 +14,9 @@ import subprocess
 import logging
 
 import click
+import duckdb
 import bioc
 from bioc import biocxml
-
 
 def download_pubtator3(to_dir: str = ".",
                        pubtator3_ftp_url: str = "ftp://ftp.ncbi.nlm.nih.gov/pub/lu/PubTator3/",
@@ -80,23 +80,59 @@ def download(to_dir, pubtator3_ftp_url):
 @click.argument("biocxml_tar_gz_filename", type=click.Path(exists=True, dir_okay=False, file_okay=True), nargs=-1)
 @click.option("--duckdb", "duckdb_filename", type=click.Path(dir_okay=False, file_okay=True), help="The DuckDB file to write to. If none is provided, ")
 @click.option("--check-only", is_flag=True, default=False, help="Don't load the individual BioCXML files, just check if the entire BioCXML file can be read.")
-def load(biocxml_tar_gz_filename: str, duckdb_filename: str, check_only=False):
+@click.option("--source", type=str, help="The source to use in the database.")
+def load(biocxml_tar_gz_filename: str, duckdb_filename: str, check_only=False, source=None):
     """
     Load the BioCXML.tar.gz file(s) into the DuckDB database.
     """
     logging.basicConfig(level=logging.INFO)
 
+    # Make sure we have at least one input file.
+    if len(biocxml_tar_gz_filename) == 0:
+        raise RuntimeError("At least one BioCXML.tar.gz file must be provided.")
+
     # If no DuckDB filename is provided, we replace the .tar.gz extension with .duckdb.
     if duckdb_filename is None:
         duckdb_filename = re.sub(r"(?i)\.tar\.gz$", "", biocxml_tar_gz_filename) + ".duckdb"
 
-    if len(biocxml_tar_gz_filename) == 0:
-        raise RuntimeError("At least one BioCXML.tar.gz file must be provided.")
+    # Set up DuckDB.
+    db = duckdb.connect(duckdb_filename)
+
+    # Turn on a progress bar.
+    db.sql("PRAGMA enable_progress_bar=true")
+
+    # Create databases if they don't already exist.
+    db.sql("""CREATE TABLE IF NOT EXISTS Texts (
+        Source TEXT,
+        DocumentID TEXT NOT NULL,
+        SectionIndex LONG,
+        SectionTitle TEXT,
+        BodyText TEXT,
+        AnnotatedBy TEXT[]
+    );""")
+    db.sql("""CREATE TABLE IF NOT EXISTS Annotations (
+        DocumentID TEXT NOT NULL,
+        SectionIndex LONG,
+        SectionTitle TEXT,
+        AnnotationEngine TEXT,
+        StartIndex LONG,
+        EndIndex LONG,
+        Text TEXT,
+        ExpectedText TEXT,
+        ConceptID TEXT,
+        ConceptType TEXT
+    );""")
 
     document_count = 0
     biocxml_count = 0
     biocxmlgz_count = 0
     for filename in biocxml_tar_gz_filename:
+        # If we don't have a source, use the filename.
+        if source is None:
+            pubtator3_source = biocxml_tar_gz_filename
+        else:
+            pubtator3_source = source
+
         biocxmlgz_count += 1
         logging.info(f"Loading BioCXML.tar.gz file {filename} into a DuckDB database at {duckdb_filename}.")
 
@@ -114,12 +150,61 @@ def load(biocxml_tar_gz_filename: str, duckdb_filename: str, check_only=False):
                             if check_only:
                                 continue
 
+                            annotation_count = 0
                             for document in reader:
                                 document_count += 1
-                                logging.debug(f"Read document: {document}")
+
+                                pmid = f"PMID:{document.id}"
+                                for passage_index, passage in enumerate(document.passages):
+                                    passage_text = passage.text
+
+                                    db.execute("INSERT INTO Texts VALUES (?, ?, ?, ?, ?, ?)", [
+                                        str(passage.infons),
+                                        pmid,
+                                        passage_index,
+                                        "",
+                                        passage.text,
+                                        [pubtator3_source]
+                                    ])
+
+                                    for annotation in passage.annotations:
+                                        for location in annotation.locations:
+                                            annotation_count += 1
+
+                                            # Tweak some identifiers
+                                            concept_id = annotation.infons.get("identifier", "")
+                                            concept_type = annotation.infons.get("type", "")
+
+                                            if concept_type == 'Species' and concept_id is not None and concept_id.isdigit():
+                                                concept_id = f"NCBITaxon:{concept_id}"
+
+                                            if concept_type == 'Gene' and concept_id is not None and concept_id.isdigit():
+                                                concept_id = f"NCBIGene:{concept_id}"
+
+                                            # Let's make sure the offsets are correct.
+                                            start_index = location.offset - passage.offset
+                                            end_index = start_index + location.length - 1
+                                            expected_text = passage_text[start_index:(end_index + 1)]
+
+                                            db.execute("INSERT INTO Annotations VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+                                                pmid,
+                                                passage_index,
+                                                "",
+                                                pubtator3_source,
+                                                start_index,
+                                                end_index,
+                                                annotation.text,
+                                                expected_text,
+                                                concept_id,
+                                                concept_type,
+                                            ])
+
+                            # After every file in the tar.gz file, write everything to the DuckDB database.
+                            db.commit()
+                            logging.info(f"Loaded {annotation_count} annotations from BioCXML file {member.name}.")
 
     logging.info(f"Loaded {document_count} documents in {biocxml_count} BioCXML files from {biocxmlgz_count} BioCXML.tar.gz files.")
-
+    db.close()
 
 if __name__ == "__main__":
     pubtator3_loader()
