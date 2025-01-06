@@ -6,11 +6,13 @@
 # - Loading them into a DuckDB database so that they can be normalized, analyzed and cleaned.
 
 import os
+import tarfile
 import urllib.parse
 import subprocess
 import logging
 
 import click
+import bioc
 
 
 def download_pubtator3(to_dir: str = ".",
@@ -69,7 +71,43 @@ def download(to_dir, pubtator3_ftp_url):
     logging.info(f"Downloading PubTator3 from {pubtator3_ftp_url} into {to_dir}.")
     download_pubtator3(to_dir=to_dir,
                        pubtator3_ftp_url=pubtator3_ftp_url,)
-    pass
+
+
+@pubtator3_loader.command()
+@click.argument("biocxml_tar_gz_filename", type=click.Path(exists=True, dir_okay=False, file_okay=True), nargs=-1)
+@click.option("--duckdb", "duckdb_filename", type=click.Path(dir_okay=False, file_okay=True), help="The DuckDB file to write to.")
+@click.option("--check-only", is_flag=True, default=False, help="Don't load the individual BioCXML files, just check if the entire BioCXML file can be read.")
+def load(biocxml_tar_gz_filename: str, duckdb_filename: str, check_only=False):
+    """
+    Load the BioCXML.tar.gz file(s) into the DuckDB database.
+    """
+    logging.basicConfig(level=logging.INFO)
+
+    if len(biocxml_tar_gz_filename) == 0:
+        raise RuntimeError(f"At least one BioCXML.tar.gz file must be provided.")
+
+
+    biocxml_count = 0
+    biocxmlgz_count = 0
+    for filename in biocxml_tar_gz_filename:
+        biocxmlgz_count += 1
+        logging.info(f"Loading BioCXML.tar.gz file {filename} into a DuckDB database at {duckdb_filename}.")
+
+        with tarfile.open(filename, "r:gz") as tf:
+            for member in tf:
+                logging.debug(f"Checking BioCXML member {member}.")
+                if member.name.lower().endswith(".bioc.xml"):
+                    with tf.extractfile(member) as biocxmlf:
+                        biocxml_count += 1
+                        logging.info(f"Reading BioCXML file {member.name} from {filename}.")
+
+                        if check_only:
+                            continue
+
+                        bioc_collection = bioc.load(biocxmlf)
+                        logging.info(f"Read {member.name} as {bioc_collection}")
+
+    logging.info(f"Loaded {biocxml_count} BioCXML files from {biocxmlgz_count} BioCXML.tar.gz files.")
 
 
 if __name__ == "__main__":
