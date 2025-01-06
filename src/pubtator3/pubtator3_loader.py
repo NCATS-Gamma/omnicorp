@@ -5,7 +5,9 @@
 # - Downloading all the annotations from PubTator3
 # - Loading them into a DuckDB database so that they can be normalized, analyzed and cleaned.
 
-import os
+
+
+import re
 import tarfile
 import urllib.parse
 import subprocess
@@ -13,6 +15,7 @@ import logging
 
 import click
 import bioc
+from bioc import biocxml
 
 
 def download_pubtator3(to_dir: str = ".",
@@ -75,7 +78,7 @@ def download(to_dir, pubtator3_ftp_url):
 
 @pubtator3_loader.command()
 @click.argument("biocxml_tar_gz_filename", type=click.Path(exists=True, dir_okay=False, file_okay=True), nargs=-1)
-@click.option("--duckdb", "duckdb_filename", type=click.Path(dir_okay=False, file_okay=True), help="The DuckDB file to write to.")
+@click.option("--duckdb", "duckdb_filename", type=click.Path(dir_okay=False, file_okay=True), help="The DuckDB file to write to. If none is provided, ")
 @click.option("--check-only", is_flag=True, default=False, help="Don't load the individual BioCXML files, just check if the entire BioCXML file can be read.")
 def load(biocxml_tar_gz_filename: str, duckdb_filename: str, check_only=False):
     """
@@ -83,10 +86,14 @@ def load(biocxml_tar_gz_filename: str, duckdb_filename: str, check_only=False):
     """
     logging.basicConfig(level=logging.INFO)
 
+    # If no DuckDB filename is provided, we replace the .tar.gz extension with .duckdb.
+    if duckdb_filename is None:
+        duckdb_filename = re.sub(r"(?i)\.tar\.gz$", "", biocxml_tar_gz_filename) + ".duckdb"
+
     if len(biocxml_tar_gz_filename) == 0:
-        raise RuntimeError(f"At least one BioCXML.tar.gz file must be provided.")
+        raise RuntimeError("At least one BioCXML.tar.gz file must be provided.")
 
-
+    document_count = 0
     biocxml_count = 0
     biocxmlgz_count = 0
     for filename in biocxml_tar_gz_filename:
@@ -99,15 +106,19 @@ def load(biocxml_tar_gz_filename: str, duckdb_filename: str, check_only=False):
                 if member.name.lower().endswith(".bioc.xml"):
                     with tf.extractfile(member) as biocxmlf:
                         biocxml_count += 1
-                        logging.info(f"Reading BioCXML file {member.name} from {filename}.")
 
-                        if check_only:
-                            continue
+                        with biocxml.iterparse(biocxmlf) as reader:
+                            collection_info = reader.get_collection_info()
+                            logging.info(f"Loaded BioCXML file {member.name} with collection: {collection_info}.")
 
-                        bioc_collection = bioc.load(biocxmlf)
-                        logging.info(f"Read {member.name} as {bioc_collection}")
+                            if check_only:
+                                continue
 
-    logging.info(f"Loaded {biocxml_count} BioCXML files from {biocxmlgz_count} BioCXML.tar.gz files.")
+                            for document in reader:
+                                document_count += 1
+                                logging.debug(f"Read document: {document}")
+
+    logging.info(f"Loaded {document_count} documents in {biocxml_count} BioCXML files from {biocxmlgz_count} BioCXML.tar.gz files.")
 
 
 if __name__ == "__main__":
